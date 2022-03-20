@@ -4,7 +4,7 @@ from enum import Enum
 import sys
 sys.path
 
-from Sara2_BaseClass_0.1.py import *
+import Sara2_BaseClass_0
 
 class NUPACK_API:
     def __init__(self):

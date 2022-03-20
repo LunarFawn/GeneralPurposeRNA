@@ -1,5 +1,6 @@
 # This is the SARA2 data structure class
 #this is my first update push
+
 class DataStructure:
     def __init__(self, name, description, data_structure, value, upLimit):
         self.name = name
@@ -32,8 +33,18 @@ class DataStructure:
     def get_value(self):
         return self.value
 
-class DataCollection:
-    def __init__(self):
+class DataCollection(DataStructure):
+
+    def __init__(self, dictname):
+        self.dictName = dictname
+        self.dict = {}
+
+    def init_dict(self):
+        self.dict.clear()
+        self.dict = {}
+
+
+
 
 
 

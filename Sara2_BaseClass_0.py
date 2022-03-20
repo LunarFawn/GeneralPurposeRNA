@@ -2,12 +2,11 @@
 # this is my first update push
 
 class DataStructure:
-    def __init__(self, name, description, data_structure, value, upLimit):
+    def __init__(self, name, description, data_structure, value):
         self.name = name
         self.description = description
         self.data_structure = data_structure
         self.value = value
-        self.upLimit = upLimit
 
     def set_name(self, name):
         self.name = name
@@ -35,16 +34,19 @@ class DataStructure:
 
 
 class DataCollection(DataStructure):
+
     def __init__(self, name):
         self.name = name
         self.dict = {}
 
     def init_dict(self):
         self.dict.clear()
-        self.dict = {}
 
     # vdd entry to dictionary
     def add_entry(self, key_name, value):
-        temp_dict = {key_name, DataStructure}
-        temp_dict[key_name].set_value = value
-        self.dict.update(temp_dict)
+        taco = DataStructure
+        taco.set_value(self, value)
+        taco.set_data_structure(self, "work")
+        temp_dict = {key_name, taco}
+        self.dict.update(key_name=taco)
+        tst=1

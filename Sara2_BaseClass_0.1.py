@@ -1,5 +1,5 @@
 # This is the SARA2 data structure class
-#this is my first update push
+# this is my first update push
 
 class DataStructure:
     def __init__(self, name, description, data_structure, value, upLimit):
@@ -33,20 +33,18 @@ class DataStructure:
     def get_value(self):
         return self.value
 
-class DataCollection(DataStructure):
 
-    def __init__(self, dictname):
-        self.dictName = dictname
+class DataCollection(DataStructure):
+    def __init__(self, name):
+        self.name = name
         self.dict = {}
 
     def init_dict(self):
         self.dict.clear()
         self.dict = {}
 
-
-
-
-
-
-
-
+    # vdd entry to dictionary
+    def add_entry(self, key_name, value):
+        temp_dict = {key_name, DataStructure}
+        temp_dict[key_name].set_value = value
+        self.dict.update(temp_dict)

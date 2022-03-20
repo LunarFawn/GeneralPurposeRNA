@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="a55e03d3-cc82-42cd-9cc0-c019db73e5cb" name="Changes" comment="new change">
-      <change afterPath="$PROJECT_DIR$/NUPACK API PYTHON V0.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="a55e03d3-cc82-42cd-9cc0-c019db73e5cb" name="Changes" comment="creating data structures">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NUPACK API PYTHON V0.py" beforeDir="false" afterPath="$PROJECT_DIR$/NUPACK API PYTHON V0.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Sara2_BaseClass_0.1.py" beforeDir="false" afterPath="$PROJECT_DIR$/Sara2_BaseClass_0.1.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -38,7 +37,7 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
   </component>
   <component name="RunManager">
-    <configuration name="Sara2_BaseClass_0.1" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="Sara2_BaseClass_0" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Sara2_TheLogicQueen" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -50,7 +49,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Sara2_BaseClass_0.1.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Sara2_BaseClass_0.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -61,7 +60,7 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.Sara2_BaseClass_0.1" />
+        <item itemvalue="Python.Sara2_BaseClass_0" />
       </list>
     </recent_temporary>
   </component>
@@ -81,7 +80,14 @@
       <option name="project" value="LOCAL" />
       <updated>1647803479641</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="creating data structures">
+      <created>1647808095045</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1647808095045</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -97,6 +103,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="new change" />
-    <option name="LAST_COMMIT_MESSAGE" value="new change" />
+    <MESSAGE value="creating data structures" />
+    <option name="LAST_COMMIT_MESSAGE" value="creating data structures" />
   </component>
 </project>

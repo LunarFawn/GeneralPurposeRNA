@@ -1,12 +1,11 @@
 # This is the SARA2 data structure class
 # this is my first update push
 
-class DataStructure:
-    def __init__(self, name, description, data_structure, value):
-        self.name = name
-        self.description = description
-        self.data_structure = data_structure
-        self.value = value
+class DataStructure(object):
+    def __init__(self):
+        self.value = None
+        self.name = None
+        self.description = None
 
     def set_name(self, name):
         self.name = name
@@ -33,7 +32,7 @@ class DataStructure:
         return self.value
 
 
-class DataCollection(DataStructure):
+class DataCollection:
 
     def __init__(self, name):
         self.name = name
@@ -44,9 +43,16 @@ class DataCollection(DataStructure):
 
     # vdd entry to dictionary
     def add_entry(self, key_name, value):
-        taco = DataStructure
-        taco.set_value(self, value)
-        taco.set_data_structure(self, "work")
-        temp_dict = {key_name, taco}
-        self.dict.update(key_name=taco)
-        tst=1
+        temp_struct = DataStructure
+        temp_struct.set_name(self,key_name)
+        temp_struct.set_value(self, value)
+        temp_dict = {key_name: temp_struct}
+        self.dict.update(temp_dict)
+
+    def get_entry(self, key_name):
+        value = self.dict[key_name].get_name(self)
+        return value
+
+
+
+

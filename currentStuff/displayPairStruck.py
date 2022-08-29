@@ -1,4 +1,4 @@
-from varnaapi import *
+#from varnaapi import *
 from nupack import *
 
 
@@ -65,3 +65,5 @@ def processPairs(mySequence, primaryCutoff, secondaryCuttoff):
         print(element)
     #now return all the lists for ingesting
     return pairsArray, primaryPairsList, primaryPairsSortedList, secondaryPairsList, secondaryPairsSortedList
+
+pairsArray, primaryPairsList, primaryPairsSortedList, secondaryPairsList, secondaryPairsSortedList = processPairs(sequence, 0.1, .001)

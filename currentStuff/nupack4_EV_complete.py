@@ -229,7 +229,7 @@ def get_AdvancedEV(ensemble_kcal_group_elements, mfestructure):
     structure_ensemble_variance = sum(energydelta_individualVariationScore_list)# * 100
     return nucleotide_ensemble_variance_classic, nucleotide_ensemble_variance_normalized, structure_ensemble_variance
 
-if deltasToInspect_list[0] == "5":
+if deltasToInspect_list[0] == "2":
     #get each 1 kcal EV for entire range of value
     #to start it will be 5 for development purposes
     

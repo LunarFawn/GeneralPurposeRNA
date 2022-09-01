@@ -13,7 +13,7 @@ def initializeRnaDict(numNucs):
     return rnaDict
 
 
-def getPairProbsDict(mySequence, my_model):
+def getPairProbs(mySequence, my_model):
     #get pairs array
     pairsDict =initializeRnaDict(len(mySequence))
     pairsMatrix = pairs(strands=mySequence, model=my_model)
@@ -24,7 +24,7 @@ def getPairProbsDict(mySequence, my_model):
         for j in range(len(pairsArray[i])):
             pairsDict[i][j]=pairsArray[i][j]
 
-    return pairsDict
+    return pairsDict, pairsArray
 
 def getPairProb_individual(i, j, pairsDict):
     individualProb = pairsDict[i][j]

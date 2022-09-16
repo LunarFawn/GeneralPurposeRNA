@@ -1,6 +1,11 @@
 #from varnaapi import *
+import struct
 from nupack import *
-
+import pandas as pd
+import sys
+import openpyxl
+sys.path.append('/home/rna/rnaDev/git/Sara2_TheLogicQueen/')
+import Sara2_BaseClass_0 
 
 print("Enter single strand RNA sequence")
 sequence = "GGGAACGACUCGAGUAGAGUCGAAAAGUUGAAACGACUGAACAUGGUAACAUGAGUGGUUUGAACACAUACGAACAGGGUUCUUUCGAGGAUCCAAAAGAAACAACAACAACAAC" #input()
@@ -66,4 +71,42 @@ def processPairs(mySequence, primaryCutoff, secondaryCuttoff):
     #now return all the lists for ingesting
     return pairsArray, primaryPairsList, primaryPairsSortedList, secondaryPairsList, secondaryPairsSortedList
 
-pairsArray, primaryPairsList, primaryPairsSortedList, secondaryPairsList, secondaryPairsSortedList = processPairs(sequence, 0.1, .001)
+
+
+#now check for 100% and also specified fold change
+def grabPnasData():
+    pnasPath = r'pnas.2112979119.sd01.xlsx'
+    designRound = "Round 7 (R101)"
+    
+    sheet = pd.read_excel(pnasPath, sheet_name=designRound)
+
+    index=1
+    for lab_design_index in sheet.index:
+        sequence = sheet['Sequence'][lab_design_index]
+        DesignID = sheet['DesignID'][lab_design_index]
+        DesignName = sheet['Design'][lab_design_index]
+        Player = sheet['Player'][lab_design_index]
+        Eterna_Score=sheet['Eterna_Score'][lab_design_index]
+        FoldChange=sheet['FoldChange'][lab_design_index]
+        Puzzle_Name=sheet['Puzzle_Name'][lab_design_index]
+        #run single sequence
+        new_dict = Sara2_BaseClass_0.DataCollection("PNAS")
+        new_dict.init_dict()
+        new_dict.add_entry('Sequence', sequence)
+        new_dict.add_entry('DesignID', DesignID)
+        new_dict.add_entry('DesignName', DesignName)
+        new_dict.add_entry('Player', Player)
+        new_dict.add_entry('Eterna_Score', Eterna_Score)
+        new_dict.add_entry('FoldChange', FoldChange)
+        new_dict.add_entry('Puzzle_Name', Puzzle_Name)
+        pairsArray, primaryPairsList, primaryPairsSortedList, secondaryPairsList, secondaryPairsSortedList = processPairs(sequence, 0.1, .001)
+        new_dict.add_entry('pairsArray', pairsArray)
+        new_dict.add_entry('primaryPairsList', primaryPairsList)
+        new_dict.add_entry('primaryPairsSortedList', primaryPairsSortedList)
+        new_dict.add_entry('secondaryPairsList', secondaryPairsList)
+        new_dict.add_entry('secondaryPairsSortedList', secondaryPairsSortedList)
+
+
+
+        test = new_dict.get_entry('sequence')
+        result = test.get_value()

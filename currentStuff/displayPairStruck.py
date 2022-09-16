@@ -4,8 +4,7 @@ from nupack import *
 import pandas as pd
 import sys
 import openpyxl
-sys.path.append('/home/rna/rnaDev/git/Sara2_TheLogicQueen/')
-import Sara2_BaseClass_0 
+
 
 print("Enter single strand RNA sequence")
 sequence = "GGGAACGACUCGAGUAGAGUCGAAAAGUUGAAACGACUGAACAUGGUAACAUGAGUGGUUUGAACACAUACGAACAGGGUUCUUUCGAGGAUCCAAAAGAAACAACAACAACAAC" #input()
@@ -90,21 +89,8 @@ def grabPnasData():
         FoldChange=sheet['FoldChange'][lab_design_index]
         Puzzle_Name=sheet['Puzzle_Name'][lab_design_index]
         #run single sequence
-        new_dict = Sara2_BaseClass_0.DataCollection("PNAS")
-        new_dict.init_dict()
-        new_dict.add_entry('Sequence', sequence)
-        new_dict.add_entry('DesignID', DesignID)
-        new_dict.add_entry('DesignName', DesignName)
-        new_dict.add_entry('Player', Player)
-        new_dict.add_entry('Eterna_Score', Eterna_Score)
-        new_dict.add_entry('FoldChange', FoldChange)
-        new_dict.add_entry('Puzzle_Name', Puzzle_Name)
-        pairsArray, primaryPairsList, primaryPairsSortedList, secondaryPairsList, secondaryPairsSortedList = processPairs(sequence, 0.1, .001)
-        new_dict.add_entry('pairsArray', pairsArray)
-        new_dict.add_entry('primaryPairsList', primaryPairsList)
-        new_dict.add_entry('primaryPairsSortedList', primaryPairsSortedList)
-        new_dict.add_entry('secondaryPairsList', secondaryPairsList)
-        new_dict.add_entry('secondaryPairsSortedList', secondaryPairsSortedList)
+        
+       
 
 
 

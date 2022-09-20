@@ -4,6 +4,7 @@ from nupack import *
 import pandas as pd
 import sys
 import openpyxl
+import numpy
 
 
 print("Enter single strand RNA sequence")
@@ -24,7 +25,7 @@ my_model = energy_model(rna_model, temperature)
 def processPairs(mySequence, primaryCutoff, secondaryCuttoff):
     
     pairsMatrix = pairs(strands=mySequence, model=my_model)
-    pairsArray = pairsMatrix.to_array();
+    pairsArray = pairsMatrix.to_array()
     #make a two dimensional list that has all teh pairs for everything
     nucs = len(mySequence)
     nucPairsList=[[-1]*nucs]*nucs

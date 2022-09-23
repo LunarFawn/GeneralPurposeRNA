@@ -10,6 +10,9 @@ import pandas as pd
 import sys
 import openpyxl
 from dataclasses import dataclass
+import mysql.connector
+from mysql.connector import Error
+import pandas as pd
 
 import nupackAPI_Sara2_Ver1 as nupackAPI
 
@@ -162,3 +165,42 @@ def ProcessLab(path, designRound_sheet):
     #lets stop at puzzle data until this is fully gigure out and tested a bit
     puzzleInfo = puzzleData(Puzzle_Name=puzzlename, designsList=designs)    
     return puzzleInfo
+
+def Create_server_connection(host_name, user_name, user_password):
+    connection = None
+    try:
+        connection = mysql.connector.connect(
+            host=host_name,
+            user=user_name,
+            passwd=user_password
+        )
+        print("MySQL Database connection successful")
+    except Error as err:
+        print(f"Error: '{err}'")
+
+    return connection
+
+def Execute_query(cursor, connection, query):
+    try:
+        cursor.execute(query)
+        connection.commit()
+        print("Query successful")
+    except Error as err:
+        print(f"Error: '{err}'")
+
+def MakeDB(connection, dBNameQuery):
+    cursor = connection.cursor()
+    try:
+        cursor.execute(dBNameQuery)
+        print("Database created successfully")
+    except Error as err:
+        print(f"Error: '{err}'")
+
+def GenerateSQL(puzzle: puzzleData, databaseName):
+    query = 'CREATE DATABASE ' + databaseName
+    connection = Create_server_connection("localhost", "rnauser", "rna")
+    MakeDB(connection, query)
+    #now add each desgin to the SQL database
+
+    
+

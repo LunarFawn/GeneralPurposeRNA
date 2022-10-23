@@ -8,10 +8,13 @@ def mechpaperRun():
     if temp == "d":
         temp = "37"
     
-    if cutoff == "d":
-        cutoff="0.0001"
-    else:
-        cutoff = float(cutoff)
+    if cutoff == "l1":
+        cutoff="0.01"
+    elif cutoff =="l2":
+        cutoff = ".001"
+    elif cutoff == "d":
+        cutoff = ".001" 
+
     pairsdict, pairs, snuppPairs = nupppy.getPairProbs(sequence,temp,cutoff)
     
     pairNum=1

@@ -37,10 +37,11 @@ def getPairProbs(mySequence, temp,  filterCutoff):
         for j in range(len(pairsArray[i])):
             value = pairsArray[i][j]
             if  value >= float(filterCutoff):
-                pairsDict[i][j]=value
-                newPairsList[i].append(value)
-                snupPairValue = "{0}:{1}={2:.10f}".format(i, j, value)
-                snupp_PaisList.append(snupPairValue)
+                if i is not j:
+                    pairsDict[i][j]=value
+                    newPairsList[i].append(value)
+                    snupPairValue = "{0}:{1}={2:.10f}".format(i+1, j+1, value)
+                    snupp_PaisList.append(snupPairValue)
 
     return pairsDict, newPairsList, snupp_PaisList
 

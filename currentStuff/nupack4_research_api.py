@@ -1,5 +1,15 @@
 from nupack import *
 
+my_model = Model
+
+rna_model='rna95-nupack3'    
+# Define physical model 
+
+
+
+def SetModel(rna_model, temp_C):
+    my_model = Model(material=rna_model, celsius=int(temp_C))
+    return my_model
 
 def initializeRnaDict(numNucs):
     #make the dict and intialize each nuc pair to -1 or not paires. 
@@ -13,18 +23,26 @@ def initializeRnaDict(numNucs):
     return rnaDict
 
 
-def getPairProbs(mySequence, my_model, dofilter):
+def getPairProbs(mySequence, temp,  filterCutoff):
     #get pairs array
+    theModel = SetModel(rna_model, temp)
     pairsDict =initializeRnaDict(len(mySequence))
-    pairsMatrix = pairs(strands=mySequence, model=my_model)
+    pairsMatrix = pairs(strands=mySequence, model=theModel)
     pairsArray = pairsMatrix.to_array()
-
+    newPairsList=list()
+    snupp_PaisList = []
     #now populate the pairs dict
     for i in range(len(pairsArray)):
+        newPairsList.append(list())
         for j in range(len(pairsArray[i])):
-            pairsDict[i][j]=pairsArray[i][j]
+            value = pairsArray[i][j]
+            if  value >= float(filterCutoff):
+                pairsDict[i][j]=value
+                newPairsList[i].append(value)
+                snupPairValue = "{0}:{1}={2:.10f}".format(i, j, value)
+                snupp_PaisList.append(snupPairValue)
 
-    return pairsDict, pairsArray
+    return pairsDict, newPairsList, snupp_PaisList
 
 def getPairProb_individual(i, j, pairsDict):
     individualProb = pairsDict[i][j]

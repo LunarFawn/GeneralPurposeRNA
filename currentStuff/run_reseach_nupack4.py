@@ -10,8 +10,6 @@ def mechpaperRun():
     
     if cutoff == "l1":
         cutoff="0.01"
-    elif cutoff =="l2":
-        cutoff = ".001"
     elif cutoff == "d":
         cutoff = ".001" 
 

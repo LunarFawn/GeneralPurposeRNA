@@ -167,20 +167,57 @@ def ProcessLab(path, designRound_sheet):
     puzzleInfo = puzzleData(Puzzle_Name=puzzlename, designsList=designs)    
     return puzzleInfo
 
-
+#not sure about is one yet
+#this will give a list of pairs based on prob level
 def NucProbSearch(foldData: NupackFoldData, probThresh):
     pairsList = foldData.pairprobsList
-    snuppPairs= dict(string, float)
+    snuppPairsDict= dict(string, float)
+    snuppList = []
 
     for i in range(len(pairsList)):        
         for j in range(len(pairsList[i])):
             pairValue = pairsList[i][j]
             if pairValue >= probThresh:
                 pairName = "{i}:{j}".format(i=i, j=j)
-                snuppPairs[pairName]=pairValue
-    return snuppPairs     
+                snuppPairsDict[pairName]=pairValue
+                snuppList.append(pairName)
+    return snuppPairsDict, snuppList     
 
 
+#this is new stuff to do snupp pairs like it should have been in the C# code.
 
+#need a collection of nupackfold data
+
+#need a dict 
+#pairsDict= dict(string, list)
+
+#find all pairs that have a parameter in common
+
+def writePair(i: int, j: int):
+    pairName = "{i}:{j}".format(i=i, j=j)
+    return pairName
+
+def foldChangeSearch(foldChange_min: float, foldChange_max: float, roundInfo: puzzleData, probMin: float):
+    commonPairsList=[]
+    
+    #i dont care about the disgn name or anything right now just the pairs
+    commonFoldChangeList=[]
+    for designData in roundInfo.designsList:
+        #designData is everything to do with each individual design in the lab
+        #get the foldchange
+        if((designData.wetlabResults.FoldChange >=  foldChange_min) and (designData.wetlabResults.FoldChange<=foldChange_max) ):
+            pairDict, pairList = NucProbSearch(designData.nupackFoldResults, probMin)
+            commonFoldChangeList.append(pairList)
+    
+    #now should have all the lists of pairs so do intersection and return just the pairs that are in common
+    commonPairsList = list(set.intersection(*map(set, commonFoldChangeList)))
+    return commonPairsList
     
 
+
+
+def findPairs(wetLabElement: string, wetLabElement_min: float, wetLabElemt_max: float, roundInfo: puzzleData, probMin: float):
+    #do a search 
+    #initially do fold change, no. of clusters, and EternScores
+    if wetLabElement is "foldchange":
+        foldChangeSearch()

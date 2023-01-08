@@ -31,24 +31,28 @@ def getPairProbs(mySequence, temp,  filterCutoff):
     pairsArray = pairsMatrix.to_array()
     newPairsList=list()
     snupp_PaisList = []
+    pairsTracker = []
     #now populate the pairs dict
     for i in range(len(pairsArray)):
         newPairsList.append(list())
         for j in range(len(pairsArray[i])):
             value = pairsArray[i][j]
+            checkpair= "{1}:{0}".format(i+1, j+1)
             if filterCutoff=="l2":
-                if  value < .01 and value >= .001:
-                    if i is not j:
+                if  value < .01 and value >= .001:                    
+                    if i is not j and checkpair not in pairsTracker:
                         pairsDict[i][j]=value
                         newPairsList[i].append(value)
                         snupPairValue = "{0}:{1}={2:.10f}".format(i+1, j+1, value)
+                        pairsTracker.append("{0}:{1}".format(i+1, j+1))
                         snupp_PaisList.append(snupPairValue)
             else:
                 if  value >= float(filterCutoff):
-                    if i is not j:
+                    if i is not j and checkpair not in pairsTracker:
                         pairsDict[i][j]=value
                         newPairsList[i].append(value)
                         snupPairValue = "{0}:{1}={2:.10f}".format(i+1, j+1, value)
+                        pairsTracker.append("{0}:{1}".format(i+1, j+1))
                         snupp_PaisList.append(snupPairValue)
 
     return pairsDict, newPairsList, snupp_PaisList

@@ -197,7 +197,9 @@ def writePair(i: int, j: int):
     pairName = "{i}:{j}".format(i=i, j=j)
     return pairName
 
-def foldChangeSearch(foldChange_min: float, foldChange_max: float, roundInfo: puzzleData, probMin: float):
+#need to write a function that is used as a base class for checking a value againsta a rna stucture vs finding commonalityin structures
+
+def foldChangeSearch(roundInfo: puzzleData, foldChange_min: float, foldChange_max: float, probMin: float):
     commonPairsList=[]
     
     #i dont care about the disgn name or anything right now just the pairs
@@ -215,9 +217,20 @@ def foldChangeSearch(foldChange_min: float, foldChange_max: float, roundInfo: pu
     
 
 
-
-def findPairs(wetLabElement: string, wetLabElement_min: float, wetLabElemt_max: float, roundInfo: puzzleData, probMin: float):
+# make this have a argument passed that define sget/set
+def FindPairs(roundInfo: puzzleData, wetLabElement: string, wetLabElement_min: float, wetLabElemt_max: float, probMin: float):
     #do a search 
     #initially do fold change, no. of clusters, and EternScores
     if wetLabElement is "foldchange":
-        foldChangeSearch()
+       pairsList = foldChangeSearch(roundInfo, wetLabElement_min, wetLabElemt_max, probMin)
+       return pairsList
+
+
+#find if a list of elements are in a molecule based on in silico calulations
+
+#make rainbow of pairs in stuct
+
+#returns teh ranges and designs in each group for a rainbow color map
+#this is the entrance
+def getRainbowColorMap():
+    pass

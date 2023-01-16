@@ -14,6 +14,8 @@ from dataclasses import dataclass
 import mysql.connector
 from mysql.connector import Error
 import pandas as pd
+from collections import OrderedDict
+from enum import Enum
 
 import nupackAPI_Sara2_Ver1 as nupackAPI
 
@@ -191,39 +193,9 @@ def NucProbSearch(foldData: NupackFoldData, probThresh):
 #need a dict 
 #pairsDict= dict(string, list)
 
-#find all pairs that have a parameter in common
-
-def writePair(i: int, j: int):
-    pairName = "{i}:{j}".format(i=i, j=j)
-    return pairName
-
-#need to write a function that is used as a base class for checking a value againsta a rna stucture vs finding commonalityin structures
-
-def foldChangeSearch(roundInfo: puzzleData, foldChange_min: float, foldChange_max: float, probMin: float):
-    commonPairsList=[]
-    
-    #i dont care about the disgn name or anything right now just the pairs
-    commonFoldChangeList=[]
-    for designData in roundInfo.designsList:
-        #designData is everything to do with each individual design in the lab
-        #get the foldchange
-        if((designData.wetlabResults.FoldChange >=  foldChange_min) and (designData.wetlabResults.FoldChange<=foldChange_max) ):
-            pairDict, pairList = NucProbSearch(designData.nupackFoldResults, probMin)
-            commonFoldChangeList.append(pairList)
-    
-    #now should have all the lists of pairs so do intersection and return just the pairs that are in common
-    commonPairsList = list(set.intersection(*map(set, commonFoldChangeList)))
-    return commonPairsList
-    
 
 
-# make this have a argument passed that define sget/set
-def FindPairs(roundInfo: puzzleData, wetLabElement: string, wetLabElement_min: float, wetLabElemt_max: float, probMin: float):
-    #do a search 
-    #initially do fold change, no. of clusters, and EternScores
-    if wetLabElement is "foldchange":
-       pairsList = foldChangeSearch(roundInfo, wetLabElement_min, wetLabElemt_max, probMin)
-       return pairsList
+
 
 
 #find if a list of elements are in a molecule based on in silico calulations
@@ -232,5 +204,72 @@ def FindPairs(roundInfo: puzzleData, wetLabElement: string, wetLabElement_min: f
 
 #returns teh ranges and designs in each group for a rainbow color map
 #this is the entrance
-def getRainbowColorMap():
-    pass
+class NucPair(object):
+
+    def __init__(self, nuc1: int, nuc2: int)-> None:
+        #convert to comon i, j pair
+        self.i_nuc = nuc1
+        self.j_nuc = nuc2
+    
+    def i(self):
+        return self.i_nuc
+
+    def j(self):
+        return self.j_nuc
+
+
+class GenerateRainbowStructurePlot():
+    
+    class Season(Enum):
+        SPRING = 1
+        SUMMER = 2
+        AUTUMN = 3
+        WINTER = 4
+
+    #this is agrouping and what defines a grouping is done by the function that calls this
+    @dataclass
+    class SearchResultsGrouping:
+        _RawResults_Dict: Dict = {}
+        _SortedResults_Dict: Dict = {}
+        PairProb_NucPair_Sorted_Dict: OrderedDict[float, List[str]] = {}
+
+       
+
+
+    def getRainbowColorMap():
+        pass
+
+    #find all pairs that have a parameter in common
+
+    def writePair(i: int, j: int):
+        pairName = "{i}:{j}".format(i=i, j=j)
+        return pairName
+    
+    
+    #need to write a function that is used as a base class for checking a value againsta a rna stucture vs finding commonalityin structures
+
+    def foldChangeSearch(roundInfo: puzzleData, foldChange_min: float, foldChange_max: float, probMin: float):
+        commonPairsList=[]
+        
+        #i dont care about the disgn name or anything right now just the pairs
+        commonFoldChangeList=[]
+        for designData in roundInfo.designsList:
+            #designData is everything to do with each individual design in the lab
+            #get the foldchange
+            if((designData.wetlabResults.FoldChange >=  foldChange_min) and (designData.wetlabResults.FoldChange<=foldChange_max) ):
+                pairDict, pairList = NucProbSearch(designData.nupackFoldResults, probMin)
+                commonFoldChangeList.append(pairList)
+        
+        #now should have all the lists of pairs so do intersection and return just the pairs that are in common
+        commonPairsList = list(set.intersection(*map(set, commonFoldChangeList)))
+        return commonPairsList
+        
+
+
+    # make this have a argument passed that define sget/set
+    def FindPairs(roundInfo: puzzleData, wetLabElement: string, wetLabElement_min: float, wetLabElemt_max: float, probMin: float):
+        #do a search 
+        #initially do fold change, no. of clusters, and EternScores
+        if wetLabElement is "foldchange":
+            pairsList = GenerateRainbowStructurePlot.foldChangeSearch(roundInfo, wetLabElement_min, wetLabElemt_max, probMin)
+        return pairsList

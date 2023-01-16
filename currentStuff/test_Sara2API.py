@@ -19,6 +19,7 @@ def TestSara():
 
     results = sara2.ProcessLab(path, roundName)      
     design = results.designsList[0]
+    test = results.designsList[0].nupackFoldResults.pairprobsList
     assert design, "Design entry not built right"
     assert design.Sequence, "sequence no defined"
 

@@ -222,21 +222,30 @@ class NucPair(object):
     def __repr__(self):
         return f'{self._pair}#{self._probability}'
 
+    @property
     def i(self):
         return self._i
 
+    @property
     def j(self):
         return self._j
-    
-    
 
-
+    @property
     def probability(self):
         return self._probability
 
-#class NucList(object):
-#    pass
+class NucPairList(object):
     
+    def __init__(self, _nucs:List[NucPair]) -> None:
+        self.currentProabilityList : List[NucPair] = _nucs
+        pass
+        
+    def __add__(self):
+        pass
+        
+    def makeProbDict(self):
+        pass
+
 class SearchProtocol(Enum):
     FOLDCHANGE = 1
     PAIRPROB = 2

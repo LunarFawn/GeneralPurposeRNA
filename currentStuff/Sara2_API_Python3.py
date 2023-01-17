@@ -5,7 +5,7 @@ from decimal import Decimal
 import string
 from tokenize import Double
 from turtle import st
-from typing import Dict, NamedTuple, List
+from typing import Dict, NamedTuple, List, Optional
 from unicodedata import decimal
 import pandas as pd
 import sys
@@ -78,6 +78,7 @@ class DesignPerformanceData(NamedTuple):
 class puzzleData(NamedTuple):
     Puzzle_Name: str
     designsList: List[DesignPerformanceData]
+    designsDict: Dict[str, DesignPerformanceData]
 
 
 #class RoundData(NamedTuple):
@@ -152,6 +153,7 @@ def ProcessLab(path, designRound_sheet):
     #first do the Design entry stuff  
 
     designs: List[DesignPerformanceData] = []
+    designsDict: Dict[str, DesignInformation] = {}
      
     for row in sheet:
         wetlabResults: WetlabData
@@ -164,14 +166,16 @@ def ProcessLab(path, designRound_sheet):
         desingInfo = GenerateDesignInfo(row)
         DesingData = DesignPerformanceData(DesignInfo=desingInfo, wetlabResults=wetlabResults, nupackFoldResults=nupackRestuls)
         designs.append(DesingData)
+        designsDict[DesingData.DesignInfo.DesignID]=DesingData
     puzzlename = designs[0].DesignInfo.Puzzle_Name
     #lets stop at puzzle data until this is fully gigure out and tested a bit
-    puzzleInfo = puzzleData(Puzzle_Name=puzzlename, designsList=designs)    
+    puzzleInfo = puzzleData(Puzzle_Name=puzzlename, designsList=designs, designsDict=designsDict)    
     return puzzleInfo
 
-#not sure about is one yet
-#this will give a list of pairs based on prob level
-def NucProbSearch(foldData: NupackFoldData, probThresh):
+
+
+ #this will give a list of pairs based on prob level
+def NucProbSearch(self, foldData: NupackFoldData, probThresh):
     pairsList = foldData.pairprobsList
     snuppPairsDict= dict(string, float)
     snuppList = []
@@ -180,12 +184,11 @@ def NucProbSearch(foldData: NupackFoldData, probThresh):
         for j in range(len(pairsList[i])):
             pairValue = pairsList[i][j]
             if pairValue >= probThresh:
+                #pair = NucPair(i,j)
                 pairName = "{i}:{j}".format(i=i, j=j)
                 snuppPairsDict[pairName]=pairValue
                 snuppList.append(pairName)
     return snuppPairsDict, snuppList     
-
-
 #this is new stuff to do snupp pairs like it should have been in the C# code.
 
 #need a collection of nupackfold data
@@ -206,49 +209,117 @@ def NucProbSearch(foldData: NupackFoldData, probThresh):
 #this is the entrance
 class NucPair(object):
 
-    def __init__(self, nuc1: int, nuc2: int)-> None:
+    def __init__(self, nuc1: int, nuc2: int, pairProb:float)-> None:
         #convert to comon i, j pair
-        self.i_nuc = nuc1
-        self.j_nuc = nuc2
+        self._i = nuc1
+        self._j = nuc2
+        self._pair = f'{self.i_nuc}:{self.j_nuc}'
+        self._probability=pairProb
     
+    def __str__(self) -> str:
+        return self._pair
+    
+    def __repr__(self):
+        return f'{self._pair}#{self._probability}'
+
     def i(self):
-        return self.i_nuc
+        return self._i
 
     def j(self):
-        return self.j_nuc
-
-
-class GenerateRainbowStructurePlot():
+        return self._j
     
-    class Season(Enum):
-        SPRING = 1
-        SUMMER = 2
-        AUTUMN = 3
-        WINTER = 4
+    
+
+
+    def probability(self):
+        return self._probability
+
+#class NucList(object):
+#    pass
+    
+class SearchProtocol(Enum):
+    FOLDCHANGE = 1
+    PAIRPROB = 2
+    NUCPAIR = 3
+
+class NupackFoldDataEnum(Enum):
+    PAIRPROBS = 1
+    #NOT IMPLEMENTED YET
+    PAIRSLIST =2
+
+class GenerateRainbowStructurePlot:
+
+    def __init__(self, _searchType: SearchProtocol, _sourceType: NupackFoldDataEnum) -> None:
+        self.searchType: SearchProtocol = _searchType
+        self.sourceType: NupackFoldDataEnum = _sourceType
+        self.initialize()
+
+    def initialize(self):
+        if self.searchType==SearchProtocol.FOLDCHANGE:
+            if self.sourceType == NupackFoldDataEnum.PAIRPROBS: 
+                #load fold change for lab into memory
+                pass
+        pass
+
+    #this will load a datatype for furute searches to be faster
+    def LoadLab(self, _lab: puzzleData):
+        self.rawLabData=_lab
+        self.foldChangeDict: Dict[float, Dict[float, List[NucPair]]]={}
+        if self.searchType==SearchProtocol.FOLDCHANGE:
+            for design in _lab.designsList:
+                nupackData = design.nupackFoldResults
+                wetlabData = design.wetlabResults
+                currentPairDict, currentPairsList = self.PairsSearch_SingleDesign(nupackData, 0)
+                currentFoldChange = wetlabData.FoldChange
+
 
     #this is agrouping and what defines a grouping is done by the function that calls this
     @dataclass
     class SearchResultsGrouping:
         _RawResults_Dict: Dict = {}
         _SortedResults_Dict: Dict = {}
-        PairProb_NucPair_Sorted_Dict: OrderedDict[float, List[str]] = {}
+        Prob_Pair: OrderedDict[float, List[NucPair]] = {}
 
        
 
 
-    def getRainbowColorMap():
+    def getRainbowColorMap(self):
         pass
 
     #find all pairs that have a parameter in common
 
-    def writePair(i: int, j: int):
+    def writePair(self, i: int, j: int):
         pairName = "{i}:{j}".format(i=i, j=j)
         return pairName
     
+  
     
+    
+    #this will give a list of pairs based on prob level
+    #remember that nupackfolddata is for a single design for a single lab
+    def PairsSearch_SingleDesign(self, foldData: NupackFoldData, probThresh:float, doInit:Optional[bool]=False):
+        pairsList = foldData.pairprobsList
+        
+        tempSnuppPairsDict= dict(NucPair, float)        
+        tempSnuppList = []
+        #snuppPairsResults = self.SearchResultsGrouping
+
+        for i in range(len(pairsList)):        
+            for j in range(len(pairsList[i])):
+                pairValue = pairsList[i][j]
+                if pairValue >= probThresh:
+                    pairName = NucPair(i,j, pairValue)
+                    if doInit==True:
+                        pass
+                    else:
+                        #pairName = "{i}:{j}".format(i=i, j=j)
+                        tempSnuppPairsDict[str(pairName)]=pairValue
+                        tempSnuppList.append(pairName)
+        return tempSnuppPairsDict, tempSnuppList     
+
     #need to write a function that is used as a base class for checking a value againsta a rna stucture vs finding commonalityin structures
 
-    def foldChangeSearch(roundInfo: puzzleData, foldChange_min: float, foldChange_max: float, probMin: float):
+    def foldChangeSearch(self, roundInfo: puzzleData, foldChange_min: float, foldChange_max: float, probMin: float):
         commonPairsList=[]
         
         #i dont care about the disgn name or anything right now just the pairs
@@ -257,7 +328,9 @@ class GenerateRainbowStructurePlot():
             #designData is everything to do with each individual design in the lab
             #get the foldchange
             if((designData.wetlabResults.FoldChange >=  foldChange_min) and (designData.wetlabResults.FoldChange<=foldChange_max) ):
-                pairDict, pairList = NucProbSearch(designData.nupackFoldResults, probMin)
+                #get nuc pairs
+                pairDict, pairList = self.NucProbSearch(designData.nupackFoldResults, probMin)
+                #now write to the list
                 commonFoldChangeList.append(pairList)
         
         #now should have all the lists of pairs so do intersection and return just the pairs that are in common
@@ -267,9 +340,9 @@ class GenerateRainbowStructurePlot():
 
 
     # make this have a argument passed that define sget/set
-    def FindPairs(roundInfo: puzzleData, wetLabElement: string, wetLabElement_min: float, wetLabElemt_max: float, probMin: float):
+    def FindPairs(self, roundInfo: puzzleData, wetLabElement: string, wetLabElement_min: float, wetLabElemt_max: float, probMin: float):
         #do a search 
         #initially do fold change, no. of clusters, and EternScores
         if wetLabElement is "foldchange":
-            pairsList = GenerateRainbowStructurePlot.foldChangeSearch(roundInfo, wetLabElement_min, wetLabElemt_max, probMin)
+            pairsList = self.foldChangeSearch(roundInfo, wetLabElement_min, wetLabElemt_max, probMin)
         return pairsList

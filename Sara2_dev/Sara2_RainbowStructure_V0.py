@@ -17,6 +17,11 @@ from enum import Enum
 import currentStuff.nupackAPI_Sara2_Ver1 as nupackAPI
 import Sara2_dev.Sara2_API_Python3_V1 as sara2Root
 
+from pathlib import Path
+
+from draw_rna import draw, draw_all, draw_from_rdat, draw_utils
+
+
 
 
 class SnuppPair(object):
@@ -48,19 +53,22 @@ class SnuppPair(object):
 #this is the entrance
 class NucPair(object):
 
-    def __init__(self, nuc1: int, nuc2: int, pairProb:float, designID_str: str)-> None:
+    def __init__(self, nuc1: int, nuc2: int, pairProb:float, designID_str: str, _foldchange: Optional[float]=None)-> None:
         #convert to comon i, j pair
         self._pair:SnuppPair = SnuppPair(nuc1, nuc2)
         self._probability=pairProb
         #self._designId = designID_str
         self._designIdList: List[str]
         self._designIdList.append(designID_str)
+        self._foldChangeList: List[float]
+        if _foldchange is not None:
+            self._foldChangeList.append(_foldchange)
     
     def __str__(self) -> str:
         return self._pair
     
     def __repr__(self):
-        return f'NucPair(pair={self._pair}, prob={self._probability})'
+        return f'NucPair(pair={self._pair}, prob={self._probability}, deisgnIDList={self._designIdList})'
 
     @property
     def snuppPair(self):
@@ -81,6 +89,10 @@ class NucPair(object):
     @property
     def designIDs(self):
         return self._designIdList
+    
+    @property
+    def foldChangeList(self):
+        return self._foldChangeList
 
     #@property
     #def designIDList(self):
@@ -88,23 +100,37 @@ class NucPair(object):
         
     def appendDesignId(self, value: List[str]):
         self._designIdList = self._designIdList + value
+    
+    def appendFoldChange(self, value: float):
+        self._foldChangeList.append(value)
         
-
-
 
 class NucPairList(object):
     
-    def __init__(self, _nucs:List[NucPair]) -> None:
+    def __init__(self, _nucs:List[NucPair], _foldchange: Optional[float]=None) -> None:
         self._nucPairListFull : List[NucPair] = _nucs
         self._sortedPairListFull: List[NucPair]
         self._snuppOnly: List[SnuppPair]
         self._pairsDict: OrderedDict[SnuppPair, NucPair]
+        if _foldchange is not None:
+            pass
         self.refresh()
 
     def refresh(self):
         self.sort_probability()
         self.makeJustPairs()
         self.makePairsDict()
+
+    def sort_probability(self):
+        #sort list by probability
+        sortedPairList: List[NucPair] = sorted(self._nucPairListFull, key=lambda x: x.probability)
+        self._sortedPairListFull = sortedPairList
+
+    def makeJustPairs(self):
+        justPairs = []
+        for pair in self._nucPairListFull:
+            justPairs.append(pair.snuppPair)
+        self._snuppOnly = justPairs
 
     def makePairsDict(self):
         pairsDict = OrderedDict[SnuppPair, NucPair]
@@ -113,19 +139,8 @@ class NucPairList(object):
         self._pairsDict = pairsDict
 
 
-    def makeJustPairs(self):
-        justPairs = []
-        for pair in self._nucPairListFull:
-            justPairs.append(pair.snuppPair)
-        self._snuppOnly = justPairs
-
-    def sort_probability(self):
-        #sort list by probability
-        sortedPairList: List[NucPair] = sorted(self._nucPairListFull, key=lambda x: x.probability)
-        self._sortedPairListFull = sortedPairList
-
     #this will add two lists of NucPairs and only keep the pairs that are common
-    def __add__(self, value):
+    def addNucPairList(self, value, _foldchange: Optional[float]=None):
         #first need see what nuc pairs and probs are common
         secondList: NucPairList
         if isinstance(value, NucPairList):
@@ -137,6 +152,12 @@ class NucPairList(object):
         for secondSnupp, secondNucPair in secondList.pairsDictFull.items():
             snuppPair: SnuppPair = secondSnupp.snuppPair
             if snuppPair in self.snuppOnlyList:
+                
+                #do fold change first so thta it is easier to handle probabilities dict
+                if  _foldchange is not None and _foldchange in secondList.pairsDictFull[snuppPair].foldChangeList:
+                    #if they are the same then just need to append the design ID
+                    self.pairsDictFull[snuppPair].appendFoldChange(_foldchange)
+
                 if secondList.pairsDictFull[snuppPair].probability == self.pairsDictFull[snuppPair].probability:
                     #if they are the same then just need to append the design ID
                     self.pairsDictFull[snuppPair].appendDesignId(secondNucPair.designIDs)
@@ -145,7 +166,8 @@ class NucPairList(object):
                     #if not the same pair prob then need to add both orignal and new to list as they are different
                     tempNucList.append(self.pairsDictFull[snuppPair])
                     tempNucList.append(secondNucPair)
-        #now there shoudl be a new list so use that to init this one
+
+        #now there shoudl be a new list so use that to re-init this one with the new list
         self.__init__(tempNucList)
    
 
@@ -174,38 +196,61 @@ class NupackFoldDataEnum(Enum):
 
 class GenerateRainbowStructurePlot:
 
-    def __init__(self, _searchType: SearchProtocol, _sourceType: NupackFoldDataEnum) -> None:
+    def __init__(self, _searchType: SearchProtocol, _sourceType: NupackFoldDataEnum, lab: sara2Root.puzzleData) -> None:
         self.searchType: SearchProtocol = _searchType
         self.sourceType: NupackFoldDataEnum = _sourceType
+        self.foldChangeDict: OrderedDict[float, NucPairList]
+        self.rawLabData: sara2Root.puzzleData = lab
         self.initialize()
+        #now a dictionary is loaded with all the fold changes and goodies
 
     def initialize(self):
         if self.searchType==SearchProtocol.FOLDCHANGE:
             if self.sourceType == NupackFoldDataEnum.PAIRPROBS: 
                 #load fold change for lab into memory
-                pass
+                self.LoadLab()
         pass
 
     #this will load a datatype for furute searches to be faster
-    def LoadLab(self, _lab: sara2Root.puzzleData):
-        self.rawLabData=_lab
-        self.foldChangeDict: Dict[float, Dict[float, List[NucPair]]]={}
+    #IMPORTANT need to remember to assume that currently teh data loaded needs to be 
+    #ensured to be common to each fold change level. that means use NucPairList + override
+    def LoadLab(self):
+        #this will be orded Dict[fold_change, Dict[pairing_prob, List[NucPair]]]
+        self.foldChangeDict = {}
         if self.searchType==SearchProtocol.FOLDCHANGE:
-            for design in _lab.designsList:
+            for design in self.rawLabData.designsList:
                 nupackData = design.nupackFoldResults
-                wetlabData = design.wetlabResults
-                currentPairDict, currentPairsList = self.PairsSearch_SingleDesign(nupackData, 0)
+                wetlabData = design.wetlabResults                
                 currentFoldChange = wetlabData.FoldChange
+                currentPairDict, currentPairsList = self.PairsSearch_SingleDesign(foldData=nupackData, probThresh=0, doInit=True, foldChange=currentFoldChange)
 
+                if currentFoldChange in self.foldChangeDict:
+                    #update dictionary
+                    primaryNucPairList = self.foldChangeDict[currentFoldChange]
+                    primaryNucPairList.addNucPairList(currentPairsList, currentFoldChange)
+                    #now only nuc pairs that are in common are retained in the nucpairlist
+                    self.foldChangeDict[currentFoldChange] = primaryNucPairList
+                else:
+                    #make a new entry
+                    self.foldChangeDict[currentFoldChange] = primaryNucPairList
+            # now you should have a dictionary of fold changes with ech fold change having a list of nucpairs sorted by pairing prob
+            # and the foldchange(s) the nuc pair is found in is(are) retained as well 
 
+    #now need to write functions that filter through the loaded dic. the benifiet of the dict is that hopefully
+    #we only need to do a few searches as they are all insorted order
+
+   
+   
+   
+   
+   #old stuff and maybe some still used code... idk
+   
     #this is agrouping and what defines a grouping is done by the function that calls this
     @dataclass
     class SearchResultsGrouping:
         _RawResults_Dict: Dict = {}
         _SortedResults_Dict: Dict = {}
-        Prob_Pair: OrderedDict[float, List[NucPair]] = {}
-
-       
+        Prob_Pair: OrderedDict[float, List[NucPair]] = {}      
 
 
     def getRainbowColorMap(self):
@@ -222,25 +267,27 @@ class GenerateRainbowStructurePlot:
     
     #this will give a list of pairs based on prob level
     #remember that nupackfolddata is for a single design for a single lab
-    def PairsSearch_SingleDesign(self, foldData: sara2Root, probThresh:float, doInit:Optional[bool]=False):
+    def PairsSearch_SingleDesign(self, foldData: sara2Root, probThresh:float, doInit:Optional[bool]=False, foldChange:Optional[float]=None):
         pairsList = foldData.NupackFoldData.pairprobsList
         designID = foldData.DesignInformation.DesignID
         
         tempSnuppPairsDict= dict(NucPair, float)        
-        tempSnuppList = []
+        tempSnuppList: List[NucPair]= []
         #snuppPairsResults = self.SearchResultsGrouping
 
         for i in range(len(pairsList)):        
             for j in range(len(pairsList[i])):
                 pairValue = pairsList[i][j]
                 if pairValue >= probThresh:
-                    pairName = NucPair(i,j, pairValue, designID)
+                    pair = NucPair(i,j, pairValue, designID, foldChange)
                     if doInit==True:
-                        pass
+                        #pairName = "{i}:{j}".format(i=i, j=j)
+                        tempSnuppPairsDict[str(pair)]=pair
+                        tempSnuppList.append(pair)
                     else:
                         #pairName = "{i}:{j}".format(i=i, j=j)
-                        tempSnuppPairsDict[str(pairName)]=pairValue
-                        tempSnuppList.append(pairName)
+                        tempSnuppPairsDict[str(pair)]=pair
+                        tempSnuppList.append(pair)
         return tempSnuppPairsDict, tempSnuppList     
 
     #need to write a function that is used as a base class for checking a value againsta a rna stucture vs finding commonalityin structures

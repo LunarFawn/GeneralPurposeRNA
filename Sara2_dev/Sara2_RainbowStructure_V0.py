@@ -13,6 +13,7 @@ from mysql.connector import Error
 import pandas as pd
 from collections import OrderedDict
 from enum import Enum
+import numpy as np
 
 import currentStuff.nupackAPI_Sara2_Ver1 as nupackAPI
 import Sara2_dev.Sara2_API_Python3_V1 as sara2Root
@@ -102,8 +103,7 @@ class NucPair(object):
         self._designIdList = self._designIdList + value
     
     def appendFoldChange(self, value: float):
-        self._foldChangeList.append(value)
-        
+        self._foldChangeList.append(value)       
 
 class NucPairList(object):
     
@@ -183,11 +183,110 @@ class NucPairList(object):
     def fullPairsList(self):
         return self._sortedPairListFull
 
-
 class SearchProtocol(Enum):
     FOLDCHANGE = 1
     PAIRPROB = 2
     NUCPAIR = 3
+
+class SearchResult(object):
+
+    def __init__(self, numSections: Optional[int] = 0) -> None:
+        #currently only does FoldChange and PairProb
+        self._resultsDict_float: Dict[float, NucPairList] = {}
+        self._parameterValuesList: List[float] = None
+        self._minParameterValue: float = None
+        self._maxParameterValue: float = None
+        self._rangeParameterValue: float = None
+        self._numSections: int = numSections
+        self._listSectionValues: List[float] = None
+        #self.appendResult(searchParameter, searchResult)
+
+    
+    def appendResult(self, searchParameter: float, searchResult: NucPairList, numSections: Optional[int] = None):
+        if searchParameter not in self._resultsDict_float:
+            self._resultsDict_float[searchParameter] = NucPairList           
+        else:
+            primaryNucPairList: NucPairList = self._resultsDict_float[searchParameter]
+            primaryNucPairList.addNucPairList(searchResult, searchParameter)
+            self._resultsDict_float[searchParameter]=primaryNucPairList
+
+        self.createParameterList()
+        self.get_min_max()
+        if(numSections is not None):
+            self._numSections = numSections
+        #only defne sections is neccessary
+        if numSections > 0:
+            self.defineSections()
+        successString = f"Parameter {searchParameter} successfully added to SearchResult"
+        return successString
+
+    def defineSections(self):
+        #first get the max and min
+        numSections = self._numSections
+        rangeOfValues = self._maxParameterValue - self._minParameterValue
+        pointsPerSection:float = rangeOfValues/float(numSections)
+        listSectionValues: List[float] =[]
+        
+        value = self._minParameterValue
+        listSectionValues.append(value)
+        #stop at the last one since that need to be the max to prevent weird math things from creating errors
+        for num in range(numSections-1):            
+            value = value + pointsPerSection
+            listSectionValues.append(value)
+        listSectionValues.append(self._maxParameterValue)
+        self._listSectionValues = listSectionValues
+
+    @property
+    def sections(self):
+        return self._numSections, self._listSectionValues
+
+    @sections.setter
+    def sections(self, numSections: int):
+        self._numSections = numSections
+        self.defineSections(numSections)   
+
+    def createParameterList(self):
+        self._parameterValuesList = self._resultsDict_float.keys()
+    
+    def get_min_max(self):
+        self._minParameterValue = min(self._parameterValuesList)
+        self._maxParameterValue = max(self._parameterValuesList)
+        self._rangeParameterValue =  self._maxParameterValue - self._minParameterValue
+    
+    @property
+    def parameterList(self):
+        return self._parameterValuesList
+
+    @property
+    def min(self):
+        return self._minParameterValue
+    
+    @property
+    def max(self):
+        return self._maxParameterValue
+    
+    @property
+    def fullResults(self):
+        return self._resultsDict_float
+
+    @property
+    def parameterResult(self, searchParameter:float):
+        return self._resultsDict_float[searchParameter]
+    
+    @property
+    def clear(self):
+        self._resultsDict_float = {}
+        self._parameterValuesList: List[float] = None
+        self._minParameterValue: float = None
+        self._maxParameterValue: float = None
+        self._rangeParameterValue: float = None
+        self._listSectionValues: List[float] = None
+        return self._resultsDict_float
+
+
+
+    
+
 
 class NupackFoldDataEnum(Enum):
     PAIRPROBS = 1
@@ -199,7 +298,7 @@ class GenerateRainbowStructurePlot:
     def __init__(self, _searchType: SearchProtocol, _sourceType: NupackFoldDataEnum, lab: sara2Root.puzzleData) -> None:
         self.searchType: SearchProtocol = _searchType
         self.sourceType: NupackFoldDataEnum = _sourceType
-        self.foldChangeDict: OrderedDict[float, NucPairList]
+        self.foldChangeDict: SearchResult = SearchResult(numSections=5)
         self.rawLabData: sara2Root.puzzleData = lab
         self.initialize()
         #now a dictionary is loaded with all the fold changes and goodies
@@ -211,33 +310,80 @@ class GenerateRainbowStructurePlot:
                 self.LoadLab()
         pass
 
+
+    #this will give a list of pairs based on prob level
+    #remember that nupackfolddata is for a single design for a single lab
+    def PairsSearch_SingleDesign(self, foldData: sara2Root, probThresh:float, doInit:Optional[bool]=False, foldChange:Optional[float]=None):
+        pairsList = foldData.NupackFoldData.pairprobsList
+        designID = foldData.DesignInformation.DesignID
+        
+        tempSnuppPairsDict: Dict[NucPair, float] = {}  
+        tempSnuppList: List[NucPair]= []
+        #snuppPairsResults = self.SearchResultsGrouping
+
+        for i in range(len(pairsList)):        
+            for j in range(len(pairsList[i])):
+                pairValue = pairsList[i][j]
+                if pairValue >= probThresh:
+                    pair = NucPair(i,j, pairValue, designID, foldChange)
+                    if doInit==True:
+                        #pairName = "{i}:{j}".format(i=i, j=j)
+                        tempSnuppPairsDict[str(pair)]=pair
+                        tempSnuppList.append(pair)
+                    else:
+                        #pairName = "{i}:{j}".format(i=i, j=j)
+                        tempSnuppPairsDict[str(pair)]=pair
+                        tempSnuppList.append(pair)
+        return tempSnuppPairsDict, tempSnuppList     
+
     #this will load a datatype for furute searches to be faster
     #IMPORTANT need to remember to assume that currently teh data loaded needs to be 
     #ensured to be common to each fold change level. that means use NucPairList + override
     def LoadLab(self):
         #this will be orded Dict[fold_change, Dict[pairing_prob, List[NucPair]]]
-        self.foldChangeDict = {}
+        self.foldChangeDict.clear()
         if self.searchType==SearchProtocol.FOLDCHANGE:
             for design in self.rawLabData.designsList:
                 nupackData = design.nupackFoldResults
                 wetlabData = design.wetlabResults                
                 currentFoldChange = wetlabData.FoldChange
                 currentPairDict, currentPairsList = self.PairsSearch_SingleDesign(foldData=nupackData, probThresh=0, doInit=True, foldChange=currentFoldChange)
-
-                if currentFoldChange in self.foldChangeDict:
-                    #update dictionary
-                    primaryNucPairList = self.foldChangeDict[currentFoldChange]
-                    primaryNucPairList.addNucPairList(currentPairsList, currentFoldChange)
-                    #now only nuc pairs that are in common are retained in the nucpairlist
-                    self.foldChangeDict[currentFoldChange] = primaryNucPairList
-                else:
-                    #make a new entry
-                    self.foldChangeDict[currentFoldChange] = primaryNucPairList
+                self.foldChangeDict.appendResult(currentFoldChange, NucPairList(currentPairsList, currentFoldChange))    
             # now you should have a dictionary of fold changes with ech fold change having a list of nucpairs sorted by pairing prob
             # and the foldchange(s) the nuc pair is found in is(are) retained as well 
 
     #now need to write functions that filter through the loaded dic. the benifiet of the dict is that hopefully
     #we only need to do a few searches as they are all insorted order
+
+    #need to write a function that is used as a base class for checking a value againsta a rna stucture vs finding commonalityin structures
+
+    def foldChangeSearch(self, roundInfo: sara2Root.puzzleData, foldChange_min: float, foldChange_max: float, probMin: float):
+        commonPairsList:NucPairList
+        
+        #i dont care about the disgn name or anything right now just the pairs
+        commonFoldChangeList=[]
+        for designData in roundInfo.designsList:
+            #designData is everything to do with each individual design in the lab
+            #get the foldchange
+            if((designData.wetlabResults.FoldChange >=  foldChange_min) and (designData.wetlabResults.FoldChange<=foldChange_max) ):
+                #get nuc pairs
+                pairDict, pairList = self.PairsSearch_SingleDesign(designData.nupackFoldResults, probMin)
+                #now write to the list
+                commonFoldChangeList.append(pairList)
+        
+        #now should have all the lists of pairs so do intersection and return just the pairs that are in common
+        commonPairsList = list(set.intersection(*map(set, commonFoldChangeList)))
+        return commonPairsList
+        
+
+
+    # make this have a argument passed that define sget/set
+    def FindPairs(self, roundInfo: sara2Root.puzzleData, wetLabElement: string, wetLabElement_min: float, wetLabElemt_max: float, probMin: float):
+        #do a search 
+        #initially do fold change, no. of clusters, and EternScores
+        if wetLabElement is "foldchange":
+            pairsList = self.foldChangeSearch(roundInfo, wetLabElement_min, wetLabElemt_max, probMin)
+        return pairsList
 
    
    
@@ -265,57 +411,6 @@ class GenerateRainbowStructurePlot:
   
     
     
-    #this will give a list of pairs based on prob level
-    #remember that nupackfolddata is for a single design for a single lab
-    def PairsSearch_SingleDesign(self, foldData: sara2Root, probThresh:float, doInit:Optional[bool]=False, foldChange:Optional[float]=None):
-        pairsList = foldData.NupackFoldData.pairprobsList
-        designID = foldData.DesignInformation.DesignID
-        
-        tempSnuppPairsDict= dict(NucPair, float)        
-        tempSnuppList: List[NucPair]= []
-        #snuppPairsResults = self.SearchResultsGrouping
+    
 
-        for i in range(len(pairsList)):        
-            for j in range(len(pairsList[i])):
-                pairValue = pairsList[i][j]
-                if pairValue >= probThresh:
-                    pair = NucPair(i,j, pairValue, designID, foldChange)
-                    if doInit==True:
-                        #pairName = "{i}:{j}".format(i=i, j=j)
-                        tempSnuppPairsDict[str(pair)]=pair
-                        tempSnuppList.append(pair)
-                    else:
-                        #pairName = "{i}:{j}".format(i=i, j=j)
-                        tempSnuppPairsDict[str(pair)]=pair
-                        tempSnuppList.append(pair)
-        return tempSnuppPairsDict, tempSnuppList     
-
-    #need to write a function that is used as a base class for checking a value againsta a rna stucture vs finding commonalityin structures
-
-    def foldChangeSearch(self, roundInfo: sara2Root.puzzleData, foldChange_min: float, foldChange_max: float, probMin: float):
-        commonPairsList=[]
-        
-        #i dont care about the disgn name or anything right now just the pairs
-        commonFoldChangeList=[]
-        for designData in roundInfo.designsList:
-            #designData is everything to do with each individual design in the lab
-            #get the foldchange
-            if((designData.wetlabResults.FoldChange >=  foldChange_min) and (designData.wetlabResults.FoldChange<=foldChange_max) ):
-                #get nuc pairs
-                pairDict, pairList = self.NucProbSearch(designData.nupackFoldResults, probMin)
-                #now write to the list
-                commonFoldChangeList.append(pairList)
-        
-        #now should have all the lists of pairs so do intersection and return just the pairs that are in common
-        commonPairsList = list(set.intersection(*map(set, commonFoldChangeList)))
-        return commonPairsList
-        
-
-
-    # make this have a argument passed that define sget/set
-    def FindPairs(self, roundInfo: sara2Root.puzzleData, wetLabElement: string, wetLabElement_min: float, wetLabElemt_max: float, probMin: float):
-        #do a search 
-        #initially do fold change, no. of clusters, and EternScores
-        if wetLabElement is "foldchange":
-            pairsList = self.foldChangeSearch(roundInfo, wetLabElement_min, wetLabElemt_max, probMin)
-        return pairsList
+    

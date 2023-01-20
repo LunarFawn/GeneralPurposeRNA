@@ -11,7 +11,7 @@ rna95_nupack3_parameters=["rna95-nupack3", "Same as rna95 except that terminal m
 rna_parameterSet=[rna06_nupack4_parameter, rna95_nupack4_parameters, rna99_nupack3_parameters, rna95_nupack3_parameters]
 
 print("Enter single strand RNA sequence")
-sequence = "GGGAACGACUCGAGUAGAGUCGAAAAGUUGAAACGACUGAACAUGGUAACAUGAGUGGUUUGAACACAUACGAACAGGGUUCUUUCGAGGAUCCAAAAGAAACAACAACAACAAC" #input()
+sequence = "GUAAGGUGGUACCCCGAGGAUCACUCGGCCUUACGAGUAAUCGUAAGGCUGUUUUU" #input()
 
 print("Enter the temperature to simulate at")
 temperature = 37 #input()

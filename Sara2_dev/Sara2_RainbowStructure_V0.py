@@ -107,14 +107,26 @@ class NucPair(object):
 
 class NucPairList(object):
     
-    def __init__(self, _nucs:List[NucPair], _foldchange: Optional[float]=None) -> None:
-        self._nucPairListFull : List[NucPair] = _nucs
+    def __init__(self) -> None:
+        #self._nucPairListFull : List[NucPair] = _nucs
+        self._nucPairListFull : List[NucPair]
         self._sortedPairListFull: List[NucPair]
         self._snuppOnly: List[SnuppPair]
         self._pairsDict: OrderedDict[SnuppPair, NucPair]
+        self._isEmpty:bool = True
+
+        #self.refresh()
+
+    def makeNewPairList(self, _nucs:List[NucPair], _foldchange: Optional[float]=None):
+        self._nucPairListFull : List[NucPair] = _nucs
+        self._isEmpty:bool = False
         if _foldchange is not None:
             pass
         self.refresh()
+
+    @property
+    def empty(self):
+        return self._isEmpty
 
     def refresh(self):
         self.sort_probability()
@@ -138,37 +150,41 @@ class NucPairList(object):
             pairsDict[pair.snuppPair] = pair
         self._pairsDict = pairsDict
 
-
     #this will add two lists of NucPairs and only keep the pairs that are common
-    def addNucPairList(self, value, _foldchange: Optional[float]=None):
-        #first need see what nuc pairs and probs are common
-        secondList: NucPairList
-        if isinstance(value, NucPairList):
-            secondList = value
-        elif isinstance(value, List[NucPair]):
-            secondList = NucPairList(value)        
+    def appendNucPairList(self, value, _foldchange: Optional[float]=None) -> bool:
+        if (self._isEmpty==False):
+            #first need see what nuc pairs and probs are common
+            secondList: NucPairList = NucPairList()
+            if isinstance(value, NucPairList):
+                secondList = value
+            elif isinstance(value, List[NucPair]):
+                secondList.makeNewPairList(value)    
 
-        tempNucList: List[NucPair] = []
-        for secondSnupp, secondNucPair in secondList.pairsDictFull.items():
-            snuppPair: SnuppPair = secondSnupp.snuppPair
-            if snuppPair in self.snuppOnlyList:
-                
-                #do fold change first so thta it is easier to handle probabilities dict
-                if  _foldchange is not None and _foldchange in secondList.pairsDictFull[snuppPair].foldChangeList:
-                    #if they are the same then just need to append the design ID
-                    self.pairsDictFull[snuppPair].appendFoldChange(_foldchange)
+            tempNucList: List[NucPair] = []
+            for secondSnupp, secondNucPair in secondList.pairsDictFull.items():
+                snuppPair: SnuppPair = secondSnupp.snuppPair
+                if snuppPair in self.snuppOnlyList:
+                    
+                    #do fold change first so thta it is easier to handle probabilities dict
+                    if  _foldchange is not None and _foldchange in secondList.pairsDictFull[snuppPair].foldChangeList:
+                        #if they are the same then just need to append the design ID
+                        self.pairsDictFull[snuppPair].appendFoldChange(_foldchange)
 
-                if secondList.pairsDictFull[snuppPair].probability == self.pairsDictFull[snuppPair].probability:
-                    #if they are the same then just need to append the design ID
-                    self.pairsDictFull[snuppPair].appendDesignId(secondNucPair.designIDs)
-                    tempNucList.append(self.pairsDictFull[snuppPair])
-                else:
-                    #if not the same pair prob then need to add both orignal and new to list as they are different
-                    tempNucList.append(self.pairsDictFull[snuppPair])
-                    tempNucList.append(secondNucPair)
-
-        #now there shoudl be a new list so use that to re-init this one with the new list
-        self.__init__(tempNucList)
+                    if secondList.pairsDictFull[snuppPair].probability == self.pairsDictFull[snuppPair].probability:
+                        #if they are the same then just need to append the design ID
+                        self.pairsDictFull[snuppPair].appendDesignId(secondNucPair.designIDs)
+                        tempNucList.append(self.pairsDictFull[snuppPair])
+                    else:
+                        #if not the same pair prob then need to add both orignal and new to list as they are different
+                        tempNucList.append(self.pairsDictFull[snuppPair])
+                        tempNucList.append(secondNucPair)            
+        else:
+            newNucList: List[NucPair] 
+            if isinstance(value, NucPairList):
+                newNucList = value.fullPairsList
+            elif isinstance(value, List[NucPair]):
+                newNucList = value 
+            self.makeNewPairList(newNucList)
    
 
     @property
@@ -189,6 +205,7 @@ class SearchProtocol(Enum):
     NUCPAIR = 3
 
 class SearchResult(object):
+    #its really a dict
 
     def __init__(self, numSections: Optional[int] = 0) -> None:
         #currently only does FoldChange and PairProb
@@ -258,6 +275,10 @@ class SearchResult(object):
         return self._parameterValuesList
 
     @property
+    def keys(self):
+        return self._parameterValuesList
+
+    @property
     def min(self):
         return self._minParameterValue
     
@@ -270,8 +291,22 @@ class SearchResult(object):
         return self._resultsDict_float
 
     @property
+    def dictResults(self):
+        return self._resultsDict_float
+
+    @property
     def parameterResult(self, searchParameter:float):
-        return self._resultsDict_float[searchParameter]
+        if (searchParameter not in self._resultsDict_float):
+            return None
+        else:     
+            return self._resultsDict_float[searchParameter]
+
+    @property
+    def keySearch(self, searchKey:float):
+        if (searchKey not in self._resultsDict_float):
+            return None
+        else:     
+            return self._resultsDict_float[searchKey]
     
     @property
     def clear(self):
@@ -295,11 +330,12 @@ class NupackFoldDataEnum(Enum):
 
 class GenerateRainbowStructurePlot:
 
-    def __init__(self, _searchType: SearchProtocol, _sourceType: NupackFoldDataEnum, lab: sara2Root.puzzleData) -> None:
+    def __init__(self, _searchType: SearchProtocol, _sourceType: NupackFoldDataEnum, lab: sara2Root.puzzleData, minProbForPair: Optional[float] = 0) -> None:
         self.searchType: SearchProtocol = _searchType
         self.sourceType: NupackFoldDataEnum = _sourceType
         self.foldChangeDict: SearchResult = SearchResult(numSections=5)
         self.rawLabData: sara2Root.puzzleData = lab
+        self._minProbForPair: float = minProbForPair
         self.initialize()
         #now a dictionary is loaded with all the fold changes and goodies
 
@@ -347,8 +383,10 @@ class GenerateRainbowStructurePlot:
                 nupackData = design.nupackFoldResults
                 wetlabData = design.wetlabResults                
                 currentFoldChange = wetlabData.FoldChange
-                currentPairDict, currentPairsList = self.PairsSearch_SingleDesign(foldData=nupackData, probThresh=0, doInit=True, foldChange=currentFoldChange)
-                self.foldChangeDict.appendResult(currentFoldChange, NucPairList(currentPairsList, currentFoldChange))    
+                currentPairDict, currentPairsList = self.PairsSearch_SingleDesign(foldData=nupackData, probThresh=self._minProbForPair, doInit=True, foldChange=currentFoldChange)
+                newNucPairList: NucPairList = NucPairList()
+                newNucPairList.appendNucPairList(currentPairsList, currentFoldChange)
+                self.foldChangeDict.appendResult(currentFoldChange, newNucPairList)    
             # now you should have a dictionary of fold changes with ech fold change having a list of nucpairs sorted by pairing prob
             # and the foldchange(s) the nuc pair is found in is(are) retained as well 
 
@@ -357,8 +395,37 @@ class GenerateRainbowStructurePlot:
 
     #need to write a function that is used as a base class for checking a value againsta a rna stucture vs finding commonalityin structures
 
+
+    def new_foldChangeSearchPairs(self, foldChange_min: float, foldChange_max: float):
+        #need to work off of fold change dict
+        #self.foldChangeDict
+        resultNucPairList: NucPairList = NucPairList()
+        for foldChangeValue in self.foldChangeDict.keys:
+            if (foldChangeValue >= foldChange_min and foldChangeValue <= foldChange_max):
+                #then this fold change needs to be recorded
+                listFromDict: NucPairList = self.foldChangeDict.parameterResult(foldChangeValue)
+                resultNucPairList.appendNucPairList(listFromDict)
+        return resultNucPairList
+
+    def generate_Marker_Grouping_For_Analysis(self, minFoldChangePair:float):
+        #first get the list of sections
+        results: SearchResult = SearchResult()
+        sectionNums: int
+        sectionList: list[float]
+        sectionNums, sectionList= self.foldChangeDict.sections
+
+        for sectionIndex in range(len(sectionList)-1):
+            lowerSectionValue = sectionList[sectionIndex]
+            upperSectionValue = sectionList[sectionIndex+1]
+            commonPairsList: NucPairList = self.new_foldChangeSearchPairs(lowerSectionValue, upperSectionValue)
+            if commonPairsList.empty == False:
+                results.appendResult(upperSectionValue, commonPairsList)
+        return results
+
+
     def foldChangeSearch(self, roundInfo: sara2Root.puzzleData, foldChange_min: float, foldChange_max: float, probMin: float):
-        commonPairsList:NucPairList
+        
+        commonPairsList:NucPairList = NucPairList()
         
         #i dont care about the disgn name or anything right now just the pairs
         commonFoldChangeList=[]
@@ -368,11 +435,8 @@ class GenerateRainbowStructurePlot:
             if((designData.wetlabResults.FoldChange >=  foldChange_min) and (designData.wetlabResults.FoldChange<=foldChange_max) ):
                 #get nuc pairs
                 pairDict, pairList = self.PairsSearch_SingleDesign(designData.nupackFoldResults, probMin)
+                commonPairsList.appendNucPairList(pairList)
                 #now write to the list
-                commonFoldChangeList.append(pairList)
-        
-        #now should have all the lists of pairs so do intersection and return just the pairs that are in common
-        commonPairsList = list(set.intersection(*map(set, commonFoldChangeList)))
         return commonPairsList
         
 

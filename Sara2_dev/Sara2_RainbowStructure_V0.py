@@ -20,7 +20,7 @@ import Sara2_dev.Sara2_API_Python3_V1 as sara2Root
 
 from pathlib import Path
 
-from draw_rna import draw, draw_all, draw_from_rdat, draw_utils
+#from draw_rna import draw, draw_all, draw_from_rdat, draw_utils
 
 
 
@@ -330,10 +330,10 @@ class NupackFoldDataEnum(Enum):
 
 class GenerateRainbowStructurePlot:
 
-    def __init__(self, _searchType: SearchProtocol, _sourceType: NupackFoldDataEnum, lab: sara2Root.puzzleData, minProbForPair: Optional[float] = 0) -> None:
+    def __init__(self, _searchType: SearchProtocol, _sourceType: NupackFoldDataEnum, lab: sara2Root.puzzleData, minProbForPair: Optional[float] = 0, numberSections:Optional[int]=5) -> None:
         self.searchType: SearchProtocol = _searchType
         self.sourceType: NupackFoldDataEnum = _sourceType
-        self.foldChangeDict: SearchResult = SearchResult(numSections=5)
+        self.foldChangeDict: SearchResult = SearchResult(numSections=numberSections)
         self.rawLabData: sara2Root.puzzleData = lab
         self._minProbForPair: float = minProbForPair
         self.initialize()
@@ -407,7 +407,7 @@ class GenerateRainbowStructurePlot:
                 resultNucPairList.appendNucPairList(listFromDict)
         return resultNucPairList
 
-    def generate_Marker_Grouping_For_Analysis(self, minFoldChangePair:float):
+    def generate_Marker_Grouping_For_Analysis(self, minFoldChangePair: Optional[float]=0):
         #first get the list of sections
         results: SearchResult = SearchResult()
         sectionNums: int
@@ -456,21 +456,21 @@ class GenerateRainbowStructurePlot:
    #old stuff and maybe some still used code... idk
    
     #this is agrouping and what defines a grouping is done by the function that calls this
-    @dataclass
-    class SearchResultsGrouping:
-        _RawResults_Dict: Dict = {}
-        _SortedResults_Dict: Dict = {}
-        Prob_Pair: OrderedDict[float, List[NucPair]] = {}      
+    #@dataclass
+    #class SearchResultsGrouping:
+    #    _RawResults_Dict: Dict = {}
+    #    _SortedResults_Dict: Dict = {}
+    #    Prob_Pair: OrderedDict[float, List[NucPair]] = {}      
 
 
-    def getRainbowColorMap(self):
-        pass
+    #def getRainbowColorMap(self):
+    #    pass
 
     #find all pairs that have a parameter in common
 
-    def writePair(self, i: int, j: int):
-        pairName = "{i}:{j}".format(i=i, j=j)
-        return pairName
+    #def writePair(self, i: int, j: int):
+    #    pairName = "{i}:{j}".format(i=i, j=j)
+    #    return pairName
     
   
     

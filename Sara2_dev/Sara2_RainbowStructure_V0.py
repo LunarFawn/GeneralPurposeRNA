@@ -17,6 +17,7 @@ import numpy as np
 
 import currentStuff.nupackAPI_Sara2_Ver1 as nupackAPI
 import Sara2_dev.Sara2_API_Python3_V1 as sara2Root
+#from Sara2_API_Python3_V1 import Sara2 as sara2Root
 
 from pathlib import Path
 
@@ -317,9 +318,6 @@ class SearchResult(object):
         self._rangeParameterValue: float = None
         self._listSectionValues: List[float] = None
         return self._resultsDict_float
-
-
-
     
 
 

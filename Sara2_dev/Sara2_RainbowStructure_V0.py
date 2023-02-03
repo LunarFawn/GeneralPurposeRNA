@@ -15,8 +15,8 @@ from collections import OrderedDict
 from enum import Enum
 import numpy as np
 
-import currentStuff.nupackAPI_Sara2_Ver1 as nupackAPI
-import Sara2_dev.Sara2_API_Python3_V1 as sara2Root
+import nupackAPI_Sara2_Ver1 as nupackAPI
+import Sara2_API_Python3_V1 as sara2Root
 #from Sara2_API_Python3_V1 import Sara2 as sara2Root
 
 from pathlib import Path
@@ -60,14 +60,14 @@ class NucPair(object):
         self._pair:SnuppPair = SnuppPair(nuc1, nuc2)
         self._probability=pairProb
         #self._designId = designID_str
-        self._designIdList: List[str]
+        self._designIdList: List[str] = []
         self._designIdList.append(designID_str)
-        self._foldChangeList: List[float]
+        self._foldChangeList: List[float] = []
         if _foldchange is not None:
             self._foldChangeList.append(_foldchange)
     
     def __str__(self) -> str:
-        return self._pair
+        return self._pair._pair
     
     def __repr__(self):
         return f'NucPair(pair={self._pair}, prob={self._probability}, deisgnIDList={self._designIdList})'
@@ -146,26 +146,27 @@ class NucPairList(object):
         self._snuppOnly = justPairs
 
     def makePairsDict(self):
-        pairsDict = OrderedDict[SnuppPair, NucPair]
+        pairsDict: OrderedDict[SnuppPair, NucPair] = {}
         for pair in self.fullPairsList:
             pairsDict[pair.snuppPair] = pair
         self._pairsDict = pairsDict
 
     #this will add two lists of NucPairs and only keep the pairs that are common
     def appendNucPairList(self, value, _foldchange: Optional[float]=None) -> bool:
+        
         if (self._isEmpty==False):
             #first need see what nuc pairs and probs are common
             secondList: NucPairList = NucPairList()
             if isinstance(value, NucPairList):
                 secondList = value
-            elif isinstance(value, List[NucPair]):
+            else: # isinstance(value, List[NucPair]):
                 secondList.makeNewPairList(value)    
 
             tempNucList: List[NucPair] = []
             for secondSnupp, secondNucPair in secondList.pairsDictFull.items():
                 snuppPair: SnuppPair = secondSnupp.snuppPair
-                if snuppPair in self.snuppOnlyList:
-                    
+                #print(f'Appending Nuc Pair list for snuppPair {str(snuppPair)}')
+                if snuppPair in self.snuppOnlyList:                    
                     #do fold change first so thta it is easier to handle probabilities dict
                     if  _foldchange is not None and _foldchange in secondList.pairsDictFull[snuppPair].foldChangeList:
                         #if they are the same then just need to append the design ID
@@ -183,7 +184,8 @@ class NucPairList(object):
             newNucList: List[NucPair] 
             if isinstance(value, NucPairList):
                 newNucList = value.fullPairsList
-            elif isinstance(value, List[NucPair]):
+            else:
+                #it must be a List[NUCPAIR]
                 newNucList = value 
             self.makeNewPairList(newNucList)
    
@@ -221,11 +223,12 @@ class SearchResult(object):
 
     
     def appendResult(self, searchParameter: float, searchResult: NucPairList, numSections: Optional[int] = None):
+        print(f'Appending result to result object')
         if searchParameter not in self._resultsDict_float:
-            self._resultsDict_float[searchParameter] = NucPairList           
+            self._resultsDict_float[searchParameter] = searchResult           
         else:
             primaryNucPairList: NucPairList = self._resultsDict_float[searchParameter]
-            primaryNucPairList.addNucPairList(searchResult, searchParameter)
+            primaryNucPairList.appendNucPairList(searchResult, searchParameter)
             self._resultsDict_float[searchParameter]=primaryNucPairList
 
         self.createParameterList()
@@ -233,7 +236,7 @@ class SearchResult(object):
         if(numSections is not None):
             self._numSections = numSections
         #only defne sections is neccessary
-        if numSections > 0:
+        if self._numSections > 0:
             self.defineSections()
         successString = f"Parameter {searchParameter} successfully added to SearchResult"
         return successString
@@ -295,14 +298,14 @@ class SearchResult(object):
     def dictResults(self):
         return self._resultsDict_float
 
-    @property
+    
     def parameterResult(self, searchParameter:float):
         if (searchParameter not in self._resultsDict_float):
             return None
         else:     
             return self._resultsDict_float[searchParameter]
 
-    @property
+   
     def keySearch(self, searchKey:float):
         if (searchKey not in self._resultsDict_float):
             return None
@@ -344,12 +347,15 @@ class GenerateRainbowStructurePlot:
                 self.LoadLab()
         pass
 
+    def get_dict(self):
+        return self.foldChangeDict.dictResults
 
     #this will give a list of pairs based on prob level
     #remember that nupackfolddata is for a single design for a single lab
-    def PairsSearch_SingleDesign(self, foldData: sara2Root, probThresh:float, doInit:Optional[bool]=False, foldChange:Optional[float]=None):
-        pairsList = foldData.NupackFoldData.pairprobsList
-        designID = foldData.DesignInformation.DesignID
+    def PairsSearch_SingleDesign(self, foldData: sara2Root.DesignPerformanceData, probThresh:float, doInit:Optional[bool]=False, foldChange:Optional[float]=None):
+        print(f'Performing pairs search for {foldData.DesignInfo.DesignID}')
+        pairsList = foldData.nupackFoldResults.pairprobsList
+        designID = foldData.DesignInfo.DesignID
         
         tempSnuppPairsDict: Dict[NucPair, float] = {}  
         tempSnuppList: List[NucPair]= []
@@ -358,7 +364,7 @@ class GenerateRainbowStructurePlot:
         for i in range(len(pairsList)):        
             for j in range(len(pairsList[i])):
                 pairValue = pairsList[i][j]
-                if pairValue >= probThresh:
+                if pairValue >= probThresh and pairValue != 0.0:
                     pair = NucPair(i,j, pairValue, designID, foldChange)
                     if doInit==True:
                         #pairName = "{i}:{j}".format(i=i, j=j)
@@ -375,18 +381,20 @@ class GenerateRainbowStructurePlot:
     #ensured to be common to each fold change level. that means use NucPairList + override
     def LoadLab(self):
         #this will be orded Dict[fold_change, Dict[pairing_prob, List[NucPair]]]
-        self.foldChangeDict.clear()
+        self.foldChangeDict.clear
         if self.searchType==SearchProtocol.FOLDCHANGE:
             for design in self.rawLabData.designsList:
+                print(f'processing desing ID {design.DesignInfo.DesignID} for rainbow analysis')
                 nupackData = design.nupackFoldResults
                 wetlabData = design.wetlabResults                
                 currentFoldChange = wetlabData.FoldChange
-                currentPairDict, currentPairsList = self.PairsSearch_SingleDesign(foldData=nupackData, probThresh=self._minProbForPair, doInit=True, foldChange=currentFoldChange)
+                currentPairDict, currentPairsList = self.PairsSearch_SingleDesign(foldData=design, probThresh=self._minProbForPair, doInit=True, foldChange=currentFoldChange)
                 newNucPairList: NucPairList = NucPairList()
                 newNucPairList.appendNucPairList(currentPairsList, currentFoldChange)
                 self.foldChangeDict.appendResult(currentFoldChange, newNucPairList)    
             # now you should have a dictionary of fold changes with ech fold change having a list of nucpairs sorted by pairing prob
-            # and the foldchange(s) the nuc pair is found in is(are) retained as well 
+            # and the foldchange(s) the nuc pair is found in is(are) retained as well
+        print("lab is now loaded into memory for analysis")
 
     #now need to write functions that filter through the loaded dic. the benifiet of the dict is that hopefully
     #we only need to do a few searches as they are all insorted order
@@ -397,12 +405,15 @@ class GenerateRainbowStructurePlot:
     def new_foldChangeSearchPairs(self, foldChange_min: float, foldChange_max: float):
         #need to work off of fold change dict
         #self.foldChangeDict
+        print("processing foldchang pairs")
         resultNucPairList: NucPairList = NucPairList()
         for foldChangeValue in self.foldChangeDict.keys:
+            print(f'processing value {foldChangeValue}')
             if (foldChangeValue >= foldChange_min and foldChangeValue <= foldChange_max):
                 #then this fold change needs to be recorded
                 listFromDict: NucPairList = self.foldChangeDict.parameterResult(foldChangeValue)
                 resultNucPairList.appendNucPairList(listFromDict)
+                print(f'finished appending nuc pairs for value {foldChangeValue}')
         return resultNucPairList
 
     def generate_Marker_Grouping_For_Analysis(self, minFoldChangePair: Optional[float]=0):
@@ -413,6 +424,7 @@ class GenerateRainbowStructurePlot:
         sectionNums, sectionList= self.foldChangeDict.sections
 
         for sectionIndex in range(len(sectionList)-1):
+            print(f'processing section index {sectionIndex}')
             lowerSectionValue = sectionList[sectionIndex]
             upperSectionValue = sectionList[sectionIndex+1]
             commonPairsList: NucPairList = self.new_foldChangeSearchPairs(lowerSectionValue, upperSectionValue)

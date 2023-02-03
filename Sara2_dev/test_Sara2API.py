@@ -1,5 +1,6 @@
 import pytest
-
+import time
+from datetime import datetime, time, timedelta
 #import currentStuff.nupackAPI_Sara2_Ver1 as nupackAPI
 #import currentStuff.nupackAPI_Sara2_Ver1 as nupy
 
@@ -21,7 +22,8 @@ path = os.path.join(full_path, main_research)
 
 
 def TestSara():
-
+    start_time = datetime.now()
+    print(f'Start Time = {datetime.now()}')
     sara2_fuck = saraApi.Sara2()
     results: saraApi.puzzleData = sara2_fuck.ProcessLab(path, roundName)      
     design: saraApi.DesignPerformanceData  = results.designsList[0]
@@ -34,7 +36,13 @@ def TestSara():
     newDict = newSearch.get_dict()
     markerSearchResult: rainbow.SearchResult = newSearch.generate_Marker_Grouping_For_Analysis()
     dict = markerSearchResult.dictResults
+    end_time = datetime.now()
+    time_span: float = (end_time - start_time).total_seconds()
+    thing = time_span / 60
     print("done")
-
+    print(f'End time = {datetime.now()}')
+    print(f'elapsed time is {thing} min total')
+    print(f'elapsed time is {time_span} sec total')
+    print("hi")
 
 TestSara()

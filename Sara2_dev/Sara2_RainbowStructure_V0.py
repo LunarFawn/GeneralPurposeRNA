@@ -252,7 +252,7 @@ class NucPairList(object):
 
             current_list_snupps_set: set = set(self.snuppOnlyList_str)
             filter_out_list_snupps_set: set =set(temp_filter_outList.snuppOnlyList_str)
-            unique_snupps_current_list = list(current_list_snupps_set-filter_out_list_snupps_set)
+            #unique_snupps_current_list = list(current_list_snupps_set-filter_out_list_snupps_set)
             unique_snupps_filter_out_list =  list(filter_out_list_snupps_set-current_list_snupps_set)
 
             #now remove anythng not only in current
@@ -314,7 +314,7 @@ class SearchResult(object):
             for value_key, nucpair_value in self._resultsDict_float.items():
                 #dont do anything if it is the current one
                 if value_key != value:
-                    print(f'working on group {value} and filterin out nucs that appear in group {nucpair_value}')
+                    print(f'working on group {value} and filterin out nucs that appear in group {value_key}')
                     current_keep_NucPairList.filter_out_NucPairList(nucpair_value)
             #now save teh temp list as the current list for the unique dict
             self._unique_results_dict_float[value]=current_keep_NucPairList

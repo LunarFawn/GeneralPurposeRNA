@@ -65,8 +65,8 @@ class SnuppPair(object):
 #returns teh ranges and designs in each group for a rainbow color map
 #this is the entrance
 class NucPair(object):
-
-    def __init__(self, nuc1: int, nuc2: int, pairProb:float, designID_str: str, _foldchange: Optional[float]=None)-> None:
+    round_value: int = 0
+    def __init__(self, nuc1: int, nuc2: int, pairProb:float, designID_str: str, _foldchange: Optional[float]=None, fcl_round_digits:int = round_value)-> None:
         #convert to comon i, j pair
         self._pair:SnuppPair = SnuppPair(nuc1, nuc2)
         self._probability=pairProb
@@ -74,8 +74,10 @@ class NucPair(object):
         self._designIdList: List[str] = []
         self._designIdList.append(designID_str)
         self._foldChangeList: List[float] = []
+        self._foldChangeList_rounded: List[float] = []
         if _foldchange is not None:
             self._foldChangeList.append(_foldchange)
+            self._foldChangeList_rounded.append(round(_foldchange, fcl_round_digits))
     
     def __hash__(self):
         return hash((self._pair, self._probability, self._designIdList, self._foldChangeList))
@@ -117,6 +119,11 @@ class NucPair(object):
     @property
     def foldChangeList(self):
         return self._foldChangeList
+    
+    @property
+    def foldChangeList_rounded(self):
+        return self._foldChangeList_rounded
+    
 
     #@property
     #def designIDList(self):
@@ -125,8 +132,9 @@ class NucPair(object):
     def appendDesignId(self, value: List[str]):
         self._designIdList = self._designIdList + value
     
-    def appendFoldChange(self, value: float):
+    def appendFoldChange(self, value: float, fcl_round_digits:int=round_value):
         self._foldChangeList.append(value)
+        self._foldChangeList_rounded.append(round(value, fcl_round_digits))
 
      
 
@@ -199,8 +207,9 @@ class NucPairList(object):
                 if snuppPair in self.snuppOnlyList_str:                    
                     #do fold change first so thta it is easier to handle probabilities dict
                     if  _foldchange is not None:
-                        search_list = secondList.pairsDictFull[secondSnupp].foldChangeList
-                        num_times = search_list.count(_foldchange)
+                        rounded_foldchange = round(_foldchange, 0)
+                        search_list = secondList.pairsDictFull[secondSnupp].foldChangeList_rounded
+                        num_times = search_list.count(rounded_foldchange)
                         if num_times == 0:
                             #if they are the same then just need to append the design ID
                             self.pairsDictFull[secondSnupp].appendFoldChange(_foldchange)

@@ -236,7 +236,37 @@ class NucPairList(object):
                 newNucList = value 
             self.makeNewPairList(newNucList)
 
-   
+    def filter_out_NucPairList(self, filter_outList):
+
+        if self._isEmpty == False:
+            temp_filter_outList: NucPairList = NucPairList()
+            if isinstance(filter_outList, NucPairList):
+                temp_filter_outList = filter_outList
+            else: # isinstance(value, List[NucPair]):
+                temp_filter_outList.makeNewPairList(filter_outList)
+
+            #so now you should have a new nucpair list from which you an work from
+            #need to filter out nuc pairs that are similar
+            #remember that this is only filtering out based on nuc pairs
+            #do this based on snupp pairs list
+
+            current_list_snupps_set: set = set(self.snuppOnlyList_str)
+            filter_out_list_snupps_set: set =set(temp_filter_outList.snuppOnlyList_str)
+            unique_snupps_current_list = list(current_list_snupps_set-filter_out_list_snupps_set)
+            unique_snupps_filter_out_list =  list(filter_out_list_snupps_set-current_list_snupps_set)
+
+            #now remove anythng not only in current
+            #going to need to iterate through
+            for nucPair in self._nucPairListFull:
+                snupp_str:str = nucPair.snuppPair.snuppPair
+                if snupp_str in unique_snupps_filter_out_list:
+                    #remove from current list then
+                    self._nucPairListFull.remove(nucPair)
+            
+            #now you should have a list of just unique nuc pairs
+            #so now do nucpair list housekeeping
+            self.refresh()
+
 
     @property
     def pairsDictFull(self):
@@ -265,6 +295,7 @@ class SearchResult(object):
     def __init__(self, numSections: Optional[int] = 0) -> None:
         #currently only does FoldChange and PairProb
         self._resultsDict_float: Dict[float, NucPairList] = {}
+        self._unique_results_dict_float:  Dict[float, NucPairList] = {}
         self._parameterValuesList: List[float] = None
         self._minParameterValue: float = None
         self._maxParameterValue: float = None
@@ -273,7 +304,23 @@ class SearchResult(object):
         self._listSectionValues: List[float] = None
         #self.appendResult(searchParameter, searchResult)
 
-    
+    def define_unique_section_nucs(self):
+        #first get the list of section values and iterate through them
+        #start at first group and then filter nucs based on the rest
+        #and then go on from there
+        for value, nucpair in self._resultsDict_float.items():
+            current_keep_NucPairList: NucPairList = self._resultsDict_float[value]
+            #now itereat through the dict
+            for value_key, nucpair_value in self._resultsDict_float.items():
+                #dont do anything if it is the current one
+                if value_key != value:
+                    print(f'working on group {value} and filterin out nucs that appear in group {nucpair_value}')
+                    current_keep_NucPairList.filter_out_NucPairList(nucpair_value)
+            #now save teh temp list as the current list for the unique dict
+            self._unique_results_dict_float[value]=current_keep_NucPairList
+
+
+
     def appendResult(self, searchParameter: float, searchResult: NucPairList, numSections: Optional[int] = None):
         print(f'Appending result to result object')
         if searchParameter not in self._resultsDict_float:
@@ -349,6 +396,10 @@ class SearchResult(object):
     @property
     def dictResults(self):
         return self._resultsDict_float
+    
+    @property
+    def unique_dict_results(self):
+        return self._unique_results_dict_float
 
     
     def parameterResult(self, searchParameter:float):
@@ -485,6 +536,8 @@ class GenerateRainbowStructurePlot:
             commonPairsList: NucPairList = self.new_foldChangeSearchPairs(lowerSectionValue, upperSectionValue)
             if commonPairsList.empty == False:
                 results.appendResult(upperSectionValue, commonPairsList)
+        print(f'Defining unique nuc lists for search result')
+        results.define_unique_section_nucs()
         return results
 
 

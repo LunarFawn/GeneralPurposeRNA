@@ -34,7 +34,7 @@ def TestSara():
     #this creates a search result with all teh nucs associated with the groupings defined by the number of sections
     newSearch: rainbow.GenerateRainbowStructurePlot = rainbow.GenerateRainbowStructurePlot(rainbow.SearchProtocol.FOLDCHANGE, rainbow.NupackFoldDataEnum.PAIRPROBS, results, 0, 10)
     newDict = newSearch.get_dict()
-    markerSearchResult: rainbow.SearchResult = newSearch.generate_Marker_Grouping_For_Analysis()
+    markerSearchResult: rainbow.SearchResult = newSearch.generate_Marker_Grouping_For_Analysis()    
     dict = markerSearchResult.dictResults
     end_time = datetime.now()
     time_span: float = (end_time - start_time).total_seconds()

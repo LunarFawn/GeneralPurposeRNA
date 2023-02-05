@@ -8,8 +8,8 @@ import pandas as pd
 import sys
 import openpyxl
 from dataclasses import dataclass
-import mysql.connector
-from mysql.connector import Error
+#import mysql.connector
+#from mysql.connector import Error
 import pandas as pd
 from collections import OrderedDict
 from enum import Enum
@@ -50,6 +50,17 @@ class SnuppPair(object):
     @property
     def j(self):
         return self._j
+    
+    def __hash__(self):
+        return hash((self._i, self._j, self._pair))
+
+    def __eq__(self, other):
+        return (self._i, self._j, self._pair) == (other._i, other._j, other._pair)
+
+    def __ne__(self, other):
+        # Not strictly necessary, but to avoid having both x==y and x!=y
+        # True at the same time
+        return not(self == other)
 
 #returns teh ranges and designs in each group for a rainbow color map
 #this is the entrance
@@ -66,6 +77,17 @@ class NucPair(object):
         if _foldchange is not None:
             self._foldChangeList.append(_foldchange)
     
+    def __hash__(self):
+        return hash((self._pair, self._probability, self._designIdList, self._foldChangeList))
+
+    def __eq__(self, other):
+        return (self._pair, self._probability, self._designIdList, self._foldChangeList) == (other._pair, other._probability, other._designIdList, other._foldChangeList)
+
+    def __ne__(self, other):
+        # Not strictly necessary, but to avoid having both x==y and x!=y
+        # True at the same time
+        return not(self == other)  
+
     def __str__(self) -> str:
         return self._pair._pair
     
@@ -104,7 +126,9 @@ class NucPair(object):
         self._designIdList = self._designIdList + value
     
     def appendFoldChange(self, value: float):
-        self._foldChangeList.append(value)       
+        self._foldChangeList.append(value)
+
+     
 
 class NucPairList(object):
     
@@ -113,6 +137,7 @@ class NucPairList(object):
         self._nucPairListFull : List[NucPair]
         self._sortedPairListFull: List[NucPair]
         self._snuppOnly: List[SnuppPair]
+        self._snuppOnly_str: List[str]
         self._pairsDict: OrderedDict[SnuppPair, NucPair]
         self._isEmpty:bool = True
 
@@ -124,6 +149,7 @@ class NucPairList(object):
         if _foldchange is not None:
             pass
         self.refresh()
+        self._isEmpty=False
 
     @property
     def empty(self):
@@ -141,9 +167,12 @@ class NucPairList(object):
 
     def makeJustPairs(self):
         justPairs = []
+        just_pairs_str=[]
         for pair in self._nucPairListFull:
             justPairs.append(pair.snuppPair)
+            just_pairs_str.append(pair.snuppPair.snuppPair)
         self._snuppOnly = justPairs
+        self._snuppOnly_str = just_pairs_str
 
     def makePairsDict(self):
         pairsDict: OrderedDict[SnuppPair, NucPair] = {}
@@ -166,19 +195,28 @@ class NucPairList(object):
             for secondSnupp, secondNucPair in secondList.pairsDictFull.items():
                 snuppPair: SnuppPair = secondSnupp.snuppPair
                 #print(f'Appending Nuc Pair list for snuppPair {str(snuppPair)}')
-                if snuppPair in self.snuppOnlyList:                    
+                #num_pairs = self.snuppOnlyList.count(snuppPair)
+                if snuppPair in self.snuppOnlyList_str:                    
                     #do fold change first so thta it is easier to handle probabilities dict
-                    if  _foldchange is not None and _foldchange in secondList.pairsDictFull[snuppPair].foldChangeList:
-                        #if they are the same then just need to append the design ID
-                        self.pairsDictFull[snuppPair].appendFoldChange(_foldchange)
+                    if  _foldchange is not None:
+                        search_list = secondList.pairsDictFull[secondSnupp].foldChangeList
+                        num_times = search_list.count(_foldchange)
+                        if num_times == 0:
+                            #if they are the same then just need to append the design ID
+                            self.pairsDictFull[secondSnupp].appendFoldChange(_foldchange)
 
-                    if secondList.pairsDictFull[snuppPair].probability == self.pairsDictFull[snuppPair].probability:
+                    #the numbers are never close due to precision
+                    #round to 6 decimal places?
+                    secondList_prob = round(secondList.pairsDictFull[secondSnupp].probability, 10)
+                    current_list_prob = round(self.pairsDictFull[secondSnupp].probability,10)
+
+                    if secondList_prob == current_list_prob:
                         #if they are the same then just need to append the design ID
-                        self.pairsDictFull[snuppPair].appendDesignId(secondNucPair.designIDs)
-                        tempNucList.append(self.pairsDictFull[snuppPair])
+                        self.pairsDictFull[secondSnupp].appendDesignId(secondNucPair.designIDs)
+                        tempNucList.append(self.pairsDictFull[secondSnupp])
                     else:
                         #if not the same pair prob then need to add both orignal and new to list as they are different
-                        tempNucList.append(self.pairsDictFull[snuppPair])
+                        tempNucList.append(self.pairsDictFull[secondSnupp])
                         tempNucList.append(secondNucPair)            
         else:
             newNucList: List[NucPair] 
@@ -188,6 +226,7 @@ class NucPairList(object):
                 #it must be a List[NUCPAIR]
                 newNucList = value 
             self.makeNewPairList(newNucList)
+
    
 
     @property
@@ -197,6 +236,10 @@ class NucPairList(object):
     @property
     def snuppOnlyList(self):
         return self._snuppOnly
+    
+    @property
+    def snuppOnlyList_str(self):
+        return self._snuppOnly_str
 
     @property
     def fullPairsList(self):
@@ -363,17 +406,20 @@ class GenerateRainbowStructurePlot:
 
         for i in range(len(pairsList)):        
             for j in range(len(pairsList[i])):
-                pairValue = pairsList[i][j]
-                if pairValue >= probThresh and pairValue != 0.0:
-                    pair = NucPair(i,j, pairValue, designID, foldChange)
-                    if doInit==True:
-                        #pairName = "{i}:{j}".format(i=i, j=j)
-                        tempSnuppPairsDict[str(pair)]=pair
-                        tempSnuppList.append(pair)
-                    else:
-                        #pairName = "{i}:{j}".format(i=i, j=j)
-                        tempSnuppPairsDict[str(pair)]=pair
-                        tempSnuppList.append(pair)
+                #only process pairs with first digit lower than first so you dont do them over
+                #if i is not less than j then it has already been done
+                if i < j:
+                    pairValue = pairsList[i][j]
+                    if pairValue >= probThresh and pairValue != 0.0:
+                        pair = NucPair(i,j, pairValue, designID, foldChange)
+                        if doInit==True:
+                            #pairName = "{i}:{j}".format(i=i, j=j)
+                            tempSnuppPairsDict[str(pair)]=pair
+                            tempSnuppList.append(pair)
+                        else:
+                            #pairName = "{i}:{j}".format(i=i, j=j)
+                            tempSnuppPairsDict[str(pair)]=pair
+                            tempSnuppList.append(pair)
         return tempSnuppPairsDict, tempSnuppList     
 
     #this will load a datatype for furute searches to be faster
@@ -412,7 +458,7 @@ class GenerateRainbowStructurePlot:
             if (foldChangeValue >= foldChange_min and foldChangeValue <= foldChange_max):
                 #then this fold change needs to be recorded
                 listFromDict: NucPairList = self.foldChangeDict.parameterResult(foldChangeValue)
-                resultNucPairList.appendNucPairList(listFromDict)
+                resultNucPairList.appendNucPairList(listFromDict, foldChangeValue)
                 print(f'finished appending nuc pairs for value {foldChangeValue}')
         return resultNucPairList
 

@@ -11,8 +11,8 @@ import pandas as pd
 import sys
 import openpyxl
 from dataclasses import dataclass, field
-import mysql.connector
-from mysql.connector import Error
+#import mysql.connector
+#from mysql.connector import Error
 import pandas as pd
 from collections import OrderedDict
 from enum import Enum

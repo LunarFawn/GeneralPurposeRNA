@@ -17,7 +17,7 @@ full_path = os.path.join(absolute_path, relative_path)
 train_Filename = "pnas_training_1-25-23.xlsx"
 main_research = "pnas.2112979119.sd01.xlsx"
 roundName = 'Round 7 (R101)'
-path = os.path.join(full_path, main_research)
+path = os.path.join(full_path, train_Filename)
 
 
 
@@ -36,6 +36,7 @@ def TestSara():
     newDict = newSearch.get_dict()
     markerSearchResult: rainbow.SearchResult = newSearch.generate_Marker_Grouping_For_Analysis()    
     dict = markerSearchResult.dictResults
+    unique_dict = markerSearchResult.unique_dict_results
     end_time = datetime.now()
     time_span: float = (end_time - start_time).total_seconds()
     thing = time_span / 60

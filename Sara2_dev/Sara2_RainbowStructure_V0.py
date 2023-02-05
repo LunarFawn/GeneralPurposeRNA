@@ -14,6 +14,7 @@ import pandas as pd
 from collections import OrderedDict
 from enum import Enum
 import numpy as np
+import copy
 
 import nupackAPI_Sara2_Ver1 as nupackAPI
 import Sara2_API_Python3_V1 as sara2Root
@@ -252,19 +253,38 @@ class NucPairList(object):
 
             current_list_snupps_set: set = set(self.snuppOnlyList_str)
             filter_out_list_snupps_set: set =set(temp_filter_outList.snuppOnlyList_str)
-            #unique_snupps_current_list = list(current_list_snupps_set-filter_out_list_snupps_set)
-            unique_snupps_filter_out_list =  list(filter_out_list_snupps_set-current_list_snupps_set)
+            unique_snupps_current_list = list(current_list_snupps_set-filter_out_list_snupps_set)
+            #unique_snupps_filter_out_list =  list(filter_out_list_snupps_set-current_list_snupps_set)
 
             #now remove anythng not only in current
             #going to need to iterate through
+
+            temp_nucPairList: List[NucPair] = []
+
+            #for nucpair_index in range(len(self._nucPairListFull)):
+            #    nucPair: NucPair = self._nucPairListFull[nucpair_index]
+            #    if nucPair.snuppPair.snuppPair in unique_snupps_current_list:
+            #        #remove from current list then
+            #        temp_nucPairList.append()
+
             for nucPair in self._nucPairListFull:
-                snupp_str:str = nucPair.snuppPair.snuppPair
-                if snupp_str in unique_snupps_filter_out_list:
+                #if the nucPair is not in the current only list then remove it
+                if nucPair.snuppPair.snuppPair in unique_snupps_current_list:
+                    temp_nucPairList.append(nucPair)
                     #remove from current list then
-                    self._nucPairListFull.remove(nucPair)
+                    #self._nucPairListFull.remove(nucPair)
+
+                # snupp_str:str = nucPair.snuppPair.snuppPair
+                #num_count = unique_snupps_current_list.count(snupp_str)
+                #if num_count > 0:
+                ##if snupp_str in unique_snupps_filter_out_list:
+                #    #remove from current list then
+                #    self._nucPairListFull.remove(nucPair)
+                #    pass
             
             #now you should have a list of just unique nuc pairs
             #so now do nucpair list housekeeping
+            self._nucPairListFull = temp_nucPairList
             self.refresh()
 
 
@@ -308,14 +328,17 @@ class SearchResult(object):
         #first get the list of section values and iterate through them
         #start at first group and then filter nucs based on the rest
         #and then go on from there
-        for value, nucpair in self._resultsDict_float.items():
-            current_keep_NucPairList: NucPairList = self._resultsDict_float[value]
+
+        #make a deap copy of the current dict
+        self._unique_results_dict_float = copy.deepcopy(self._resultsDict_float)
+
+        for value, current_keep_NucPairList in self._unique_results_dict_float.items():
             #now itereat through the dict
-            for value_key, nucpair_value in self._resultsDict_float.items():
+            for value_key, filter_out_nucpair_value in self._resultsDict_float.items():
                 #dont do anything if it is the current one
                 if value_key != value:
                     print(f'working on group {value} and filterin out nucs that appear in group {value_key}')
-                    current_keep_NucPairList.filter_out_NucPairList(nucpair_value)
+                    current_keep_NucPairList.filter_out_NucPairList(filter_out_nucpair_value)
             #now save teh temp list as the current list for the unique dict
             self._unique_results_dict_float[value]=current_keep_NucPairList
 

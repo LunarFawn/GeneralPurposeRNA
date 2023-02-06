@@ -189,6 +189,11 @@ class Sara2:
             #(DesignInfo=desingInfo, wetlabResults=wetlabResults, nupackFoldResults=nupackRestuls)
             designs.append(DesingData)
             designsDict[DesingData.DesignInfo.DesignID]=DesingData
+
+        #need to change this to account for sublabs
+
+
+
         puzzlename = designs[0].DesignInfo.Puzzle_Name
         #lets stop at puzzle data until this is fully gigure out and tested a bit
         puzzleInfo = puzzleData()

@@ -17,7 +17,7 @@ full_path = os.path.join(absolute_path, relative_path)
 train_Filename = "pnas_training_1-25-23.xlsx"
 main_research = "pnas.2112979119.sd01.xlsx"
 roundName = 'Round 7 (R101)'
-path = os.path.join(full_path, train_Filename)
+path = os.path.join(full_path, main_research)
 
 
 
@@ -32,7 +32,7 @@ def TestSara():
     assert design.DesignInfo.Sequence, "sequence not defined"
 
     #this creates a search result with all teh nucs associated with the groupings defined by the number of sections
-    newSearch: rainbow.GenerateRainbowStructurePlot = rainbow.GenerateRainbowStructurePlot(rainbow.SearchProtocol.FOLDCHANGE, rainbow.NupackFoldDataEnum.PAIRPROBS, results, 0, 10)
+    newSearch: rainbow.GenerateRainbowStructurePlot = rainbow.GenerateRainbowStructurePlot(rainbow.SearchProtocol.FOLDCHANGE, rainbow.NupackFoldDataEnum.PAIRPROBS, results, 0, 4)
     newDict = newSearch.get_dict()
     markerSearchResult: rainbow.SearchResult = newSearch.generate_Marker_Grouping_For_Analysis()    
     dict = markerSearchResult.dictResults

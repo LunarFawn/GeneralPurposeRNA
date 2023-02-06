@@ -70,6 +70,11 @@ class DesignInformation(object):
     Design: str =''
     Player: str = ''
     Puzzle_Name: str =''
+    Sublab_ID: int = -1
+    Sublab_Name: str = ''
+    Puzzle_Name: str = ''
+    Puzzle_ID: int -1
+
 
 #entry point for each design in a puzzle/lab
 class DesignPerformanceData:    
@@ -81,6 +86,7 @@ class DesignPerformanceData:
 #@dataclass
 class puzzleData(object):
     Puzzle_Name: str = ''
+    Puzzle_ID: int -1
     designsList: List[DesignPerformanceData] =[]
     designsDict: Dict[str, DesignPerformanceData] ={}
 

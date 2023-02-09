@@ -70,10 +70,6 @@ class DesignInformation(object):
     Design: str =''
     Player: str = ''
     Puzzle_Name: str =''
-    Sublab_ID: int = -1
-    Sublab_Name: str = ''
-    Puzzle_Name: str = ''
-    Puzzle_ID: int -1
 
 
 #entry point for each design in a puzzle/lab
@@ -84,12 +80,21 @@ class DesignPerformanceData:
 
 #entry point to puzzle or lab as we call them
 #@dataclass
-class puzzleData(object):
+#class puzzleData(object):
+#    Puzzle_Name: str = ''
+#    designsList: List[DesignPerformanceData] =[]
+#    designsDict: Dict[str, DesignPerformanceData] ={}
+
+
+class sublabData(object):
     Puzzle_Name: str = ''
-    Puzzle_ID: int -1
     designsList: List[DesignPerformanceData] =[]
     designsDict: Dict[str, DesignPerformanceData] ={}
 
+class mainlabData(object):
+    lab_name: str = ''
+    sublabs_list : List[sublabData] = []
+    sublabs_dict : Dict[str, sublabData] = {}
 
 #class RoundData(NamedTuple):
 #    roundName: str
@@ -168,12 +173,15 @@ class Sara2:
         return designInfo
         
 
-    def ProcessLab(self, path, designRound_sheet):
+    def ProcessLab(self, path, designRound_sheet, sublab_target:str):
         sheet = self.openExcelWetlab(path, designRound_sheet)
         #first do the Design entry stuff  
 
-        designs: List[DesignPerformanceData] = []
-        designsDict: Dict[str, DesignInformation] = {}
+        #designs: List[DesignPerformanceData] = []
+        #designsDict: Dict[str, DesignInformation] = {}
+        #lab = mainlabData()
+        sublab = sublabData()
+        sublab.Puzzle_Name = sublab_target
         
         for row in sheet:
             wetlabResults: WetlabData
@@ -184,30 +192,25 @@ class Sara2:
             desingInfo = self.GenerateDesignInfo(row)
             designName = desingInfo.Design
             designID = desingInfo.DesignID
+            sublab_name = desingInfo.Puzzle_Name
             desingString:str = f'Processing DesingID={designID}, DesignName={designName}'
             print(desingString)
-            wetlabResults = self.GenerateWetlabEntry(row)
-            nupackRestuls = self.GenerateNupackEntry(wetlabResults, 37, False)
-            DesingData = DesignPerformanceData()
-            DesingData.DesignInfo = desingInfo
-            DesingData.wetlabResults = wetlabResults
-            DesingData.nupackFoldResults = nupackRestuls            
-            #(DesignInfo=desingInfo, wetlabResults=wetlabResults, nupackFoldResults=nupackRestuls)
-            designs.append(DesingData)
-            designsDict[DesingData.DesignInfo.DesignID]=DesingData
+            if sublab_name == sublab_target:
+                wetlabResults = self.GenerateWetlabEntry(row)
+                nupackRestuls = self.GenerateNupackEntry(wetlabResults, 37, False)
+                DesingData = DesignPerformanceData()
+                DesingData.DesignInfo = desingInfo
+                DesingData.wetlabResults = wetlabResults
+                DesingData.nupackFoldResults = nupackRestuls            
+                #(DesignInfo=desingInfo, wetlabResults=wetlabResults, nupackFoldResults=nupackRestuls)
+                #process the sublab
+                sublab.designsList.append(DesingData)
+                sublab.designsDict[DesingData.DesignInfo.DesignID]=DesingData
+                #designs.append(DesingData)
+                #designsDict[DesingData.DesignInfo.DesignID]=DesingData
 
         #need to change this to account for sublabs
-
-
-
-        puzzlename = designs[0].DesignInfo.Puzzle_Name
-        #lets stop at puzzle data until this is fully gigure out and tested a bit
-        puzzleInfo = puzzleData()
-        puzzleInfo.Puzzle_Name=puzzlename
-        puzzleInfo.designsList=designs
-        puzzleInfo.designsDict=designsDict
-        #(Puzzle_Name=puzzlename, designsList=designs, designsDict=designsDict)    
-        return puzzleInfo
+        return sublab
 
 
 

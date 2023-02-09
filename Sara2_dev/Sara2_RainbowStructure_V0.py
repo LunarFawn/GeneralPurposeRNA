@@ -457,11 +457,11 @@ class NupackFoldDataEnum(Enum):
 
 class GenerateRainbowStructurePlot:
 
-    def __init__(self, _searchType: SearchProtocol, _sourceType: NupackFoldDataEnum, lab: sara2Root.puzzleData, minProbForPair: Optional[float] = 0, numberSections:Optional[int]=5) -> None:
+    def __init__(self, _searchType: SearchProtocol, _sourceType: NupackFoldDataEnum, lab: sara2Root.sublabData, minProbForPair: Optional[float] = 0, numberSections:Optional[int]=5) -> None:
         self.searchType: SearchProtocol = _searchType
         self.sourceType: NupackFoldDataEnum = _sourceType
         self.foldChangeDict: SearchResult = SearchResult(numSections=numberSections)
-        self.rawLabData: sara2Root.puzzleData = lab
+        self.rawLabData: sara2Root.sublabData = lab
         self._minProbForPair: float = minProbForPair
         self.initialize()
         #now a dictionary is loaded with all the fold changes and goodies
@@ -564,7 +564,7 @@ class GenerateRainbowStructurePlot:
         return results
 
 
-    def foldChangeSearch(self, roundInfo: sara2Root.puzzleData, foldChange_min: float, foldChange_max: float, probMin: float):
+    def foldChangeSearch(self, roundInfo: sara2Root.sublabData, foldChange_min: float, foldChange_max: float, probMin: float):
         
         commonPairsList:NucPairList = NucPairList()
         
@@ -583,7 +583,7 @@ class GenerateRainbowStructurePlot:
 
 
     # make this have a argument passed that define sget/set
-    def FindPairs(self, roundInfo: sara2Root.puzzleData, wetLabElement: string, wetLabElement_min: float, wetLabElemt_max: float, probMin: float):
+    def FindPairs(self, roundInfo: sara2Root.sublabData, wetLabElement: string, wetLabElement_min: float, wetLabElemt_max: float, probMin: float):
         #do a search 
         #initially do fold change, no. of clusters, and EternScores
         if wetLabElement is "foldchange":

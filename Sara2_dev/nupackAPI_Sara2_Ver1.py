@@ -316,7 +316,7 @@ class EnsembleVariation:
         nucleotide_ensemble_variance_normalized=total_subscore * 100 #/nuc_count    
         fail_threshold=0.2
         nucleotide_ensemble_variance_ThresholdNorm=(total_subscore/fail_threshold)#*100
-        result: EnsembleVariation.EV =  EnsembleVariation.EV(ev_normalized=nucleotide_ensemble_variance_normalized, 
+        result: EV =  EV(ev_normalized=nucleotide_ensemble_variance_normalized, 
                                                             ev_ThresholdNorm=nucleotide_ensemble_variance_ThresholdNorm, 
                                                             ev_structure=structure_ensemble_variance)      
         return  result

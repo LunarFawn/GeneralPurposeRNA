@@ -187,6 +187,7 @@ class EV:
     ev_ThresholdNorm: float = -1
     ev_structure: float = -1
 
+
 @dataclass
 class EVResult:
     groups_list : List[Sara2StructureList] = []

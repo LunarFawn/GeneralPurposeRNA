@@ -1,3 +1,17 @@
+from typing import List, Dict
+import struct
+from nupack import *
+import pandas as pd
+import sys
+import openpyxl
+from copy import deepcopy
+from dataclasses import dataclass
+
+from Sara2_dev.nupackAPI_Sara2_Ver1 import Sara2SecondaryStructure, Sara2StructureList
+
+
+
+
 @dataclass
 class EV:
     ev_normalized: float = -1
@@ -11,6 +25,12 @@ class EVResult:
     group_values: List[float] = []
     group_ev_list: List[EV] = []
     group_ev_dict: Dict[int,EV] = {}
+
+
+@dataclass
+class EVGroup:
+    group_span: float = 0
+    group_min:float = 0
 
 
 class EnsembleVariation:

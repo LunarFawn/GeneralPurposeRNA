@@ -8,6 +8,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 
 from Sara2_dev.nupackAPI_Sara2_Ver1 import Sara2SecondaryStructure, Sara2StructureList
+import Sara2_dev.nupackAPI_Sara2_Ver1 as nupackAPI
 
 
 
@@ -18,36 +19,45 @@ class EV:
     ev_ThresholdNorm: float = -1
     ev_structure: float = -1
 
+#@dataclass
+#class EVGroup:
+#    start_energy: float = 0
+ #   energy_span: int = 0
+  #  is_generic: bool = True
+   # generic_EV_subgroup: int = -1
+
+
+
+#class EVResult(object):
+#    groups_list : List[Sara2StructureList] = []
+#    groups_dict: Dict[int, Sara2StructureList] = {}
+#    group_values: List[float] = []
+#    group_ev_list: List[EV] = []
+#    group_ev_dict: Dict[int,EV] = {}
+#    group_info: EVGroup = EVGroup()
+
 @dataclass
 class EVGroup:
-    start_energy: float = 0
-    energy_span: int = 0
-    is_generic: bool = True
-    generic_EV_subgroup: int = -1
-
-@dataclass
-class EVResult:
-    groups_list : List[Sara2StructureList] = []
-    groups_dict: Dict[int, Sara2StructureList] = {}
-    group_values: List[float] = []
-    group_ev_list: List[EV] = []
-    group_ev_dict: Dict[int,EV] = {}
+    group_energy_span: float = 0
+    group_starting_energy: float = 0
+    ev: EV = EV()
 
 
-@dataclass
-class EVGroup:
-    group_span: float = 0
-    group_min:float = 0
+class EVGroupResult(object):
+    ev_info: EVGroup = EVGroup()
+    #ev_structure_scores: Dict[Sara2StructureList, EV] = {}
+    ev_group_struct_list: Sara2StructureList     
 
+class EVResulFull(object):
+    start_energy_list: List[float] = []
+    #this is intended to have the float be the min mfe energy which defines teh energy group same as an index would
+    result_dict: Dict[float, EVGroupResult] = {}
 
-class EnsembleVariation:
+class EnsembleVariation():
 
-    def __init__(self) -> None:
-        pass    
+    def __init__(self, rna_model: Model) -> None:
+        self._my_model: Model = rna_model 
 
-    def GetEnsembleVariation(self):
-        #process ensemble variation
-        pass
 
     def process_ensemble_variation(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: int):
         span_structures: Sara2StructureList = self.get_subopt_energy_gap(sequence_string=sequence, energy_delta_from_MFE=kcal_delta_span_from_mfe)       
@@ -58,12 +68,15 @@ class EnsembleVariation:
 
         
 
-        groups_list : List[Sara2StructureList] = []
-        groups_dict: Dict[int, Sara2StructureList] = {}
-        group_values: List[float] = []
-        group_ev_list: List[EV] = []
-        group_ev_dict: Dict[int,EV] = {}
+        #groups_list : List[Sara2StructureList] = []
+        #groups_dict: Dict[int, Sara2StructureList] = {}
+        
+        #group_ev_list: List[EV] = []
+        #group_ev_dict: Dict[int,EV] = {}
 
+        results_list: EVResulFull = EVResulFull()
+
+        group_values: List[float] = []
         #this fills up the list of energy deltas to publich EV's for
         current_energy: float = mfe_energy
         for index in num_groups:
@@ -75,10 +88,10 @@ class EnsembleVariation:
             group_values.append(num)
 
         #now initialize the groups_list
-        for index in range(len(group_values)):
-            group: Sara2StructureList = Sara2StructureList()
-            groups_list.append(group)
-            groups_dict[index+1] = group
+        for value in group_values:
+            group: EVGroupResult = EVGroupResult()
+            results_list.result_dict[value] = group
+            results_list.start_energy_list.append(value)
 
 
         for structure in span_structures.stuctures:
@@ -87,28 +100,39 @@ class EnsembleVariation:
             #need to do this because there are two indexes need to look at each 
             #loop and want to avoid triggering a list index overrun
             for group_index in range(len(group_values)-1):
+                #first find the structure
                 if current_energy in range(group_values[group_index], group_values[group_index+1]):
-                    groups_list[group_index].add_structure(structure)        
+                    #now get the EV
+                    results_list.result_dict[group_values[group_index]].ev_group_struct_list.add_structure(structure)
+                    #groups_list[group_index].add_structure(structure)   
+                     
                 
-        for group_index in range(len(groups_list)):
-            groups_dict[group_values[group_index]].stuctures = groups_list[group_index]
-            struct_list: Sara2StructureList = groups_list[group_index]
-            ev: EV = self.advanced_EV(struct_list, struct_list.mfe_structure)
-            group_ev_list.append(ev)
-            group_ev_dict[group_values[group_index]] = ev
+        for group_index in range(len(group_values)):
+            structure_list = results_list.result_dict[group_values[group_index]].ev_group_struct_list
+            #groups_dict[group_values[group_index]].stuctures = groups_list[group_index]
+            #struct_list: Sara2StructureList = groups_list[group_index]
+            energy_span = group_values[group_index+1]-group_values[group_index]
+            ev: EV = self.advanced_EV(structure_list, structure_list.mfe_structure)
+            results_list.result_dict[group_values[group_index]].ev_info.ev = ev
+            results_list.result_dict[group_values[group_index]].ev_info.group_energy_span = energy_span
+            results_list.result_dict[group_values[group_index]].ev_info.group_starting_energy = group_values[group_index]
+            #group_ev_list.append(ev)
+            #group_ev_dict[group_values[group_index]] = ev
 
         #now process all the groups
         #for list_index in range(len(groups_list)):
 
 
-        result: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=group_ev_list, group_ev_dict=group_ev_dict)
-        return result
+        #result: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=group_ev_list, group_ev_dict=group_ev_dict)
+        
+        
+        return results_list
 
 
     def get_subopt_energy_gap(self, sequence_string, energy_delta_from_MFE: int):
         #run through subopt 
         kcal_group_structures_list: Sara2StructureList = Sara2StructureList()
-        ensemble_kcal_group= subopt(strands=sequence_string, model=my_model, energy_gap=energy_delta_from_MFE)
+        ensemble_kcal_group= subopt(strands=sequence_string, model=self._my_model, energy_gap=energy_delta_from_MFE)
         
         #get all the data out of it
         for i,kcal_group_elementInfo in enumerate(ensemble_kcal_group):        

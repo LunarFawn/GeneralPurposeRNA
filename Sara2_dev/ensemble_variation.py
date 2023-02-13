@@ -19,6 +19,13 @@ class EV:
     ev_structure: float = -1
 
 @dataclass
+class EVGroup:
+    start_energy: float = 0
+    energy_span: int = 0
+    is_generic: bool = True
+    generic_EV_subgroup: int = -1
+
+@dataclass
 class EVResult:
     groups_list : List[Sara2StructureList] = []
     groups_dict: Dict[int, Sara2StructureList] = {}
@@ -84,14 +91,15 @@ class EnsembleVariation:
                     groups_list[group_index].add_structure(structure)        
                 
         for group_index in range(len(groups_list)):
-            groups_dict[group_index+1].stuctures = groups_list[group_index]
-
-        #now process all the groups
-        for list_index in range(len(groups_list)):
-            struct_list: Sara2StructureList = groups_list[list_index]
+            groups_dict[group_values[group_index]].stuctures = groups_list[group_index]
+            struct_list: Sara2StructureList = groups_list[group_index]
             ev: EV = self.advanced_EV(struct_list, struct_list.mfe_structure)
             group_ev_list.append(ev)
-            group_ev_dict[list_index+1] = ev
+            group_ev_dict[group_values[group_index]] = ev
+
+        #now process all the groups
+        #for list_index in range(len(groups_list)):
+
 
         result: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=group_ev_list, group_ev_dict=group_ev_dict)
         return result

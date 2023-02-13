@@ -231,4 +231,5 @@ class Sara2:
         return snuppPairsDict, snuppList     
     #this is new stuff to do snupp pairs like it should have been in the C# code.
 
-    #need to add a function for EV and this can be used to guide me on the Eterna EV stuff
+    def get_EV(self):
+        pass

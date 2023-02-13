@@ -18,6 +18,7 @@ from collections import OrderedDict
 from enum import Enum
 from nupack import *
 
+from nupackAPI_Sara2_Ver1 import Sara2SecondaryStructure, Sara2StructureList
 
 import nupackAPI_Sara2_Ver1 as nupackAPI
 from Sara2_dev.ensemble_variation import EVResulFull, EVGroup, EV, EnsembleVariation, EVGroupResult
@@ -52,7 +53,9 @@ class NupackFoldData(object):
     #mfeInfo: structureData
     #alternateStructureList: List[structureData]
     pairprobsList: List[List[float]] = [[]]
-    ev_result: EVGroupResult = EVGroupResult()
+    ev_1kcal_delta: EVGroupResult = EVGroupResult()
+    ev_2kcal_delta: EVGroupResult = EVGroupResult()
+    ev_full_2kcal_delta: EV = EV()
     #primaryPairsList:list
     #primaryPairsSortedList: list
     #secondaryPairsList: list
@@ -143,8 +146,8 @@ class Sara2:
         nupackEntry.temperature = temperature
         nupackEntry.doPknot = doPknot
         nupackEntry.isPknot = isPknot
-        nupackEntry.pairprobsList = pairProbsList   
-        nupackEntry.ev_result = self.get_EV_2kcal_group_only(wetlabDataObject.Sequence)    
+        nupackEntry.pairprobsList = pairProbsList 
+        nupackEntry.ev_1kcal_delta, nupackEntry.ev_2kcal_delta, nupackEntry.ev_full_2kcal_delta = self.get_EV_2kcal_group_only(wetlabDataObject.Sequence)    
         
         #(temperature=temperature, doPknot=doPknot, isPknot=isPknot, pairprobsList=pairProbsList)
         return nupackEntry
@@ -236,15 +239,22 @@ class Sara2:
         return snuppPairsDict, snuppList     
     #this is new stuff to do snupp pairs like it should have been in the C# code.
 
-    def get_EV_2kcal_group_only(self, sequrence: str):
+    def get_EV_2kcal_group_only(self, sequrence: str, mfe_structure: str):
         #get 2 kcal span and specify 1 kcal groups then grab 2nd group
         ev_process =  EnsembleVariation(self._my_model)
         span_to_process: int = 2
         inc_to_process: int = 1
         full_2kcal_span: EVResulFull = ev_process.process_ensemble_variation(sequence=sequrence, kcal_delta_span_from_mfe=span_to_process, 
                                                                 Kcal_unit_increments= inc_to_process)
-        target_kcal: float = full_2kcal_span.start_energy_list[1]
-        ev_result: EVGroupResult = full_2kcal_span.result_dict[target_kcal]  
+        full_2kcal_struct_list: Sara2StructureList = Sara2StructureList()
+        for structure in full_2kcal_span.result_dict[full_2kcal_span.start_energy_list[0]].ev_group_struct_list:
+            full_2kcal_struct_list.add_structure(structure)
+        for structure in full_2kcal_span.result_dict[full_2kcal_span.start_energy_list[1]].ev_group_struct_list:
+            full_2kcal_struct_list.add_structure(structure)
 
-        return ev_result                                 
+        ev_full_2kcal_span: EV = EnsembleVariation.advanced_EV(full_2kcal_struct_list, mfe_structure)
+        ev_1kcal = full_2kcal_span.result_dict[full_2kcal_span.start_energy_list[0]]
+        ev_2kcal = full_2kcal_span.result_dict[full_2kcal_span.start_energy_list[1]]
+
+        return ev_1kcal, ev_2kcal, ev_full_2kcal_span                              
 

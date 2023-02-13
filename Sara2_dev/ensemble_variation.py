@@ -19,23 +19,6 @@ class EV:
     ev_ThresholdNorm: float = -1
     ev_structure: float = -1
 
-#@dataclass
-#class EVGroup:
-#    start_energy: float = 0
- #   energy_span: int = 0
-  #  is_generic: bool = True
-   # generic_EV_subgroup: int = -1
-
-
-
-#class EVResult(object):
-#    groups_list : List[Sara2StructureList] = []
-#    groups_dict: Dict[int, Sara2StructureList] = {}
-#    group_values: List[float] = []
-#    group_ev_list: List[EV] = []
-#    group_ev_dict: Dict[int,EV] = {}
-#    group_info: EVGroup = EVGroup()
-
 @dataclass
 class EVGroup:
     group_energy_span: float = 0
@@ -125,6 +108,7 @@ class EnsembleVariation():
 
         #result: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=group_ev_list, group_ev_dict=group_ev_dict)
         
+        results_list.start_energy_list.sort()
         
         return results_list
 

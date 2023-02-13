@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 import pandas as pd
 from collections import OrderedDict
 from enum import Enum
+from nupack import *
 
 
 import nupackAPI_Sara2_Ver1 as nupackAPI
@@ -51,7 +52,7 @@ class NupackFoldData(object):
     #mfeInfo: structureData
     #alternateStructureList: List[structureData]
     pairprobsList: List[List[float]] = [[]]
-    ev_group
+    ev_result: EVGroupResult = EVGroupResult()
     #primaryPairsList:list
     #primaryPairsSortedList: list
     #secondaryPairsList: list
@@ -110,8 +111,9 @@ class Sara2:
     # we add it to a puzzleData object and once that is done for all the puzzles we then add it to a round data and wea re finished.
     # I think round data should be changable
 
-    def __init__(self) -> None:
+    def __init__(self, model: Model) -> None:
         self.something ="31415"
+        self._my_model: Model = model
 
     def GetNamesClass(self, className):
         variables = [i for i in vars(className).keys() if not callable(i) and not i.startswith('__') ]
@@ -129,7 +131,7 @@ class Sara2:
     def GenerateNupackEntry(self, wetlabDataObject: WetlabData, temperature, doPknot):
         #now need to run each design through nupack
         #pairProbsList = List[List[float]]
-        pairProbsList = nupackAPI.GetPairProbs2DArray(wetlabDataObject.Sequence, 'rna95-nupack3', temperature)
+        pairProbsList = nupackAPI.GetPairProbs2DArray(wetlabDataObject.Sequence, self._my_model, temperature)
         
         isPknot=False
         if doPknot is False:
@@ -141,7 +143,8 @@ class Sara2:
         nupackEntry.temperature = temperature
         nupackEntry.doPknot = doPknot
         nupackEntry.isPknot = isPknot
-        nupackEntry.pairprobsList = pairProbsList       
+        nupackEntry.pairprobsList = pairProbsList   
+        nupackEntry.ev_result = self.get_EV_2kcal_group_only(wetlabDataObject.Sequence)    
         
         #(temperature=temperature, doPknot=doPknot, isPknot=isPknot, pairprobsList=pairProbsList)
         return nupackEntry
@@ -233,5 +236,15 @@ class Sara2:
         return snuppPairsDict, snuppList     
     #this is new stuff to do snupp pairs like it should have been in the C# code.
 
-    def get_EV(self, sequrence: str):
-        pass
+    def get_EV_2kcal_group_only(self, sequrence: str):
+        #get 2 kcal span and specify 1 kcal groups then grab 2nd group
+        ev_process =  EnsembleVariation(self._my_model)
+        span_to_process: int = 2
+        inc_to_process: int = 1
+        full_2kcal_span: EVResulFull = ev_process.process_ensemble_variation(sequence=sequrence, kcal_delta_span_from_mfe=span_to_process, 
+                                                                Kcal_unit_increments= inc_to_process)
+        target_kcal: float = full_2kcal_span.start_energy_list[1]
+        ev_result: EVGroupResult = full_2kcal_span.result_dict[target_kcal]  
+
+        return ev_result                                 
+

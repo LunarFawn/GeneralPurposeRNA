@@ -453,7 +453,8 @@ class SearchResult(object):
 class NupackFoldDataEnum(Enum):
     PAIRPROBS = 1
     #NOT IMPLEMENTED YET
-    PAIRSLIST =2
+    PAIRSLIST = 2
+    ENSEMBLE_VARIATION = 3
 
 class GenerateRainbowStructurePlot:
 

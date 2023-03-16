@@ -308,6 +308,7 @@ class SearchProtocol(Enum):
     FOLDCHANGE = 1
     PAIRPROB = 2
     NUCPAIR = 3
+    ENSEMBLE_VARIATION = 4
 
 class SearchResult(object):
     #its really a dict

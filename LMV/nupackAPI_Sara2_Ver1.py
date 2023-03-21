@@ -227,6 +227,7 @@ class EnsembleVariation:
 
         #this fills up the list of energy deltas to publich EV's for
         current_energy: float = mfe_energy
+        group_values.append(current_energy)
         for index in range(num_groups):
             current_energy = current_energy + Kcal_unit_increments
             group_values.append(current_energy)
@@ -241,15 +242,19 @@ class EnsembleVariation:
             groups_list.append(group)
             groups_dict[index+1] = group
 
+        num_sara_struct: int = span_structures.num_structures
+        for sara_index in range(1,num_sara_struct):
+            #for sara_structure in span_structures.sara_stuctures:
 
-        for sara_structure in span_structures.sara_stuctures:
+            #this skips teh mfe from calulations
+            sara_structure: Sara2SecondaryStructure = span_structures.sara_stuctures[sara_index]
             current_energy = sara_structure.freeEnergy
 
             #need to do this because there are two indexes need to look at each 
             #loop and want to avoid triggering a list index overrun
             for group_index in range(len(group_values)):
                 if group_index != len(group_values)-1:
-                    if current_energy >= group_values[group_index] and current_energy <= group_values[group_index+1]:
+                    if current_energy >= group_values[group_index] and current_energy < group_values[group_index+1]:
                         groups_list[group_index].add_structure(sara_structure)
                 else:
                     if current_energy >= group_values[group_index]:

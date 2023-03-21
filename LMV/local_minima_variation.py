@@ -20,7 +20,7 @@ def test_LMV():
     sequence = input()
 
     print("Enter Kcal delta span to look at")
-    span = 7 # int(input())
+    span = int(input())
 
     print("Enter kcal unit to plot by")
     units = float(input())

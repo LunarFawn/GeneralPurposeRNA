@@ -11,25 +11,33 @@ import math
 import copy
 
 import nupackAPI_Sara2_Ver1 as nupack_api
-from nupackAPI_Sara2_Ver1 import Sara2SecondaryStructure, Sara2StructureList, EnsembleVariation
+from nupackAPI_Sara2_Ver1 import Sara2SecondaryStructure, Sara2StructureList, EnsembleVariation, EVResult
 
 
 
 def test_LMV():
     print("Enter single strand RNA sequence")
-    sequence = "AGGGUGGUACCGCGAUAAUCAAUCGUCCCUUCGUGUAAACGAAGGGGCG" #input()
+    sequence = input()
 
     print("Enter Kcal delta span to look at")
     span = 7 # int(input())
 
     print("Enter kcal unit to plot by")
-    units = .5# int(input())
+    units = float(input())
 
     EV_test: EnsembleVariation = EnsembleVariation()
 
-    ev_result = EV_test.process_ensemble_variation(sequence, span, units)
+    ev_result:EVResult  = EV_test.process_ensemble_variation(sequence, span, units)
 
-    print(ev_result.group_ev_list)
+    #print(ev_result.group_ev_list)
+
+    new_list_string = []
+    for ev in ev_result.group_ev_list:
+        ev_value = ev.ev_normalized
+        new_list_string.append(ev_value)
+    
+    print(new_list_string)
+
 
 test_LMV()
     

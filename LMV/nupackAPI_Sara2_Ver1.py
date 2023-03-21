@@ -309,6 +309,7 @@ class EnsembleVariation:
                 delta_nuc = sara_structure.structure[nucIndex]
                 if mfe_nuc != delta_nuc:
                     nucleotide_position_variation_basescores[nucIndex]=nucleotide_position_variation_basescores[nucIndex]+1
+                
                 structure = sara_structure.structure
                 mfe_structure = sara_mfestructure.structure
                 element_structure_mfe_distance=struc_distance(structure, mfe_structure)

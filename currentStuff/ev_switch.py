@@ -303,7 +303,9 @@ if do_advanced == True:
          #minus 1 from len since thre is the mfe in there)   
        
     ev_list = []
-    mfeStruct = target_dot_bracket      
+    if target_dot_bracket != "":
+        mfeStruct = target_dot_bracket     
+     
     #now should have a fully built energy dictionary need to do caclulations on each group
     for energyIndex in sorted(energyDict.keys()):
         energyDeltaCeil = energyIndex

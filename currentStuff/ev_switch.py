@@ -11,11 +11,13 @@ rna95_nupack3_parameters=["rna95-nupack3", "Same as rna95 except that terminal m
 rna_parameterSet=[rna06_nupack4_parameter, rna95_nupack4_parameters, rna99_nupack3_parameters, rna95_nupack3_parameters]
 
 print("Enter single strand RNA sequence")
-sequence = "GUAAGGUGGUACCCCGAGGAUCACUCGGCCUUACGAGUAAUCGUAAGGCUGUUUUU" #input()
+sequence = input()
 
 print("Enter the temperature to simulate at")
 temperature = 37 #input()
 
+print("Enter target dot bracket for 2nd state")
+target_dot_bracket = input()
 #print("Select the energy parameter set you wish to use. enter the number that corresponds")
 #for parameterSet_index in range(len(rna_parameterSet)):
 ##    parameterSet="#={0}, name={1}, description={2}".format(parameterSet_index, rna_parameterSet[parameterSet_index][0], rna_parameterSet[parameterSet_index][1])
@@ -174,10 +176,10 @@ for deltaIndex in range(len(EV_Delta_dict)):
         element_freeEnergy=element["freeEnergy"]
         element_stackEnergy=element["stackEnergy"]
         struct_message="{0}: {1} FreeEnergy: {2:+.2f}: Stack Energy: {3:+.2f}".format(index, element_structure ,element_freeEnergy, element_stackEnergy)
-        print(struct_message)
+        #(struct_message)
         index += 1
-    print("\n")
-print(probabilityMatrix_Raw.to_array())  
+    #print("\n")
+#`print(probabilityMatrix_Raw.to_array())  
     
     
 #need to dop some math on this stuff
@@ -229,7 +231,9 @@ def get_AdvancedEV(ensemble_kcal_group_elements, mfestructure):
     structure_ensemble_variance = sum(energydelta_individualVariationScore_list)# * 100
     return nucleotide_ensemble_variance_classic, nucleotide_ensemble_variance_normalized, structure_ensemble_variance
 
-if deltasToInspect_list[0] == "2":
+do_advanced = True
+if do_advanced == True:
+
     #get each 1 kcal EV for entire range of value
     #to start it will be 5 for development purposes
     
@@ -238,7 +242,7 @@ if deltasToInspect_list[0] == "2":
     energyRangeDict={}
     energyRangeDictCount={}
     #make +1 so that you can also get the EV at 0 energy delta so basically the index is teh actuall energy delta
-    for eneryIndex in range(0,int(deltasToInspect_list[0])+2, .5):
+    for eneryIndex in range(int(deltasToInspect_list[0])+2):
         energyDict[eneryIndex]=[]
         energyRangeDict[eneryIndex] = [] 
         energyRangeDictCount[eneryIndex] = [] 
@@ -294,11 +298,12 @@ if deltasToInspect_list[0] == "2":
                     currentEnergyList.append(element)
             else:
                 currentEnergyList.append(element)                               
-        count= count+1;
+        count= count+1
         energyRangeDict[delta]=copy.deepcopy(currentEnergyList)
          #minus 1 from len since thre is the mfe in there)   
        
-              
+    ev_list = []
+    mfeStruct = target_dot_bracket      
     #now should have a fully built energy dictionary need to do caclulations on each group
     for energyIndex in sorted(energyDict.keys()):
         energyDeltaCeil = energyIndex
@@ -310,18 +315,19 @@ if deltasToInspect_list[0] == "2":
         if len(currentElementList) > 0:                    
             #get EV for this chunk
             AdvancedEV_classic, AdvancedEV_normalized, AdvancedEV_structure=get_AdvancedEV(currentElementList, mfeStruct)
-            if len(rangeElementList) > 0:                
-                RangeAdvancedEV_classic, RangeAdvancedEV_normalized, RangeAdvancedEV_structure=get_AdvancedEV(rangeElementList, mfeStruct)
+            #if len(rangeElementList) > 0:                
+            #    RangeAdvancedEV_classic, RangeAdvancedEV_normalized, RangeAdvancedEV_structure=get_AdvancedEV(rangeElementList, mfeStruct)
             structureCountEv=len(currentElementList)
             structurecountRange=len(rangeElementList)
             instantaniousEV_message="Energy Delta {0}: EV_Classic: {1}: EV_Normalized {2}: EV_Structure {3}: Number Elements {4}".format(energyDeltaCeil, AdvancedEV_classic ,AdvancedEV_normalized, AdvancedEV_structure, structureCountEv)
+            ev_list.append(AdvancedEV_classic)
             print(instantaniousEV_message)      
-            if energyIndex is not 0:
-                rangeEV_message = "Energy Delta 1-{0}: EV_Classic: {1}: EV_Normalized {2}: EV_Structure {3}: Number Elements {4}".format(energyDeltaCeil, RangeAdvancedEV_classic ,RangeAdvancedEV_normalized, RangeAdvancedEV_structure, structurecountRange)
-                print(rangeEV_message)
-            else:
-                #do nothing
-                 pass
+            #if energyIndex is not 0:
+            #    rangeEV_message = "Energy Delta 1-{0}: EV_Classic: {1}: EV_Normalized {2}: EV_Structure {3}: Number Elements {4}".format(energyDeltaCeil, RangeAdvancedEV_classic ,RangeAdvancedEV_normalized, RangeAdvancedEV_structure, structurecountRange)
+            #    print(rangeEV_message)
+            #else:
+            #    #do nothing
+            #     pass
             print("\n")       
         else:
             AdvancedEV_classic=0
@@ -333,7 +339,9 @@ if deltasToInspect_list[0] == "2":
             structureCountEv=1
             structurecountRange=1
             rangeEV_message="none"
-            instantaniousEV_message="none"          
+            instantaniousEV_message="none"  
+
+    print(ev_list)        
         
          
        

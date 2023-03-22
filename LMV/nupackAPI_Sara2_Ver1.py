@@ -96,14 +96,14 @@ class Sara2StructureList(object):
         self._structures.append(structure.structure)
         self._freeEnergy_list.append(structure.freeEnergy)
         self._stackEnergy_list.append(structure.stackEnergy)
-        self.process_energy()
+        #self.process_energy()
 
 
     def remove_structure(self, index:int):
         del self._structures[index]
         del self._freeEnergy_list[index]
         del self._stackEnergy_list[index]
-        self.process_energy()            
+        #self.process_energy()            
 
 
     @property
@@ -137,30 +137,37 @@ class Sara2StructureList(object):
     
     @property
     def max_free_energy(self):
+        self.process_energy()
         return self._max_freeEnergy
     
     @property
     def min_free_energy(self):
+        self.process_energy()
         return self._min_freeEnergy
     
     @property
     def max_stack_energy(self):
+        self.process_energy()
         return self._max_stackEnergy
     
     @property
     def min_stack_energy(self):
+        self.process_energy()
         return self._min_stackEnergy
     
     @property
     def num_structures(self):
+        self.process_energy()
         return self._num_structures
     
     @property
     def freeEnergy_span(self):
+        self.process_energy()
         return self._freeEnergy_span
 
     @property
     def stackEnergy_span(self):
+        self.process_energy()
         return self._stackEnergy_span 
 
 
@@ -236,14 +243,14 @@ class EnsembleVariation:
         #this fills up the list of energy deltas to publich EV's for
         current_energy: float = mfe_energy
         group_values.append(current_energy)
-        for index in range(num_groups)-1:
+        for index in range(num_groups):
             current_energy = current_energy + Kcal_unit_increments
             group_values.append(current_energy)
         
         #if remainder > 0:
         #    current_energy = current_energy + kcal_delta_span_from_mfe
         #    group_values.append(current_energy)
-        print(f'Processing group values {group_values}\n')
+        print(f'Processing group values {group_values} to \n')
         #now initialize the groups_list
         for index in range(len(group_values)):
             group: Sara2StructureList = Sara2StructureList()
@@ -260,23 +267,21 @@ class EnsembleVariation:
 
             #need to do this because there are two indexes need to look at each 
             #loop and want to avoid triggering a list index overrun
-            for group_index in range(len(group_values)):
-                if group_index != len(group_values)-1:
-                    if current_energy >= group_values[group_index] and current_energy < group_values[group_index+1]:
-                        groups_list[group_index].add_structure(sara_structure)
-                else:
-                    if current_energy >= group_values[group_index]:
-                        
-                        groups_list[group_index].add_structure(sara_structure)              
+            for group_index in range(len(group_values)-1):
+                #remember we are dealing with neg kcal so its you want to 
+                min_energy: float = group_values[group_index]
+                max_energy: float = group_values[group_index+1]
+                if current_energy >= min_energy and current_energy <= max_energy:
+                    groups_list[group_index].add_structure(sara_structure)             
                 
         for group_index in range(len(groups_list)):
             groups_dict[group_index] = groups_list[group_index]
 
         #now process all the groups
         print(f'Begining LMV_U processing at {datetime.now()}')
-        for list_index in range(len(groups_list)):
+        for list_index in range(len(groups_list)-1):
             struct_list: Sara2StructureList = groups_list[list_index]
-            print(f'Processing {group_values[list_index]}\n')
+            print(f'Processing {group_values[list_index]} {group_values[list_index+1]}to \n')
             ev: EV = self.advanced_EV(struct_list, struct_list.sara_stuctures[0])
             group_ev_list.append(ev)
             group_ev_dict[list_index+1] = ev
@@ -290,7 +295,7 @@ class EnsembleVariation:
 
         #now process all the groups
         print(f'Begining LMV_US processing at {datetime.now()}')
-        for list_index in range(len(groups_list)):
+        for list_index in range(len(groups_list)-1):
             struct_list: Sara2StructureList = groups_list[list_index]
             print(f'Processing {group_values[list_index]}\n')
             ev: EV = self.advanced_EV(struct_list, switch_mfe_sub)
@@ -320,7 +325,6 @@ class EnsembleVariation:
             structure = str(kcal_group_elementInfo.structure)
             freeEnergy = float(kcal_group_elementInfo.energy)
             stackEnergy = float(kcal_group_elementInfo.stack_energy)
-
             structure_info: Sara2SecondaryStructure = Sara2SecondaryStructure(sequence=sequence_string, structure=structure, 
                                                                               freeEnergy=freeEnergy, stackEnergy=stackEnergy)
             kcal_group_structures_list.add_structure(structure_info)

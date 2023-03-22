@@ -6,6 +6,7 @@ import sys
 import openpyxl
 from copy import deepcopy
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 
 my_model = Model
 
@@ -209,33 +210,40 @@ class EnsembleVariation:
         #process ensemble variation
         pass
 
-    def process_ensemble_variation(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float):
+    def process_ensemble_variation(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float, target_switch_structure: str):
+        start_time=datetime.now()
+        print(f'Starting test at {start_time}')
+        print("Getting subopt\n")
         span_structures: Sara2StructureList = self.get_subopt_energy_gap(sequence_string=sequence, energy_delta_from_MFE=kcal_delta_span_from_mfe)       
         mfe_energy:float =  span_structures.mfe_freeEnergy
+
+        print(f'Done with subopt gathering. {span_structures.num_structures} structures found\n')
 
         #this is for increments of 1 kcal need to do fraction
         num_groups: int = int(kcal_delta_span_from_mfe / Kcal_unit_increments)
         remainder: int = kcal_delta_span_from_mfe % Kcal_unit_increments
 
-        
-
         groups_list : List[Sara2StructureList] = []
         groups_dict: Dict[int, Sara2StructureList] = {}
         group_values: List[float] = []
+
         group_ev_list: List[EV] = []
         group_ev_dict: Dict[int,EV] = {}
+
+        switch_ev_list: List[EV] = []
+        switch_ev_dict: Dict[int,EV] = {}
 
         #this fills up the list of energy deltas to publich EV's for
         current_energy: float = mfe_energy
         group_values.append(current_energy)
-        for index in range(num_groups):
+        for index in range(num_groups)-1:
             current_energy = current_energy + Kcal_unit_increments
             group_values.append(current_energy)
         
         #if remainder > 0:
         #    current_energy = current_energy + kcal_delta_span_from_mfe
         #    group_values.append(current_energy)
-
+        print(f'Processing group values {group_values}\n')
         #now initialize the groups_list
         for index in range(len(group_values)):
             group: Sara2StructureList = Sara2StructureList()
@@ -258,28 +266,54 @@ class EnsembleVariation:
                         groups_list[group_index].add_structure(sara_structure)
                 else:
                     if current_energy >= group_values[group_index]:
+                        
                         groups_list[group_index].add_structure(sara_structure)              
                 
         for group_index in range(len(groups_list)):
             groups_dict[group_index] = groups_list[group_index]
 
         #now process all the groups
+        print(f'Begining LMV_U processing at {datetime.now()}')
         for list_index in range(len(groups_list)):
             struct_list: Sara2StructureList = groups_list[list_index]
+            print(f'Processing {group_values[list_index]}\n')
             ev: EV = self.advanced_EV(struct_list, struct_list.sara_stuctures[0])
             group_ev_list.append(ev)
             group_ev_dict[list_index+1] = ev
+        
+        
+        switch_mfe_sub: Sara2SecondaryStructure = Sara2SecondaryStructure()
+        switch_mfe_sub.sequence=groups_list[0].sara_stuctures[0].sequence
+        switch_mfe_sub.structure=target_switch_structure
+        switch_mfe_sub.freeEnergy=groups_list[0].sara_stuctures[0].freeEnergy
+        switch_mfe_sub.stackEnergy=groups_list[0].sara_stuctures[0].stackEnergy
 
-        result: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=group_ev_list, group_ev_dict=group_ev_dict)
-        return result
+        #now process all the groups
+        print(f'Begining LMV_US processing at {datetime.now()}')
+        for list_index in range(len(groups_list)):
+            struct_list: Sara2StructureList = groups_list[list_index]
+            print(f'Processing {group_values[list_index]}\n')
+            ev: EV = self.advanced_EV(struct_list, switch_mfe_sub)
+            switch_ev_list.append(ev)
+            switch_ev_dict[list_index+1] = ev
+
+        finish_time = datetime.now()
+        print(f'Started test at {start_time}')
+        print(f'Completed test at {finish_time}')
+        timelenght:timedelta = finish_time-start_time
+        print(f'Total Time (seconds) = {timelenght.total_seconds()}')
+        result_LMV_U: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=group_ev_list, group_ev_dict=group_ev_dict)
+        result_LMV_US: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=switch_ev_list, group_ev_dict=switch_ev_dict)
+        return result_LMV_U, result_LMV_US
 
 
     def get_subopt_energy_gap(self, sequence_string, energy_delta_from_MFE: int):
         #run through subopt 
         my_model = SetModel(rna_model, 37)
+        print(f'Starting subopt at {datetime.now()}')
         kcal_group_structures_list: Sara2StructureList = Sara2StructureList()
         ensemble_kcal_group= subopt(strands=sequence_string, model=my_model, energy_gap=energy_delta_from_MFE)
-        
+        print(f'Completed subopt at {datetime.now()}')
         #get all the data out of it
         for i,kcal_group_elementInfo in enumerate(ensemble_kcal_group):        
             #get all the structures and energis pulled and prepped for proccessing and add them tot eh dict and the list               

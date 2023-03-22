@@ -19,6 +19,9 @@ def test_LMV():
     print("Enter single strand RNA sequence")
     sequence = input()
 
+    print("Enter target structure")
+    target = input()
+
     print("Enter Kcal delta span to look at")
     span = int(input())
 
@@ -26,8 +29,10 @@ def test_LMV():
     units = float(input())
 
     EV_test: EnsembleVariation = EnsembleVariation()
+    ev_result:EVResult
+    switch_result: EVResult
 
-    ev_result:EVResult  = EV_test.process_ensemble_variation(sequence, span, units)
+    ev_result, switch_result  = EV_test.process_ensemble_variation(sequence, span, units, target)
 
     #print(ev_result.group_ev_list)
 
@@ -35,8 +40,17 @@ def test_LMV():
     for ev in ev_result.group_ev_list:
         ev_value = ev.ev_normalized
         new_list_string.append(ev_value)
+
+    new_switch_string = []
+    for ev in switch_result.group_ev_list:
+        ev_value = ev.ev_normalized
+        new_switch_string.append(ev_value)
     
+    print("LMV_U")
     print(new_list_string)
+    print()
+    print("LMV_US")
+    print(new_switch_string)
 
 
 test_LMV()

@@ -221,7 +221,9 @@ class EnsembleVariation:
         start_time=datetime.now()
         print(f'Starting test at {start_time}')
         print("Getting subopt\n")
-        span_structures: Sara2StructureList = self.get_subopt_energy_gap(sequence_string=sequence, energy_delta_from_MFE=kcal_delta_span_from_mfe)       
+        nucs_lists:List[List[str]]
+        span_structures: Sara2StructureList
+        span_structures = self.get_subopt_energy_gap(sequence_string=sequence, energy_delta_from_MFE=kcal_delta_span_from_mfe)       
         mfe_energy:float =  span_structures.mfe_freeEnergy
 
         print(f'Done with subopt gathering. {span_structures.num_structures} structures found\n')
@@ -321,7 +323,14 @@ class EnsembleVariation:
         ensemble_kcal_group= subopt(strands=sequence_string, model=my_model, energy_gap=energy_delta_from_MFE)
         print(f'Completed subopt at {datetime.now()}')
         #get all the data out of it
-        for i,kcal_group_elementInfo in enumerate(ensemble_kcal_group):        
+        #list_of_nuc_lists: List[List[str]] = [[]]
+        #num_nucs:int = len(sequence_string)
+        #for index in range(num_nucs):
+        #    temp_list:List[str] = []
+        #    list_of_nuc_lists.append(temp_list)
+
+        for i,kcal_group_elementInfo in enumerate(ensemble_kcal_group):
+                  
             #get all the structures and energis pulled and prepped for proccessing and add them tot eh dict and the list               
             structure = str(kcal_group_elementInfo.structure)
             freeEnergy = float(kcal_group_elementInfo.energy)
@@ -329,7 +338,14 @@ class EnsembleVariation:
             structure_info: Sara2SecondaryStructure = Sara2SecondaryStructure(sequence=sequence_string, structure=structure, 
                                                                               freeEnergy=freeEnergy, stackEnergy=stackEnergy)
             kcal_group_structures_list.add_structure(structure_info)
-        return kcal_group_structures_list
+
+            #now go throught everything
+            #or index in range(num_nucs):
+            #    character: str = structure[index]
+            #    list_of_nuc_lists[index].append(character)
+
+
+        return kcal_group_structures_list#, list_of_nuc_lists
 
     
     def advanced_EV(self, kcal_group_structures_list: Sara2StructureList, sara_mfestructure:Sara2SecondaryStructure):
@@ -345,6 +361,41 @@ class EnsembleVariation:
         nucleotide_position_variation_subscores=[0]*nuc_count
         energydelta_individualVariationScore_list=[]
         
+        #add the step to get nuc array here
+        #get all the data out of it
+
+        #first initialize the lists
+        list_of_nuc_lists: List[List[str]] = []
+ 
+        num_nucs: int = kcal_group_structures_list.nuc_count
+        for index in range(num_nucs):
+            temp_list:List[str] = []
+            list_of_nuc_lists.append(temp_list)
+            
+        
+        #now go throught everything
+        for sara_structure in kcal_group_structures_list.sara_stuctures:
+            for index in range(num_nucs):
+                character: str = sara_structure.structure[index]
+                list_of_nuc_lists[index].append(character)
+
+        list_of_nuc_scores_base: List[int] = [0]*nuc_count
+        list_of_nuc_scores_subscores: List[int] = [0]*nuc_count
+        num_structs:int = kcal_group_structures_list.num_structures
+
+        for nucIndex in range(nuc_count):
+            mfe_nuc=sara_mfestructure.structure[nucIndex]
+            num_chars = list_of_nuc_lists[nucIndex].count(mfe_nuc)
+            num_diff:int = num_structs - num_chars
+            list_of_nuc_scores_base[nucIndex] = num_diff
+            list_of_nuc_scores_subscores[nucIndex] = list_of_nuc_scores_base[nucIndex] / structure_element_count
+            
+        
+        total_EV_subscore1 = sum(list_of_nuc_scores_subscores)
+        result: EV =  EV(ev_normalized=total_EV_subscore1, ev_ThresholdNorm=0, ev_structure=0)   
+        
+        """
+
         #we have all the elements and all the stuff for the group
         for nucIndex in range(nuc_count):
             for sara_structure in kcal_group_structures_list.sara_stuctures:
@@ -371,8 +422,10 @@ class EnsembleVariation:
         nucleotide_ensemble_variance_normalized=total_subscore #/nuc_count    
         fail_threshold=0.2
         nucleotide_ensemble_variance_ThresholdNorm=(total_subscore/fail_threshold)#*100
-        result: EV =  EV(ev_normalized=nucleotide_ensemble_variance_normalized, 
+        
+        result2: EV =  EV(ev_normalized=nucleotide_ensemble_variance_normalized, 
                                                             ev_ThresholdNorm=nucleotide_ensemble_variance_ThresholdNorm, 
-                                                            ev_structure=structure_ensemble_variance)      
+                                                            ev_structure=structure_ensemble_variance)   
+        """   
         return  result
 

@@ -13,31 +13,40 @@ import copy
 import nupackAPI_Sara2_Ver1 as nupack_api
 from nupackAPI_Sara2_Ver1 import Sara2SecondaryStructure, Sara2StructureList, EnsembleVariation, EVResult
 
-debug:bool = False
+debug:bool = True
 
 def test_LMV():
-    print("Enter single strand RNA sequence")
-    sequence = input()
 
-    #print("Enter target structure")
-    #target = input()
+    sequence = ''
+    target = ''
+    span = 0
+    units = 0
 
-    print("Enter Kcal delta span to look at")
-    span = input()
+    if debug is True:
+        print("using debug")
+        sequence = 'AGGGUGGUACCGCGAUAAUCAAUCGUCCCUUCGUGUAAACGAAGGGGCG'
+        target = '.(((.......(((((.....))))))))(((((....)))))......'
+        span = 5
+        units = 1
+    else:
+        print("Enter single strand RNA sequence")
+        sequence = input()
 
-    print("Enter kcal unit to plot by")
-    units = input()
+        #print("Enter target structure")
+        #target = input()
 
-    print("Enter design name")
-    name = input()
+        print("Enter Kcal delta span to look at")
+        span = input()
+
+        print("Enter kcal unit to plot by")
+        units = input()
+
+        print("Enter design name")
+        name = input()
 
     
 
-    if debug is True:
-        sequence = 'AGGGUGGUACCGCGAUAAUCAAUCGUCCCUUCGUGUAAACGAAGGGGCG'
-        target = '.(((.......(((((.....))))))))(((((....)))))......'
-        span = 20
-        units = 1
+   
     
 
     EV_test: EnsembleVariation = EnsembleVariation()
@@ -53,11 +62,11 @@ def test_LMV():
         ev_value = ev.ev_normalized
         new_list_string.append(ev_value)
 
-    new_switch_string = []
-    for ev in switch_result.group_ev_list:
-        ev_value = ev.ev_normalized
-        new_switch_string.append(ev_value)
-    
+    #new_switch_string = []
+    #for ev in switch_result.group_ev_list:
+    #    ev_value = ev.ev_normalized
+    #    new_switch_string.append(ev_value)
+   # 
     print(f'Results for name={name}, sequence={sequence} ')
     print("LMV_U")
     print(new_list_string)

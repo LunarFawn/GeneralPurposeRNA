@@ -13,14 +13,14 @@ import copy
 import nupackAPI_Sara2_Ver1 as nupack_api
 from nupackAPI_Sara2_Ver1 import Sara2SecondaryStructure, Sara2StructureList, EnsembleVariation, EVResult
 
-debug:bool = True
+debug:bool = False
 
 def test_LMV():
     print("Enter single strand RNA sequence")
     sequence = input()
 
-    print("Enter target structure")
-    target = input()
+    #print("Enter target structure")
+    #target = input()
 
     print("Enter Kcal delta span to look at")
     span = input()
@@ -44,7 +44,7 @@ def test_LMV():
     ev_result:EVResult
     switch_result: EVResult
 
-    ev_result = EV_test.process_ensemble_variation(sequence, int(span), float(units), target)
+    ev_result = EV_test.process_ensemble_variation(sequence, int(span), float(units))
 
     #print(ev_result.group_ev_list)
 

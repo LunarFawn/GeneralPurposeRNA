@@ -217,7 +217,7 @@ class EnsembleVariation:
         #process ensemble variation
         pass
 
-    def process_ensemble_variation(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float, target_switch_structure: str):
+    def process_ensemble_variation(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float):
         start_time=datetime.now()
         print(f'Starting test at {start_time}')
         print("Getting subopt\n")
@@ -301,7 +301,7 @@ class EnsembleVariation:
             ev: EV = self.advanced_EV(struct_list, switch_mfe_sub)
             switch_ev_list.append(ev)
             switch_ev_dict[list_index+1] = ev
-            
+
         """
         finish_time = datetime.now()
         print(f'Started test at {start_time}')

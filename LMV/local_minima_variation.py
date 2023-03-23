@@ -28,20 +28,23 @@ def test_LMV():
     print("Enter kcal unit to plot by")
     units = input()
 
+    print("Enter design name")
+    name = input()
+
     
 
     if debug is True:
         sequence = 'AGGGUGGUACCGCGAUAAUCAAUCGUCCCUUCGUGUAAACGAAGGGGCG'
         target = '.(((.......(((((.....))))))))(((((....)))))......'
-        span = 15
-        units = .5
+        span = 20
+        units = 1
     
 
     EV_test: EnsembleVariation = EnsembleVariation()
     ev_result:EVResult
     switch_result: EVResult
 
-    ev_result, switch_result  = EV_test.process_ensemble_variation(sequence, int(span), float(units), target)
+    ev_result = EV_test.process_ensemble_variation(sequence, int(span), float(units), target)
 
     #print(ev_result.group_ev_list)
 
@@ -55,11 +58,12 @@ def test_LMV():
         ev_value = ev.ev_normalized
         new_switch_string.append(ev_value)
     
+    print(f'Results for name={name}, sequence={sequence} ')
     print("LMV_U")
     print(new_list_string)
-    print()
-    print("LMV_US")
-    print(new_switch_string)
+    #print()
+    #print("LMV_US")
+    #print(new_switch_string)
 
 
 test_LMV()

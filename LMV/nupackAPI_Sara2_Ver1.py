@@ -286,7 +286,7 @@ class EnsembleVariation:
             group_ev_list.append(ev)
             group_ev_dict[list_index+1] = ev
         
-        
+        """
         switch_mfe_sub: Sara2SecondaryStructure = Sara2SecondaryStructure()
         switch_mfe_sub.sequence=groups_list[0].sara_stuctures[0].sequence
         switch_mfe_sub.structure=target_switch_structure
@@ -301,15 +301,16 @@ class EnsembleVariation:
             ev: EV = self.advanced_EV(struct_list, switch_mfe_sub)
             switch_ev_list.append(ev)
             switch_ev_dict[list_index+1] = ev
-
+            
+        """
         finish_time = datetime.now()
         print(f'Started test at {start_time}')
         print(f'Completed test at {finish_time}')
         timelenght:timedelta = finish_time-start_time
         print(f'Total Time (seconds) = {timelenght.total_seconds()}')
         result_LMV_U: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=group_ev_list, group_ev_dict=group_ev_dict)
-        result_LMV_US: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=switch_ev_list, group_ev_dict=switch_ev_dict)
-        return result_LMV_U, result_LMV_US
+        #result_LMV_US: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=switch_ev_list, group_ev_dict=switch_ev_dict)
+        return result_LMV_U#, result_LMV_US
 
 
     def get_subopt_energy_gap(self, sequence_string, energy_delta_from_MFE: int):

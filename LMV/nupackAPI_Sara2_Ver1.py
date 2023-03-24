@@ -1,3 +1,7 @@
+"""
+Sara2 api for nupack
+copyright 2023 Jennifer Pearl
+"""
 from typing import List, Dict
 import struct
 from nupack import *
@@ -217,7 +221,7 @@ class EnsembleVariation:
         #process ensemble variation
         pass
 
-    def process_ensemble_variation(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float):
+    def process_ensemble_variation(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float, target_switch_structure:str=''):
         start_time=datetime.now()
         print(f'Starting test at {start_time}')
         print("Getting subopt\n")
@@ -283,36 +287,41 @@ class EnsembleVariation:
         print(f'Begining LMV_U processing at {datetime.now()}')
         for list_index in range(len(groups_list)-1):
             struct_list: Sara2StructureList = groups_list[list_index]
-            print(f'Processing {group_values[list_index]} {group_values[list_index+1]}to \n')
+            print(f'Processing {group_values[list_index]} to {group_values[list_index+1]}')
+            print(f'started LMV_U group EV at {datetime.now()}')
             ev: EV = self.advanced_EV(struct_list, struct_list.sara_stuctures[0])
+            print(f'finished LMV_U group EV at {datetime.now()}\n')
             group_ev_list.append(ev)
             group_ev_dict[list_index+1] = ev
         
-        """
+       
         switch_mfe_sub: Sara2SecondaryStructure = Sara2SecondaryStructure()
         switch_mfe_sub.sequence=groups_list[0].sara_stuctures[0].sequence
         switch_mfe_sub.structure=target_switch_structure
         switch_mfe_sub.freeEnergy=groups_list[0].sara_stuctures[0].freeEnergy
         switch_mfe_sub.stackEnergy=groups_list[0].sara_stuctures[0].stackEnergy
 
-        #now process all the groups
-        print(f'Begining LMV_US processing at {datetime.now()}')
-        for list_index in range(len(groups_list)-1):
-            struct_list: Sara2StructureList = groups_list[list_index]
-            print(f'Processing {group_values[list_index]}\n')
-            ev: EV = self.advanced_EV(struct_list, switch_mfe_sub)
-            switch_ev_list.append(ev)
-            switch_ev_dict[list_index+1] = ev
+        if target_switch_structure != '':
+            #now process all the groups
+            print(f'Begining LMV_US processing at {datetime.now()}')
+            for list_index in range(len(groups_list)-1):
+                struct_list: Sara2StructureList = groups_list[list_index]
+                print(f'Processing  {group_values[list_index]} to {group_values[list_index+1]}')
+                print(f'started LMV_US group EV at {datetime.now()}')
+                ev: EV = self.advanced_EV(struct_list, switch_mfe_sub)
+                print(f'finished LMV_US group EV at {datetime.now()}\n')
+                switch_ev_list.append(ev)
+                switch_ev_dict[list_index+1] = ev
 
-        """
-        finish_time = datetime.now()
-        print(f'Started test at {start_time}')
-        print(f'Completed test at {finish_time}')
-        timelenght:timedelta = finish_time-start_time
-        print(f'Total Time (seconds) = {timelenght.total_seconds()}')
+            
+            finish_time = datetime.now()
+            print(f'Started test at {start_time}')
+            print(f'Completed test at {finish_time}')
+            timelenght:timedelta = finish_time-start_time
+            print(f'Total Time (seconds) = {timelenght.total_seconds()}')
         result_LMV_U: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=group_ev_list, group_ev_dict=group_ev_dict)
-        #result_LMV_US: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=switch_ev_list, group_ev_dict=switch_ev_dict)
-        return result_LMV_U#, result_LMV_US
+        result_LMV_US: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=switch_ev_list, group_ev_dict=switch_ev_dict)
+        return result_LMV_U, result_LMV_US
 
 
     def get_subopt_energy_gap(self, sequence_string, energy_delta_from_MFE: int):
@@ -393,6 +402,7 @@ class EnsembleVariation:
         
         total_EV_subscore1 = sum(list_of_nuc_scores_subscores)
         result: EV =  EV(ev_normalized=total_EV_subscore1, ev_ThresholdNorm=0, ev_structure=0)   
+     
         
         """
 

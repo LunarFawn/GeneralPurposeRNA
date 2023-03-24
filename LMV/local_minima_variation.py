@@ -13,7 +13,7 @@ import copy
 import nupackAPI_Sara2_Ver1 as nupack_api
 from nupackAPI_Sara2_Ver1 import Sara2SecondaryStructure, Sara2StructureList, EnsembleVariation, EVResult
 
-debug:bool = True
+debug:bool = False
 
 def test_LMV():
 
@@ -21,13 +21,15 @@ def test_LMV():
     target = ''
     span = 0
     units = 0
+    name = ''
 
     if debug is True:
         print("using debug")
-        sequence = 'AGGGUGGUACCGCGAUAAUCAAUCGUCCCUUCGUGUAAACGAAGGGGCG'
+        sequence = 'AGGGUGGUAUCGUGAUAAUCAAUCGUCCCGUCGUGUAAACGACGGGGCG'
         target = '.(((.......(((((.....))))))))(((((....)))))......'
         span = 5
         units = 1
+        name = "33"
     else:
         print("Enter single strand RNA sequence")
         sequence = input()
@@ -53,7 +55,7 @@ def test_LMV():
     ev_result:EVResult
     switch_result: EVResult
 
-    ev_result = EV_test.process_ensemble_variation(sequence, int(span), float(units))
+    ev_result, switch_result = EV_test.process_ensemble_variation(sequence, int(span), float(units), target)
 
     #print(ev_result.group_ev_list)
 
@@ -62,17 +64,17 @@ def test_LMV():
         ev_value = ev.ev_normalized
         new_list_string.append(ev_value)
 
-    #new_switch_string = []
-    #for ev in switch_result.group_ev_list:
-    #    ev_value = ev.ev_normalized
-    #    new_switch_string.append(ev_value)
-   # 
-    print(f'Results for name={name}, sequence={sequence} ')
+    new_switch_string = []
+    for ev in switch_result.group_ev_list:
+        ev_value = ev.ev_normalized
+        new_switch_string.append(ev_value)
+    
+    print(f'Results for name={name}, sequence={sequence}, span={span}, units={units} ')
     print("LMV_U")
     print(new_list_string)
-    #print()
-    #print("LMV_US")
-    #print(new_switch_string)
+    print()
+    print("LMV_US")
+    print(new_switch_string)
 
 
 test_LMV()

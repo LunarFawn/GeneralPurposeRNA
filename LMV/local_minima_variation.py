@@ -25,11 +25,11 @@ def test_LMV():
 
     if debug is True:
         print("using debug")
-        sequence = 'AGGGUGGUAUCGUGAUAAUCAAUCGUCCCGUCGUGUAAACGACGGGGCG'
+        sequence = 'AGGGUGGUACCGCGAUAAUCAAUCGUCCCUUCGUGUAAACGAAGGGGCG'
         target = '.(((.......(((((.....))))))))(((((....)))))......'
         span = 20
         units = .5
-        name = "33"
+        name = "WT"
     else:
         print("Enter single strand RNA sequence")
         sequence = input()
@@ -52,17 +52,23 @@ def test_LMV():
     
 
     EV_test: EnsembleVariation = EnsembleVariation()
-    ev_result:EVResult
+    ev_result_mfe:EVResult
+    ev_result_rel:EVResult
     switch_result: EVResult
 
-    ev_result, switch_result = EV_test.process_ensemble_variation(sequence, int(span), float(units), target)
+    ev_result_mfe, ev_result_rel, switch_result = EV_test.process_ensemble_variation(sequence, int(span), float(units), target)
 
     #print(ev_result.group_ev_list)
 
-    new_list_string = []
-    for ev in ev_result.group_ev_list:
+    new_list_string_mfe = []
+    for ev in ev_result_mfe.group_ev_list:
         ev_value = ev.ev_normalized
-        new_list_string.append(ev_value)
+        new_list_string_mfe.append(ev_value)
+
+    new_list_string_rel = []
+    for ev in ev_result_rel.group_ev_list:
+        ev_value = ev.ev_normalized
+        new_list_string_rel.append(ev_value)
 
     new_switch_string = []
     for ev in switch_result.group_ev_list:
@@ -70,8 +76,11 @@ def test_LMV():
         new_switch_string.append(ev_value)
     
     print(f'Results for name={name}, sequence={sequence}, span={span}, units={units} ')
-    print("LMV_U")
-    print(new_list_string)
+    print("LMV_U mfe")
+    print(new_list_string_mfe)
+    print()
+    print("LMV_U rel")
+    print(new_list_string_rel)
     print()
     print("LMV_US")
     print(new_switch_string)

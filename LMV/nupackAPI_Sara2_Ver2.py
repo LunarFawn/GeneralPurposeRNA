@@ -373,8 +373,12 @@ class EnsembleVariation:
 
         #now process all the groups
         print(f'Begining LMV_U processing at {datetime.now()}')
-        LMV_U_thread: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct=None)
-        result_thread_LMV_:LMV_Token = LMV_U_thread.run_LMV()
+        LMV_U_thread_mfe: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct="mfe")
+        result_thread_LMV_mfe:LMV_Token = LMV_U_thread_mfe.run_LMV()
+
+        print(f'Begining LMV_U processing at {datetime.now()}')
+        LMV_U_thread_rel: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct="rel")
+        result_thread_LMV_rel:LMV_Token = LMV_U_thread_rel.run_LMV()
 
         #for list_index in range(len(groups_list)-1):
         #    struct_list: Sara2StructureList = groups_list[list_index]
@@ -415,16 +419,20 @@ class EnsembleVariation:
             timelenght:timedelta = finish_time-start_time
             print(f'Total Time (seconds) = {timelenght.total_seconds()}')
 
-        group_ev_list: List[EV] = result_thread_LMV_.group_results
-        group_ev_dict: Dict[int,EV] = result_thread_LMV_.group_dict
+        group_ev_list_mfe: List[EV] = result_thread_LMV_mfe.group_results
+        group_ev_dict_mfe: Dict[int,EV] = result_thread_LMV_mfe.group_dict
+
+        group_ev_list_rel: List[EV] = result_thread_LMV_rel.group_results
+        group_ev_dict_rel: Dict[int,EV] = result_thread_LMV_rel.group_dict
 
         switch_ev_list: List[EV] = result_thread_LMV_US.group_results
         switch_ev_dict: Dict[int,EV] = result_thread_LMV_US.group_dict
 
 
-        result_LMV_U: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=group_ev_list, group_ev_dict=group_ev_dict)
+        result_LMV_U_mfe: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=group_ev_list_mfe, group_ev_dict=group_ev_dict_mfe)
+        result_LMV_U_rel: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=group_ev_list_rel, group_ev_dict=group_ev_dict_rel)
         result_LMV_US: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=switch_ev_list, group_ev_dict=switch_ev_dict)
-        return result_LMV_U, result_LMV_US
+        return result_LMV_U_mfe, result_LMV_U_rel, result_LMV_US
 
 
     def get_subopt_energy_gap(self, sequence_string, energy_delta_from_MFE: int):
@@ -606,8 +614,6 @@ class LMV_ThreadProcessor():
     def __init__(self, stuctures: List[Sara2StructureList],mfe_stuct: Sara2SecondaryStructure) -> None:
         self._sara2_groups: List[Sara2StructureList] = stuctures
         self._mfe_stuct: Sara2SecondaryStructure= mfe_stuct
-        if mfe_stuct == None:
-            self._mfe_stuct = stuctures[0].sara_stuctures[0]
         num_groups:int = len(stuctures)
         self._num_groups: int =  num_groups
         self._group_token: LMV_Token = LMV_Token(num_groups)
@@ -660,8 +666,15 @@ class LMV_ThreadProcessor():
 
     def start_calculations(self):
         for thread_index in range(self.num_groups):
-            sara2_struct  = self.sara2_groups[thread_index]
-            new_shuttle: LMV_Shuttle = LMV_Shuttle(structs_list=sara2_struct, mfe=self.mfe_stuct, group_index=thread_index,token=self.group_token) 
+            sara2_structs: Sara2StructureList  = self.sara2_groups[thread_index]
+            temp_mfe_stuct:Sara2SecondaryStructure
+            if self.mfe_stuct == "mfe":
+                temp_mfe_stuct = sara2_structs.sara_stuctures[0]
+            elif self.mfe_stuct == "rel":
+                temp_mfe_stuct = self.sara2_groups[0].sara_stuctures[0]
+            else:
+                temp_mfe_stuct = self.mfe_stuct
+            new_shuttle: LMV_Shuttle = LMV_Shuttle(structs_list=sara2_structs, mfe=temp_mfe_stuct, group_index=thread_index,token=self.group_token) 
             mew_thread = threading.Thread(target=self.LMV.thread_EV, args=[new_shuttle])
             mew_thread.start()
 

@@ -27,8 +27,8 @@ def test_LMV():
         print("using debug")
         sequence = 'AGGGUGGUAUCGUGAUAAUCAAUCGUCCCGUCGUGUAAACGACGGGGCG'
         target = '.(((.......(((((.....))))))))(((((....)))))......'
-        span = 5
-        units = 1
+        span = 20
+        units = .5
         name = "33"
     else:
         print("Enter single strand RNA sequence")

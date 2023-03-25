@@ -344,7 +344,7 @@ class EnsembleVariation:
         #    group_values.append(current_energy)
         print(f'Processing group values {group_values} to \n')
         #now initialize the groups_list
-        for index in range(len(group_values)-2):
+        for index in range(len(group_values)-1):
             group: Sara2StructureList = Sara2StructureList()
             groups_list.append(group)
             groups_dict[index+1] = group
@@ -359,7 +359,7 @@ class EnsembleVariation:
 
             #need to do this because there are two indexes need to look at each 
             #loop and want to avoid triggering a list index overrun
-            for group_index in range(len(group_values)-2):
+            for group_index in range(len(group_values)-1):
                 #remember we are dealing with neg kcal so its you want to 
                 min_energy: float = group_values[group_index]
                 max_energy: float = group_values[group_index+1]
@@ -373,7 +373,7 @@ class EnsembleVariation:
 
         #now process all the groups
         print(f'Begining LMV_U processing at {datetime.now()}')
-        LMV_U_thread: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct=span_structures.sara_stuctures[0])
+        LMV_U_thread: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct=None)
         result_thread_LMV_:LMV_Token = LMV_U_thread.run_LMV()
 
         #for list_index in range(len(groups_list)-1):
@@ -605,7 +605,9 @@ class LMV_ThreadProcessor():
     
     def __init__(self, stuctures: List[Sara2StructureList],mfe_stuct: Sara2SecondaryStructure) -> None:
         self._sara2_groups: List[Sara2StructureList] = stuctures
-        self._mfe_stuct: Sara2SecondaryStructure = mfe_stuct
+        self._mfe_stuct: Sara2SecondaryStructure= mfe_stuct
+        if mfe_stuct == None:
+            self._mfe_stuct = stuctures[0].sara_stuctures[0]
         num_groups:int = len(stuctures)
         self._num_groups: int =  num_groups
         self._group_token: LMV_Token = LMV_Token(num_groups)

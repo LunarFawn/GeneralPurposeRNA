@@ -13,29 +13,34 @@ import copy
 import nupackAPI_Sara2_Ver2 as nupack_api
 from nupackAPI_Sara2_Ver2 import Sara2SecondaryStructure, Sara2StructureList, EnsembleVariation, EVResult
 
-debug:bool = False
+debug:bool = True
 
 def test_LMV():
 
     sequence = ''
     target = ''
+    folded = ''
     span = 0
     units = 0
     name = ''
 
     if debug is True:
         print("using debug")
-        sequence = 'AGGGUGGUACCGCGAUAAUCAAUCGUCCCUUCGUGUAAACGAAGGGGCG'
-        target = '.(((.......(((((.....))))))))(((((....)))))......'
-        span = 20
+        sequence = 'GCCAUCGCAUGAGGAUAUGCUCCGGUUUCCGGAGCAGAAGGCAUGUCAUAAGACAUGAGGAUCACCCAUGUAGUUAAGAUGGCA'
+        target = '........(((......(((.............))).....)))........................................'
+        folded = '((((((.((((......((((((((...)))))))).....))))...(((.(((((.((....)))))))..))).)))))).'
+        span = 10
         units = .5
-        name = "WT"
+        name = "09_eli"
     else:
         print("Enter single strand RNA sequence")
         sequence = input()
 
         print("Enter target structure")
         target = input()
+
+        print("Enter predicted 2nd state folded structure")
+        folded = input()
 
         print("Enter Kcal delta span to look at")
         span = input()
@@ -54,9 +59,10 @@ def test_LMV():
     EV_test: EnsembleVariation = EnsembleVariation()
     ev_result_mfe:EVResult
     ev_result_rel:EVResult
-    switch_result: EVResult
+    switch_result_target: EVResult
+    switch_result_folded: EVResult
 
-    ev_result_mfe, ev_result_rel, switch_result = EV_test.process_ensemble_variation(sequence, int(span), float(units), target)
+    ev_result_mfe, ev_result_rel, switch_result_target, switch_result_folded = EV_test.process_ensemble_variation(sequence, int(span), float(units), folded, target)
 
     #print(ev_result.group_ev_list)
 
@@ -71,9 +77,14 @@ def test_LMV():
         new_list_string_rel.append(ev_value)
 
     new_switch_string = []
-    for ev in switch_result.group_ev_list:
+    for ev in switch_result_target.group_ev_list:
         ev_value = ev.ev_normalized
         new_switch_string.append(ev_value)
+
+    new_switch_string_folded = []
+    for ev in switch_result_folded.group_ev_list:
+        ev_value = ev.ev_normalized
+        new_switch_string_folded.append(ev_value)
     
     print(f'Results for name={name}, sequence={sequence}, span={span}, units={units} ')
     print("LMV_U mfe")
@@ -82,8 +93,12 @@ def test_LMV():
     print("LMV_U rel")
     print(new_list_string_rel)
     print()
-    print("LMV_US")
+    print("LMV_US target")
     print(new_switch_string)
+    print()
+    print("LMV_US folded")
+    print(new_switch_string_folded)
+    print()
 
 
 test_LMV()

@@ -88,16 +88,29 @@ class Sara2StructureList(object):
     def process_energy(self):
             #now populate min and max
         #do free energy
-        self._min_freeEnergy = min(self._freeEnergy_list)
-        self._max_freeEnergy = max(self._freeEnergy_list)
+        if len(self._freeEnergy_list) == 0:
+            self._min_freeEnergy = 0
+            self._max_freeEnergy = 0
+        else:
+            self._min_freeEnergy = min(self._freeEnergy_list)
+            self._max_freeEnergy = max(self._freeEnergy_list)
+
         self._freeEnergy_span = self._max_freeEnergy - self._min_freeEnergy
         #do stack energy
-        self._min_stackEnergy = min(self._stackEnergy_list)
-        self._max_stackEnergy = max(self._stackEnergy_list)
+
+        if len(self._stackEnergy_list) == 0:
+            self._min_stackEnergy = 0
+            self._max_stackEnergy = 0
+        else:
+            self._min_stackEnergy = min(self._stackEnergy_list)
+            self._max_stackEnergy = max(self._stackEnergy_list)
         self._stackEnergy_span = self._max_stackEnergy - self._min_stackEnergy
 
         #now count
-        self._num_structures = len(self._structures)
+        if len(self._structures) == 0:
+            self._num_structures = 0
+        else:
+            self._num_structures = len(self._structures)
 
     def add_structure(self, structure: Sara2SecondaryStructure):
         self._sara_structures_list.append(structure)
@@ -311,7 +324,7 @@ class EnsembleVariation:
         #process ensemble variation
         pass
 
-    def process_ensemble_variation(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float, target_switch_structure:str=''):
+    def process_ensemble_variation(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float, folded_2nd_state_structure:str='', target_2nd_state_structure:str=''):
         start_time=datetime.now()
         print(f'Starting test at {start_time}')
         print("Getting subopt\n")
@@ -327,6 +340,7 @@ class EnsembleVariation:
         remainder: int = kcal_delta_span_from_mfe % Kcal_unit_increments
 
         groups_list : List[Sara2StructureList] = []
+        groups_index_used: List[bool] = []
         groups_dict: Dict[int, Sara2StructureList] = {}
         group_values: List[float] = []
 
@@ -347,6 +361,7 @@ class EnsembleVariation:
         for index in range(len(group_values)-1):
             group: Sara2StructureList = Sara2StructureList()
             groups_list.append(group)
+            groups_index_used.append(False)
             groups_dict[index+1] = group
 
         num_sara_struct: int = span_structures.num_structures
@@ -363,9 +378,11 @@ class EnsembleVariation:
                 #remember we are dealing with neg kcal so its you want to 
                 min_energy: float = group_values[group_index]
                 max_energy: float = group_values[group_index+1]
-                if current_energy >= min_energy and current_energy <= max_energy:
-                    groups_list[group_index].add_structure(sara_structure)             
-                
+                if current_energy >= min_energy and current_energy < max_energy:
+                    groups_list[group_index].add_structure(sara_structure)
+                    groups_index_used[group_index] = True            
+    
+
         for group_index in range(len(groups_list)):
             groups_dict[group_index] = groups_list[group_index]
 
@@ -376,7 +393,7 @@ class EnsembleVariation:
         LMV_U_thread_mfe: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct="mfe")
         result_thread_LMV_mfe:LMV_Token = LMV_U_thread_mfe.run_LMV()
 
-        print(f'Begining LMV_U processing at {datetime.now()}')
+        print(f'Begining LMV_U rel processing at {datetime.now()}')
         LMV_U_thread_rel: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct="rel")
         result_thread_LMV_rel:LMV_Token = LMV_U_thread_rel.run_LMV()
 
@@ -392,15 +409,15 @@ class EnsembleVariation:
        
         switch_mfe_sub: Sara2SecondaryStructure = Sara2SecondaryStructure()
         switch_mfe_sub.sequence=span_structures.sara_stuctures[0].sequence
-        switch_mfe_sub.structure=target_switch_structure
+        switch_mfe_sub.structure=target_2nd_state_structure
         switch_mfe_sub.freeEnergy=span_structures.sara_stuctures[0].freeEnergy
         switch_mfe_sub.stackEnergy=span_structures.sara_stuctures[0].stackEnergy
 
-        LMV_US_thread: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct=switch_mfe_sub)
+        LMV_US_thread_target: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct=switch_mfe_sub)
         
 
-        if target_switch_structure != '':
-            result_thread_LMV_US:LMV_Token = LMV_US_thread.run_LMV()
+        if target_2nd_state_structure != '':
+            result_thread_LMV_US:LMV_Token = LMV_US_thread_target.run_LMV()
             #now process all the groups
             #print(f'Begining LMV_US processing at {datetime.now()}')
             #for list_index in range(len(groups_list)-1):
@@ -412,12 +429,23 @@ class EnsembleVariation:
             #    switch_ev_list.append(ev)
             #    switch_ev_dict[list_index+1] = ev
 
+        
+        switch_mfe_sub_folded: Sara2SecondaryStructure = Sara2SecondaryStructure()
+        switch_mfe_sub_folded.sequence=span_structures.sara_stuctures[0].sequence
+        switch_mfe_sub_folded.structure=folded_2nd_state_structure
+        switch_mfe_sub_folded.freeEnergy=span_structures.sara_stuctures[0].freeEnergy
+        switch_mfe_sub_folded.stackEnergy=span_structures.sara_stuctures[0].stackEnergy
+
+        LMV_US_thread_folded: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct=switch_mfe_sub_folded)
+
+        if folded_2nd_state_structure != '':
+            result_thread_LMV_US_folded:LMV_Token = LMV_US_thread_folded.run_LMV()
             
-            finish_time = datetime.now()
-            print(f'Started test at {start_time}')
-            print(f'Completed test at {finish_time}')
-            timelenght:timedelta = finish_time-start_time
-            print(f'Total Time (seconds) = {timelenght.total_seconds()}')
+        finish_time = datetime.now()
+        print(f'Started test at {start_time}')
+        print(f'Completed test at {finish_time}')
+        timelenght:timedelta = finish_time-start_time
+        print(f'Total Time (seconds) = {timelenght.total_seconds()}')
 
         group_ev_list_mfe: List[EV] = result_thread_LMV_mfe.group_results
         group_ev_dict_mfe: Dict[int,EV] = result_thread_LMV_mfe.group_dict
@@ -425,14 +453,19 @@ class EnsembleVariation:
         group_ev_list_rel: List[EV] = result_thread_LMV_rel.group_results
         group_ev_dict_rel: Dict[int,EV] = result_thread_LMV_rel.group_dict
 
-        switch_ev_list: List[EV] = result_thread_LMV_US.group_results
-        switch_ev_dict: Dict[int,EV] = result_thread_LMV_US.group_dict
+        switch_ev_list_target: List[EV] = result_thread_LMV_US.group_results
+        switch_ev_dict_target: Dict[int,EV] = result_thread_LMV_US.group_dict
+
+        switch_ev_list_folded: List[EV] = result_thread_LMV_US_folded.group_results
+        switch_ev_dict_folded: Dict[int,EV] = result_thread_LMV_US_folded.group_dict
 
 
         result_LMV_U_mfe: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=group_ev_list_mfe, group_ev_dict=group_ev_dict_mfe)
         result_LMV_U_rel: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=group_ev_list_rel, group_ev_dict=group_ev_dict_rel)
-        result_LMV_US: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=switch_ev_list, group_ev_dict=switch_ev_dict)
-        return result_LMV_U_mfe, result_LMV_U_rel, result_LMV_US
+        result_LMV_US_target: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=switch_ev_list_target, group_ev_dict=switch_ev_dict_target)
+        result_LMV_US_folded: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=switch_ev_list_folded, group_ev_dict=switch_ev_dict_folded)
+        
+        return result_LMV_U_mfe, result_LMV_U_rel, result_LMV_US_target, result_LMV_US_folded
 
 
     def get_subopt_energy_gap(self, sequence_string, energy_delta_from_MFE: int):
@@ -551,58 +584,61 @@ class EnsembleVariation:
         return  result
 
     def thread_EV(self, shuttle: LMV_Shuttle):
-
-        kcal_group_structures_list: Sara2StructureList = shuttle.kcal_group_structures_list
-
-        
-        sara_mfestructure:Sara2SecondaryStructure = shuttle.sara_mfestructure 
-        group_num:int = shuttle.group_index
+        total_EV_subscore1:int = 0
+        structure_element_count = shuttle.kcal_group_structures_list.num_structures
         token:LMV_Token = shuttle.token 
-        #need to do each char abd then structure
-        #walk through each nucleotide but first prep containers grab what is needed
-        
-        #setup constants
-        nuc_count = kcal_group_structures_list.nuc_count
-        structure_element_count = kcal_group_structures_list.num_structures
+        if structure_element_count != 0:
+            kcal_group_structures_list: Sara2StructureList = shuttle.kcal_group_structures_list
 
-        ensembleVariation_score_temp = 0
-        nucleotide_position_variation_basescores=[0]*nuc_count
-        nucleotide_position_variation_subscores=[0]*nuc_count
-        energydelta_individualVariationScore_list=[]
-        
-        #add the step to get nuc array here
-        #get all the data out of it
-
-        #first initialize the lists
-        list_of_nuc_lists: List[List[str]] = []
- 
-        num_nucs: int = kcal_group_structures_list.nuc_count
-        for index in range(num_nucs):
-            temp_list:List[str] = []
-            list_of_nuc_lists.append(temp_list)
+            sara_mfestructure:Sara2SecondaryStructure = shuttle.sara_mfestructure 
+            group_num:int = shuttle.group_index
             
-        
-        #now go throught everything
-        for sara_structure in kcal_group_structures_list.sara_stuctures:
+            #need to do each char abd then structure
+            #walk through each nucleotide but first prep containers grab what is needed
+            
+            #setup constants
+            nuc_count = kcal_group_structures_list.nuc_count
+            structure_element_count = kcal_group_structures_list.num_structures
+
+            ensembleVariation_score_temp = 0
+            nucleotide_position_variation_basescores=[0]*nuc_count
+            nucleotide_position_variation_subscores=[0]*nuc_count
+            energydelta_individualVariationScore_list=[]
+            
+            #add the step to get nuc array here
+            #get all the data out of it
+
+            #first initialize the lists
+            list_of_nuc_lists: List[List[str]] = []
+    
+            num_nucs: int = kcal_group_structures_list.nuc_count
             for index in range(num_nucs):
-                character: str = sara_structure.structure[index]
-                list_of_nuc_lists[index].append(character)
-
-        list_of_nuc_scores_base: List[int] = [0]*nuc_count
-        list_of_nuc_scores_subscores: List[int] = [0]*nuc_count
-        num_structs:int = kcal_group_structures_list.num_structures
-
-        for nucIndex in range(nuc_count):
-            mfe_nuc=sara_mfestructure.structure[nucIndex]
-            num_chars = list_of_nuc_lists[nucIndex].count(mfe_nuc)
-            num_diff:int = num_structs - num_chars
-            list_of_nuc_scores_base[nucIndex] = num_diff
-            list_of_nuc_scores_subscores[nucIndex] = list_of_nuc_scores_base[nucIndex] / structure_element_count
+                temp_list:List[str] = []
+                list_of_nuc_lists.append(temp_list)
+                
             
-        
-        total_EV_subscore1 = sum(list_of_nuc_scores_subscores)
-        result: EV =  EV(ev_normalized=total_EV_subscore1, ev_ThresholdNorm=0, ev_structure=0)  
+            #now go throught everything
+            for sara_structure in kcal_group_structures_list.sara_stuctures:
+                for index in range(num_nucs):
+                    character: str = sara_structure.structure[index]
+                    list_of_nuc_lists[index].append(character)
 
+            list_of_nuc_scores_base: List[int] = [0]*nuc_count
+            list_of_nuc_scores_subscores: List[int] = [0]*nuc_count
+            num_structs:int = kcal_group_structures_list.num_structures
+
+            for nucIndex in range(nuc_count):
+                mfe_nuc=sara_mfestructure.structure[nucIndex]
+                num_chars = list_of_nuc_lists[nucIndex].count(mfe_nuc)
+                num_diff:int = num_structs - num_chars
+                list_of_nuc_scores_base[nucIndex] = num_diff
+                list_of_nuc_scores_subscores[nucIndex] = list_of_nuc_scores_base[nucIndex] / structure_element_count 
+            
+            total_EV_subscore1 = sum(list_of_nuc_scores_subscores)
+        else:
+            total_EV_subscore1 = 0
+
+        result: EV =  EV(ev_normalized=total_EV_subscore1, ev_ThresholdNorm=0, ev_structure=0)  
         token.group_results[group_num]= result
         token.group_dict[group_num] = result
         token.group_done_status[group_num] = True

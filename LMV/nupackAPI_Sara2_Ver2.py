@@ -197,9 +197,17 @@ class EVResult():
 class LMV_Token():
     def __init__(self, num_groups: int) -> None:
         self._group_results: List[EV] = num_groups * [EV()]
+        self._group_dict: Dict[int,EV] = {}
         self._group_values: List[str] = num_groups * ['']
         self._group_done_status: List[bool] = num_groups * [False]
     
+    @property
+    def group_dict(self):
+        return self._group_dict
+        
+    def set_group_dict(self, index:int, value:EV):
+        self._group_dict[index]=value
+
     @property
     def group_results(self):
         return self._group_results
@@ -322,11 +330,7 @@ class EnsembleVariation:
         groups_dict: Dict[int, Sara2StructureList] = {}
         group_values: List[float] = []
 
-        group_ev_list: List[EV] = []
-        group_ev_dict: Dict[int,EV] = {}
 
-        switch_ev_list: List[EV] = []
-        switch_ev_dict: Dict[int,EV] = {}
 
         #this fills up the list of energy deltas to publich EV's for
         current_energy: float = mfe_energy
@@ -340,7 +344,7 @@ class EnsembleVariation:
         #    group_values.append(current_energy)
         print(f'Processing group values {group_values} to \n')
         #now initialize the groups_list
-        for index in range(len(group_values)):
+        for index in range(len(group_values)-2):
             group: Sara2StructureList = Sara2StructureList()
             groups_list.append(group)
             groups_dict[index+1] = group
@@ -355,7 +359,7 @@ class EnsembleVariation:
 
             #need to do this because there are two indexes need to look at each 
             #loop and want to avoid triggering a list index overrun
-            for group_index in range(len(group_values)-1):
+            for group_index in range(len(group_values)-2):
                 #remember we are dealing with neg kcal so its you want to 
                 min_energy: float = group_values[group_index]
                 max_energy: float = group_values[group_index+1]
@@ -369,33 +373,40 @@ class EnsembleVariation:
 
         #now process all the groups
         print(f'Begining LMV_U processing at {datetime.now()}')
-        for list_index in range(len(groups_list)-1):
-            struct_list: Sara2StructureList = groups_list[list_index]
-            print(f'Processing {group_values[list_index]} to {group_values[list_index+1]}')
-            print(f'started LMV_U group EV at {datetime.now()}')
-            ev: EV = self.advanced_EV(struct_list, struct_list.sara_stuctures[0])
-            print(f'finished LMV_U group EV at {datetime.now()}\n')
-            group_ev_list.append(ev)
-            group_ev_dict[list_index+1] = ev
+        LMV_U_thread: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct=span_structures.sara_stuctures[0])
+        result_thread_LMV_:LMV_Token = LMV_U_thread.run_LMV()
+
+        #for list_index in range(len(groups_list)-1):
+        #    struct_list: Sara2StructureList = groups_list[list_index]
+        #    print(f'Processing {group_values[list_index]} to {group_values[list_index+1]}')
+        #    print(f'started LMV_U group EV at {datetime.now()}')
+        #    ev: EV = self.advanced_EV(struct_list, struct_list.sara_stuctures[0])
+        #    print(f'finished LMV_U group EV at {datetime.now()}\n')
+        #    group_ev_list.append(ev)
+        #    group_ev_dict[list_index+1] = ev
         
        
         switch_mfe_sub: Sara2SecondaryStructure = Sara2SecondaryStructure()
-        switch_mfe_sub.sequence=groups_list[0].sara_stuctures[0].sequence
+        switch_mfe_sub.sequence=span_structures.sara_stuctures[0].sequence
         switch_mfe_sub.structure=target_switch_structure
-        switch_mfe_sub.freeEnergy=groups_list[0].sara_stuctures[0].freeEnergy
-        switch_mfe_sub.stackEnergy=groups_list[0].sara_stuctures[0].stackEnergy
+        switch_mfe_sub.freeEnergy=span_structures.sara_stuctures[0].freeEnergy
+        switch_mfe_sub.stackEnergy=span_structures.sara_stuctures[0].stackEnergy
+
+        LMV_US_thread: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct=switch_mfe_sub)
+        
 
         if target_switch_structure != '':
+            result_thread_LMV_US:LMV_Token = LMV_US_thread.run_LMV()
             #now process all the groups
-            print(f'Begining LMV_US processing at {datetime.now()}')
-            for list_index in range(len(groups_list)-1):
-                struct_list: Sara2StructureList = groups_list[list_index]
-                print(f'Processing  {group_values[list_index]} to {group_values[list_index+1]}')
-                print(f'started LMV_US group EV at {datetime.now()}')
-                ev: EV = self.advanced_EV(struct_list, switch_mfe_sub)
-                print(f'finished LMV_US group EV at {datetime.now()}\n')
-                switch_ev_list.append(ev)
-                switch_ev_dict[list_index+1] = ev
+            #print(f'Begining LMV_US processing at {datetime.now()}')
+            #for list_index in range(len(groups_list)-1):
+            #    struct_list: Sara2StructureList = groups_list[list_index]
+            #    print(f'Processing  {group_values[list_index]} to {group_values[list_index+1]}')
+            #    print(f'started LMV_US group EV at {datetime.now()}')
+            #    ev: EV = self.advanced_EV(struct_list, switch_mfe_sub)
+            #    print(f'finished LMV_US group EV at {datetime.now()}\n')
+            #    switch_ev_list.append(ev)
+            #    switch_ev_dict[list_index+1] = ev
 
             
             finish_time = datetime.now()
@@ -403,6 +414,14 @@ class EnsembleVariation:
             print(f'Completed test at {finish_time}')
             timelenght:timedelta = finish_time-start_time
             print(f'Total Time (seconds) = {timelenght.total_seconds()}')
+
+        group_ev_list: List[EV] = result_thread_LMV_.group_results
+        group_ev_dict: Dict[int,EV] = result_thread_LMV_.group_dict
+
+        switch_ev_list: List[EV] = result_thread_LMV_US.group_results
+        switch_ev_dict: Dict[int,EV] = result_thread_LMV_US.group_dict
+
+
         result_LMV_U: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=group_ev_list, group_ev_dict=group_ev_dict)
         result_LMV_US: EVResult = EVResult(groups_list=groups_list, groups_dict=groups_dict, group_values=group_values, group_ev_list=switch_ev_list, group_ev_dict=switch_ev_dict)
         return result_LMV_U, result_LMV_US
@@ -577,19 +596,37 @@ class EnsembleVariation:
         result: EV =  EV(ev_normalized=total_EV_subscore1, ev_ThresholdNorm=0, ev_structure=0)  
 
         token.group_results[group_num]= result
+        token.group_dict[group_num] = result
         token.group_done_status[group_num] = True
 
  
 
 class LMV_ThreadProcessor():
     
-    def __init__(self, stuctures: List[Sara2StructureList], LMV: EnsembleVariation) -> None:
+    def __init__(self, stuctures: List[Sara2StructureList],mfe_stuct: Sara2SecondaryStructure) -> None:
         self._sara2_groups: List[Sara2StructureList] = stuctures
+        self._mfe_stuct: Sara2SecondaryStructure = mfe_stuct
         num_groups:int = len(stuctures)
         self._num_groups: int =  num_groups
         self._group_token: LMV_Token = LMV_Token(num_groups)
-        self._LMV: EnsembleVariation = LMV
+        self._LMV: EnsembleVariation = EnsembleVariation()
     
+    @property
+    def sara2_groups(self):
+        return self._sara2_groups
+
+    @sara2_groups.setter
+    def sara2_groups(self, new_list:List[Sara2StructureList]):
+        self._sara2_groups = new_list
+    
+    @property
+    def mfe_stuct(self):
+        return self._mfe_stuct
+
+    @mfe_stuct.setter
+    def mfe_stuct(self, new_struct:Sara2SecondaryStructure):
+        self._mfe_stuct = new_struct
+
     @property
     def num_groups(self):
         return self._num_groups
@@ -614,15 +651,21 @@ class LMV_ThreadProcessor():
     def LMV(self, new_lmv:EnsembleVariation):
         self._LMV = new_lmv
 
+    def run_LMV(self):
+        self.start_calculations()
+        self.wait_for_finish()
+        return self.group_token
+
     def start_calculations(self):
         for thread_index in range(self.num_groups):
-            sara2_struct  = self._sara2_groups[thread_index]
-            new_shuttle: LMV_Shuttle = LMV_Shuttle(structs_list=sara2_struct, mfe=sara2_struct.mfe_structure, group_index=thread_index,token=self.group_token)
-            LMV_routine = self.LMV.thread_EV
-            threading.Thread(target=LMV_routine, args=new_shuttle)
+            sara2_struct  = self.sara2_groups[thread_index]
+            new_shuttle: LMV_Shuttle = LMV_Shuttle(structs_list=sara2_struct, mfe=self.mfe_stuct, group_index=thread_index,token=self.group_token) 
+            mew_thread = threading.Thread(target=self.LMV.thread_EV, args=[new_shuttle])
+            mew_thread.start()
+
     
     def wait_for_finish(self):
-        
+                
         stop:bool = False
         while stop == False:
             print(f'Checking LMV status at {datetime.now()}')
@@ -640,7 +683,9 @@ class LMV_ThreadProcessor():
                 stop = True
                 print(f'Its done at {datetime.now()}')
             else:
-                dwell_time:int = 30
+                dwell_time:int = 5
                 print(f'dwelling for {dwell_time} seconds until next check')
                 time.sleep(dwell_time)
+        
+
 

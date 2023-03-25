@@ -10,10 +10,10 @@ from nupack import *
 import math
 import copy
 
-import nupackAPI_Sara2_Ver1 as nupack_api
-from nupackAPI_Sara2_Ver1 import Sara2SecondaryStructure, Sara2StructureList, EnsembleVariation, EVResult
+import nupackAPI_Sara2_Ver2 as nupack_api
+from nupackAPI_Sara2_Ver2 import Sara2SecondaryStructure, Sara2StructureList, EnsembleVariation, EVResult
 
-debug:bool = False
+debug:bool = True
 
 def test_LMV():
 

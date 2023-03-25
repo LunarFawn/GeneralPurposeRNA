@@ -350,7 +350,7 @@ class EnsembleVariation:
             groups_dict[index+1] = group
 
         num_sara_struct: int = span_structures.num_structures
-        for sara_index in range(1,num_sara_struct):
+        for sara_index in range(0,num_sara_struct):
             #for sara_structure in span_structures.sara_stuctures:
 
             #this skips teh mfe from calulations
@@ -668,9 +668,9 @@ class LMV_ThreadProcessor():
         for thread_index in range(self.num_groups):
             sara2_structs: Sara2StructureList  = self.sara2_groups[thread_index]
             temp_mfe_stuct:Sara2SecondaryStructure
-            if self.mfe_stuct == "mfe":
+            if self.mfe_stuct == "rel":
                 temp_mfe_stuct = sara2_structs.sara_stuctures[0]
-            elif self.mfe_stuct == "rel":
+            elif self.mfe_stuct == "mfe":
                 temp_mfe_stuct = self.sara2_groups[0].sara_stuctures[0]
             else:
                 temp_mfe_stuct = self.mfe_stuct

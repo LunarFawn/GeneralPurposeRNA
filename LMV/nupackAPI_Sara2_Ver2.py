@@ -12,6 +12,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 import threading
+import time
 
 my_model = Model
 
@@ -620,4 +621,26 @@ class LMV_ThreadProcessor():
             LMV_routine = self.LMV.thread_EV
             threading.Thread(target=LMV_routine, args=new_shuttle)
     
-    
+    def wait_for_finish(self):
+        
+        stop:bool = False
+        while stop == False:
+            print(f'Checking LMV status at {datetime.now()}')
+            current_status: List[bool] = self.group_token.group_done_status
+            is_done:bool = self.group_token.is_done
+            
+            message: str = ''
+            for index in range(self.num_groups):
+                goup_value:str = self.group_token.group_values[index]
+                done_status: bool = self.group_token.group_done_status[index]
+                message = message + f'Group_{index+1}: kcal_group={goup_value}, status={done_status}\n'
+            print(message)
+
+            if is_done == True:
+                stop = True
+                print(f'Its done at {datetime.now()}')
+            else:
+                dwell_time:int = 30
+                print(f'dwelling for {dwell_time} seconds until next check')
+                time.sleep(dwell_time)
+

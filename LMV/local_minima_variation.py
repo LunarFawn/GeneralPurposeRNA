@@ -34,8 +34,8 @@ def test_LMV():
         print("Enter single strand RNA sequence")
         sequence = input()
 
-        #print("Enter target structure")
-        #target = input()
+        print("Enter target structure")
+        target = input()
 
         print("Enter Kcal delta span to look at")
         span = input()

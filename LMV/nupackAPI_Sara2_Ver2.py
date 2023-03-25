@@ -705,12 +705,16 @@ class LMV_ThreadProcessor():
         for thread_index in range(self.num_groups):
             sara2_structs: Sara2StructureList  = self.sara2_groups[thread_index]
             temp_mfe_stuct:Sara2SecondaryStructure
-            if self.mfe_stuct == "rel":
-                temp_mfe_stuct = sara2_structs.sara_stuctures[0]
-            elif self.mfe_stuct == "mfe":
+            if len(sara2_structs.sara_stuctures) == 0:
+                #use mfe as its always there
                 temp_mfe_stuct = self.sara2_groups[0].sara_stuctures[0]
             else:
-                temp_mfe_stuct = self.mfe_stuct
+                if self.mfe_stuct == "rel":
+                    temp_mfe_stuct = sara2_structs.sara_stuctures[0]
+                elif self.mfe_stuct == "mfe":
+                    temp_mfe_stuct = self.sara2_groups[0].sara_stuctures[0]
+                else:
+                    temp_mfe_stuct = self.mfe_stuct
             new_shuttle: LMV_Shuttle = LMV_Shuttle(structs_list=sara2_structs, mfe=temp_mfe_stuct, group_index=thread_index,token=self.group_token) 
             mew_thread = threading.Thread(target=self.LMV.thread_EV, args=[new_shuttle])
             mew_thread.start()

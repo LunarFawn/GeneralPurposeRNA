@@ -587,11 +587,12 @@ class EnsembleVariation:
         total_EV_subscore1:int = 0
         structure_element_count = shuttle.kcal_group_structures_list.num_structures
         token:LMV_Token = shuttle.token 
+        group_num:int = shuttle.group_index
         if structure_element_count != 0:
             kcal_group_structures_list: Sara2StructureList = shuttle.kcal_group_structures_list
 
             sara_mfestructure:Sara2SecondaryStructure = shuttle.sara_mfestructure 
-            group_num:int = shuttle.group_index
+           
             
             #need to do each char abd then structure
             #walk through each nucleotide but first prep containers grab what is needed

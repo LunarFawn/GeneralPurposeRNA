@@ -31,7 +31,7 @@ def test_LMV():
         folded = '((((((.((((......((((((((...)))))))).....))))...(((.(((((.((....)))))))..))).)))))).'
         span = 10
         units = .5
-        name = "09_eli"
+        name = "DEBUG!!!!!!!_09_eli"
     else:
         print("Enter single strand RNA sequence")
         sequence = input()

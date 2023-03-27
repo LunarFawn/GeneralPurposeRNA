@@ -10,6 +10,7 @@ from nupack import *
 import math
 import copy
 import matplotlib.pyplot as plt
+from matplotlib.ticker import StrMethodFormatter
 import matplotlib
 from typing import List
 
@@ -17,7 +18,7 @@ from typing import List
 import nupackAPI_Sara2_Ver2 as nupack_api
 from nupackAPI_Sara2_Ver2 import Sara2SecondaryStructure, Sara2StructureList, EnsembleVariation, EVResult
 
-debug:bool = False
+debug:bool = True
 
 def test_LMV():
 
@@ -75,33 +76,39 @@ def test_LMV():
 
     #print(ev_result.group_ev_list)
 
-    time_span: List[int] = []
+    time_span: List[float] = []
+    tick_span = []
     
 
     mfe_value:float = ev_result_mfe.groups_list[0].mfe_freeEnergy
     seed_value:float = mfe_value
+    tick_value:float = 0
     
     num_samples: int = len(ev_result_mfe.groups_list)
     for index in range(num_samples):
         seed_value = seed_value + float(units)
+        tick_value = tick_value + float(units)
         time_span.append(seed_value)
+        tick_span.append(tick_value)
 
-    new_list_string_mfe = []
+    
+
+    new_list_string_mfe: List[float] = []
     for ev in ev_result_mfe.group_ev_list:
         ev_value = ev.ev_normalized
         new_list_string_mfe.append(ev_value)
 
-    new_list_string_rel = []
+    new_list_string_rel: List[float] = []
     for ev in ev_result_rel.group_ev_list:
         ev_value = ev.ev_normalized
         new_list_string_rel.append(ev_value)
 
-    new_switch_string = []
+    new_switch_string: List[float] = []
     for ev in switch_result_target.group_ev_list:
         ev_value = ev.ev_normalized
         new_switch_string.append(ev_value)
 
-    new_switch_string_folded = []
+    new_switch_string_folded: List[float] = []
     for ev in switch_result_folded.group_ev_list:
         ev_value = ev.ev_normalized
         new_switch_string_folded.append(ev_value)
@@ -121,11 +128,18 @@ def test_LMV():
     print()
 
     plt.title(f'LMV Switch plot for {name}')
-    
-    plt.plot(time_span, new_list_string_mfe, 'b-', label='LMV_U mfe')
-    plt.plot(time_span, new_list_string_rel, 'r-', label='LMV_U rel')
-    plt.plot(time_span, new_switch_string, 'k-', label='LMV_US target')
-    plt.plot(time_span, new_switch_string_folded, 'g-', label='LMV_US folded')   
+    #fig = plt.figure()
+    #ax = fig.add_axes((0, float(span), 0, 50))
+    #ax.set_xticks(tick_span)
+    plt.gca().xaxis.set_major_formatter(StrMethodFormatter('{x:,.2f}')) # 2 decimal places
+    plt.plot(time_span, new_list_string_mfe, 'b,-', label='LMV_U mfe')
+    plt.plot(time_span, new_list_string_rel, 'r.-', label='LMV_U rel')
+    plt.plot(time_span, new_switch_string, 'k.-', label='LMV_US target')
+    plt.plot(time_span, new_switch_string_folded, 'g.-', label='LMV_US folded')
+    y_ticks = [0,5,10,15,20,25,30,35,40,45,50]
+    plt.xticks(time_span)
+    plt.yticks(y_ticks)
+    plt.grid(True)   
     plt.legend()
     plt.ylabel("Local Minimum Variation (LMV)")
     plt.xlabel("Local Kcal Energy along Ensemble")

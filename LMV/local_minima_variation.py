@@ -86,6 +86,7 @@ def test_LMV():
 
     time_span: List[float] = []
     tick_span = []
+    index_span = range(len(ev_result_mfe.groups_list))
     
 
     mfe_value:float = ev_result_mfe.groups_list[0].mfe_freeEnergy
@@ -141,16 +142,17 @@ def test_LMV():
     #ax = fig.add_axes((0, float(span), 0, 50))
     #ax.set_xticks(tick_span)
     plt.gca().xaxis.set_major_formatter(StrMethodFormatter('{x:,.2f}')) # 2 decimal places
-    plt.plot(time_span, new_list_string_mfe, 'b,-', label='LMV_U mfe')
-    plt.plot(time_span, new_list_string_rel, 'r.-', label='LMV_U rel')
-    plt.plot(time_span, new_switch_string, 'k.-', label='LMV_US target')
-    plt.plot(time_span, new_switch_string_folded, 'g.-', label='LMV_US folded')
+    plt.plot(time_span, new_list_string_mfe, 'b^-', label='LMV_U mfe')
+    plt.plot(time_span, new_list_string_rel, 'ro-', label='LMV_U rel')
+    #plt.plot(time_span, new_switch_string, 'k.-', label='LMV_US target')
+    plt.plot(time_span, new_switch_string_folded, 'gs-', label='LMV_US folded')
     y_ticks = [0,5,10,15,20,25,30,35,40,45,50]
     plt.xticks(time_span)
     plt.yticks(y_ticks)
     plt.grid(True)   
-    plt.legend()
-    plt.subplots_adjust(top=.8)    
+    plt.legend(loc='lower right',fontsize="x-small")
+    plt.subplots_adjust(top=.8, bottom=.2, left=.12, right=.95)  
+    plt.tick_params(axis='x',labelrotation=90)  
     plt.ylabel("Local Minima Structure Variation (LMSV)")
     plt.xlabel("Local Kcal Energy along Ensemble")
     file_name:str = f'{name}_{designID}'

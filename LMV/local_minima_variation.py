@@ -17,7 +17,7 @@ from typing import List
 import nupackAPI_Sara2_Ver2 as nupack_api
 from nupackAPI_Sara2_Ver2 import Sara2SecondaryStructure, Sara2StructureList, EnsembleVariation, EVResult
 
-debug:bool = True
+debug:bool = False
 
 def test_LMV():
 
@@ -83,7 +83,7 @@ def test_LMV():
     
     num_samples: int = len(ev_result_mfe.groups_list)
     for index in range(num_samples):
-        seed_value = seed_value + units
+        seed_value = seed_value + float(units)
         time_span.append(seed_value)
 
     new_list_string_mfe = []

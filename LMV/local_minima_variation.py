@@ -29,6 +29,7 @@ def test_LMV():
     units = 0
     name = ''
     designID: int= 0
+    labname: str = ''
 
     if debug is True:
         print("using debug")
@@ -39,6 +40,7 @@ def test_LMV():
         units = .5
         name = "09_eli"
         designID = 12345
+        labname = "Tbox Round 1"
     else:
         print("Enter single strand RNA sequence")
         sequence = input()
@@ -61,7 +63,13 @@ def test_LMV():
         print("Enter designID")
         designID = int(input())
 
+        print("Enter Lab Name")
+        labname = input()
+
+
+
     
+    info_str:str = f'Eterna Lab={labname}\nDesign ID={designID}'
 
    
     
@@ -128,6 +136,7 @@ def test_LMV():
     print()
 
     plt.title(f'LMV Switch plot for {name}')
+    plt.suptitle(info_str, fontsize=14)
     #fig = plt.figure()
     #ax = fig.add_axes((0, float(span), 0, 50))
     #ax.set_xticks(tick_span)
@@ -141,7 +150,8 @@ def test_LMV():
     plt.yticks(y_ticks)
     plt.grid(True)   
     plt.legend()
-    plt.ylabel("Local Minimum Variation (LMV)")
+    plt.subplots_adjust(top=.8)    
+    plt.ylabel("Local Minima Structure Variation (LMSV)")
     plt.xlabel("Local Kcal Energy along Ensemble")
     file_name:str = f'{name}_{designID}'
     folder_name:str = '/home/ubuntu/rna_analysis/tbox_round1'

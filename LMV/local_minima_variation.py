@@ -18,7 +18,7 @@ from typing import List
 import nupackAPI_Sara2_Ver2 as nupack_api
 from nupackAPI_Sara2_Ver2 import Sara2SecondaryStructure, Sara2StructureList, EnsembleVariation, EVResult
 
-debug:bool = True
+debug:bool = False
 
 def test_LMV():
 

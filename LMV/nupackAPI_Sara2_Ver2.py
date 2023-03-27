@@ -637,7 +637,7 @@ class EnsembleVariation:
             
             total_EV_subscore1 = sum(list_of_nuc_scores_subscores)
         else:
-            total_EV_subscore1 = 0
+            total_EV_subscore1 = -1
 
         result: EV =  EV(ev_normalized=total_EV_subscore1, ev_ThresholdNorm=0, ev_structure=0)  
         token.group_results[group_num]= result
@@ -699,6 +699,14 @@ class LMV_ThreadProcessor():
     def run_LMV(self):
         self.start_calculations()
         self.wait_for_finish()
+        #the test should be done now
+        #check foor index that is -1 and if so then use prev value
+        num_groups:int = len(self.group_token.group_results)
+        for index in range(1, num_groups):
+            if self.group_token.group_results[index].ev_normalized == -1:
+                previous_EV = self.group_token.group_results[index-1]
+                self.group_token.group_results[index] = previous_EV
+                self.group_token.group_dict[index] = previous_EV
         return self.group_token
 
     def start_calculations(self):

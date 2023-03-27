@@ -9,11 +9,15 @@ copyright 2023 Jennifer Pearl
 from nupack import *
 import math
 import copy
+import matplotlib.pyplot as plt
+import matplotlib
+from typing import List
+
 
 import nupackAPI_Sara2_Ver2 as nupack_api
 from nupackAPI_Sara2_Ver2 import Sara2SecondaryStructure, Sara2StructureList, EnsembleVariation, EVResult
 
-debug:bool = False
+debug:bool = True
 
 def test_LMV():
 
@@ -23,15 +27,17 @@ def test_LMV():
     span = 0
     units = 0
     name = ''
+    designID: int= 0
 
     if debug is True:
         print("using debug")
         sequence = 'GCCAUCGCAUGAGGAUAUGCUCCGGUUUCCGGAGCAGAAGGCAUGUCAUAAGACAUGAGGAUCACCCAUGUAGUUAAGAUGGCA'
         target = '........(((......(((.............))).....)))........................................'
         folded = '((((((.((((......((((((((...)))))))).....))))...(((.(((((.((....)))))))..))).)))))).'
-        span = 10
+        span = 5
         units = .5
-        name = "DEBUG!!!!!!!_09_eli"
+        name = "09_eli"
+        designID = 12345
     else:
         print("Enter single strand RNA sequence")
         sequence = input()
@@ -51,6 +57,9 @@ def test_LMV():
         print("Enter design name")
         name = input()
 
+        print("Enter designID")
+        designID = int(input())
+
     
 
    
@@ -65,6 +74,17 @@ def test_LMV():
     ev_result_mfe, ev_result_rel, switch_result_target, switch_result_folded = EV_test.process_ensemble_variation(sequence, int(span), float(units), folded, target)
 
     #print(ev_result.group_ev_list)
+
+    time_span: List[int] = []
+    
+
+    mfe_value:float = ev_result_mfe.groups_list[0].mfe_freeEnergy
+    seed_value:float = mfe_value
+    
+    num_samples: int = len(ev_result_mfe.groups_list)
+    for index in range(num_samples):
+        seed_value = seed_value + units
+        time_span.append(seed_value)
 
     new_list_string_mfe = []
     for ev in ev_result_mfe.group_ev_list:
@@ -99,6 +119,21 @@ def test_LMV():
     print("LMV_US folded")
     print(new_switch_string_folded)
     print()
+
+    plt.title(f'LMV Switch plot for {name}')
+    
+    plt.plot(time_span, new_list_string_mfe, 'b-', label='LMV_U mfe')
+    plt.plot(time_span, new_list_string_rel, 'r-', label='LMV_U rel')
+    plt.plot(time_span, new_switch_string, 'k-', label='LMV_US target')
+    plt.plot(time_span, new_switch_string_folded, 'g-', label='LMV_US folded')   
+    plt.legend()
+    plt.ylabel("Local Minimum Variation (LMV)")
+    plt.xlabel("Local Kcal Energy along Ensemble")
+    file_name:str = f'{name}_{designID}'
+    folder_name:str = '/home/ubuntu/rna_analysis/tbox_round1'
+    plt.savefig(f'{folder_name}/{file_name}.png')
+    
+
 
 
 test_LMV()

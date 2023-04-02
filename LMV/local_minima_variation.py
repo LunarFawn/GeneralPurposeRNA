@@ -13,12 +13,13 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import StrMethodFormatter
 import matplotlib
 from typing import List
+from datetime import datetime
 
 
 import nupackAPI_Sara2_Ver2 as nupack_api
 from nupackAPI_Sara2_Ver2 import Sara2SecondaryStructure, Sara2StructureList, EnsembleVariation, EVResult
 
-debug:bool = False
+debug:bool = True
 
 def test_LMV():
 
@@ -30,6 +31,7 @@ def test_LMV():
     name = ''
     designID: int= 0
     labname: str = ''
+    folder_name:str = '/home/ubuntu/rna_analysis/tbox_round1/new'
 
     if debug is True:
         print("using debug")
@@ -121,8 +123,19 @@ def test_LMV():
     for ev in switch_result_folded.group_ev_list:
         ev_value = ev.ev_normalized
         new_switch_string_folded.append(ev_value)
+
+    csv_log_results: List[str]=[]
+    csv_log_results.append("Kcal,LMSV_U_mfe,LMSV_U_rel,LMSV_US_target,LMSV_US_folded\n")
+    for index in range(len(new_list_string_mfe)):
+        kcal = time_span[index]
+        LMSV_U_mfe = new_list_string_mfe[index]
+        LMSV_U_rel = new_list_string_rel[index]
+        LMSV_US_target = new_switch_string[index]
+        LMSV_US_folded = new_switch_string_folded[index]
+        line:str = f'{kcal},{LMSV_U_mfe},{LMSV_U_rel},{LMSV_US_target},{LMSV_US_folded}\n'
+        csv_log_results.append(line)
     
-    print(f'Results for name={name}, sequence={sequence}, span={span}, units={units} ')
+    print(f'Results for name={name}\nsequence={sequence}\mspan={span}\nunits={units}\ntarget={target}\nfolded={folded}\nDesignID={designID}\nLabName={labname}\n')
     print("LMV_U mfe")
     print(new_list_string_mfe)
     print()
@@ -136,6 +149,10 @@ def test_LMV():
     print(new_switch_string_folded)
     print()
 
+    #now save teh data
+    import time
+    timestr = time.strftime("%Y%m%d-%H%M%S")
+
     plt.title(f'LMV Switch plot for {name}')
     plt.suptitle(info_str, fontsize=14)
     #fig = plt.figure()
@@ -144,7 +161,7 @@ def test_LMV():
     plt.gca().xaxis.set_major_formatter(StrMethodFormatter('{x:,.2f}')) # 2 decimal places
     plt.plot(time_span, new_list_string_mfe, 'b^-', label='LMV_U mfe')
     plt.plot(time_span, new_list_string_rel, 'ro-', label='LMV_U rel')
-    #plt.plot(time_span, new_switch_string, 'k.-', label='LMV_US target')
+    plt.plot(time_span, new_switch_string, 'kD-', label='LMV_US target')
     plt.plot(time_span, new_switch_string_folded, 'gs-', label='LMV_US folded')
     y_ticks = [0,5,10,15,20,25,30,35,40,45,50]
     plt.xticks(time_span)
@@ -156,11 +173,31 @@ def test_LMV():
     plt.ylabel("Local Minima Structure Variation (LMSV)")
     plt.xlabel("Local Kcal Energy along Ensemble")
     file_name:str = f'{name}_{designID}'
-    folder_name:str = '/home/ubuntu/rna_analysis/tbox_round1'
-    plt.savefig(f'{folder_name}/{file_name}.png')
     
+    plt.savefig(f'{folder_name}/{file_name}_{timestr}.png')
 
+    #now save data to csv file
+    csv_record_pathstr = f'{folder_name}/{file_name}_{timestr}.csv'
+    csv_lines:List[str]=[]
+    with open(csv_record_pathstr, 'w') as csv_file:
+        #first write teh header
+        csv_lines.append(f'Local Minima Structure Variation Data\n')
+        csv_lines.append(f'Creation Date={datetime.now()}\n')
+        csv_lines.append("---------------------------------------\n")
+        csv_lines.append(f'Design Name={name}\n')
+        csv_lines.append(f'DesignID={designID}\n')
+        csv_lines.append(f'Lab Name={labname}\n')
+        csv_lines.append(f'Sequence={sequence}\n')
+        csv_lines.append(f'2nd State Folded Structure={folded}\n')
+        csv_lines.append(f'Energy Span from MFE={span}\n')
+        csv_lines.append(f'Energy span units={units}\n')
+        csv_lines.append("---------------------------------------\n")
+        csv_lines = csv_lines + csv_log_results
+        csv_lines.append("---------------------------------------\n")
+        csv_lines.append("EOF\n")
+        csv_file.writelines(csv_lines)
 
+    print("done with analysis")
 
 test_LMV()
     

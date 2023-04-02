@@ -188,6 +188,7 @@ def test_LMV():
         csv_lines.append(f'DesignID={designID}\n')
         csv_lines.append(f'Lab Name={labname}\n')
         csv_lines.append(f'Sequence={sequence}\n')
+        csv_lines.append(f'2nd State Target Structure={target}\n')
         csv_lines.append(f'2nd State Folded Structure={folded}\n')
         csv_lines.append(f'Energy Span from MFE={span}\n')
         csv_lines.append(f'Energy span units={units}\n')

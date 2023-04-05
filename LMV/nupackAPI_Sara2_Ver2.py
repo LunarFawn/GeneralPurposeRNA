@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 import threading
 import time
+import numpy as np
 
 my_model = Model
 
@@ -644,6 +645,36 @@ class EnsembleVariation:
         token.group_dict[group_num] = result
         token.group_done_status[group_num] = True
 
+    def lmsv_delta(self, delta_start:float, delta_stop:float, base_lmsv: EVResult, second_lmsv:EVResult, tick_span: List[float]):
+        #return the delta beween two LMSV's at specifid Kcal deltas
+        index_start: int = tick_span.index(delta_start)
+        stop_index: int = tick_span.index(delta_stop)
+        span_unit: float = tick_span[1]-tick_span[0]
+        base_ev_values_delta_range: List[float] = []
+        second_ev_values_delta_range: List[float] = []
+
+        num_values: int = 0
+        index: int = index_start
+        actual_value: float = delta_start 
+        stop: bool = False
+        
+        while stop is False:
+            base_value: float = base_lmsv.group_ev_list[index].ev_normalized
+            second_value: float = second_lmsv.group_ev_list[index].ev_normalized
+            base_ev_values_delta_range.append(base_value)
+            second_ev_values_delta_range.append(second_value)
+            num_values = num_values + 1
+            index = index + 1
+            actual_value = actual_value + span_unit
+            #stop if next loop willg oapst stop index
+            if actual_value > delta_stop:
+                break
+
+        average_base:float = sum(base_ev_values_delta_range)/num_values
+        average_second:float = sum(second_ev_values_delta_range)/num_values
+        delta_average: float = average_second - average_base
+
+        return delta_average
  
 
 class LMV_ThreadProcessor():

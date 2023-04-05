@@ -99,6 +99,8 @@ def test_LMV():
     for index in range(num_samples):
         seed_value = seed_value + float(units)
         tick_value = tick_value + float(units)
+        #time_span is teh MFE values
+        #tick_span is the index value (i.e. 0, 0.5, 1, 1.5)
         time_span.append(seed_value)
         tick_span.append(tick_value)
 
@@ -123,6 +125,14 @@ def test_LMV():
     for ev in switch_result_folded.group_ev_list:
         ev_value = ev.ev_normalized
         new_switch_string_folded.append(ev_value)
+
+    #get LMSV deltas
+    start_value:float = 2
+    #last value of span
+    stop_value: float = tick_span[-1]
+    mfe_fold_EV_delta = EV_test.lmsv_delta(start_value, stop_value, ev_result_mfe, switch_result_folded, tick_span)
+    delta_message: str = f'Polymorphicity Level (2Kcal delta to end) = {mfe_fold_EV_delta}'
+
 
     csv_log_results: List[str]=[]
     csv_log_results.append("Kcal,LMSV_U_mfe,LMSV_U_rel,LMSV_US_target,LMSV_US_folded\n")
@@ -172,6 +182,7 @@ def test_LMV():
     plt.tick_params(axis='x',labelrotation=90)  
     plt.ylabel("Local Minima Structure Variation (LMSV)")
     plt.xlabel("Local Kcal Energy along Ensemble")
+    plt.figtext(0.54, 0.01, delta_message, ha="center", fontsize=10, bbox={"facecolor":"orange", "alpha":.5, "pad":2})
     file_name:str = f'{name}_{designID}'
     
     plt.savefig(f'{folder_name}/{file_name}_{timestr}.png')
@@ -184,6 +195,7 @@ def test_LMV():
         csv_lines.append(f'Local Minima Structure Variation Data\n')
         csv_lines.append(f'Creation Date={datetime.now()}\n')
         csv_lines.append("---------------------------------------\n")
+        csv_lines.append("***DESIGN INFO***\n")
         csv_lines.append(f'Design Name={name}\n')
         csv_lines.append(f'DesignID={designID}\n')
         csv_lines.append(f'Lab Name={labname}\n')
@@ -193,7 +205,11 @@ def test_LMV():
         csv_lines.append(f'Energy Span from MFE={span}\n')
         csv_lines.append(f'Energy span units={units}\n')
         csv_lines.append("---------------------------------------\n")
+        csv_lines.append("***RAW DATA***\n")
         csv_lines = csv_lines + csv_log_results
+        csv_lines.append("---------------------------------------\n")
+        csv_lines.append("***METRICS***\n")
+        csv_lines.append(f'Polymorphicity Level (2kcal to end of sample)={mfe_fold_EV_delta}\n')
         csv_lines.append("---------------------------------------\n")
         csv_lines.append("EOF\n")
         csv_file.writelines(csv_lines)

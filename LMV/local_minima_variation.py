@@ -57,6 +57,8 @@ def test_LMV():
     ligand_oligo_energy:float = 0
     folded_energy_ligoligo: float = 0
     ligand_oligo_name:str = ''
+    eterna_score:float = 0
+    fold_change:float = 0
 
     if debug is True:
         print("using debug")
@@ -72,6 +74,8 @@ def test_LMV():
         ligand_oligo_energy:float = 10
         folded_energy_ligoligo: float = -29
         ligand_oligo_name:str = ''
+        eterna_score:float = 100
+        fold_change:float = 500
     else:
         print("Enter single strand RNA sequence")
         sequence = input()
@@ -100,13 +104,19 @@ def test_LMV():
         print("Enter Lab Name")
         labname = input()
 
+        print("Enter Eterna Score")
+        eterna_score = float(input())
+
+        print("Enter Fold Change")
+        fold_change = float(input())
+
         
 
         folder_name:str = '/home/ubuntu/rna_analysis/tbox_round1/poly'
 
 
     
-    info_str:str = f'Eterna Lab={labname}\nDesign ID={designID}'
+    info_str:str = f'Eterna_Score = {eterna_score}, FoldChange = {fold_change}'
 
    
     
@@ -202,8 +212,9 @@ def test_LMV():
     import time
     timestr = time.strftime("%Y%m%d-%H%M%S")
     fig, ax = plt.subplots()
-    plt.title(f'LMV Switch plot for {name}')
-    plt.suptitle(info_str, fontsize=14)
+    
+    plt.suptitle(f'LMV Switch plot for {name}\nEterna Lab = {labname}\nDesign ID = {designID}\n',fontsize=12)
+    plt.title(info_str, fontsize=10)
     #fig = plt.figure()
     
     #ax.set_xticks(tick_span)
@@ -263,6 +274,8 @@ def test_LMV():
         csv_lines.append(f'DesignID = {designID}\n')
         csv_lines.append(f'Lab Name = {labname}\n')
         csv_lines.append(f'Sequence = {sequence}\n')
+        csv_lines.append(f'Eterna_Score = {eterna_score}\n')
+        csv_lines.append(f'FoldChange = {fold_change}\n')
         csv_lines.append(f'2nd State Target Structure = {target}\n')
         csv_lines.append(f'2nd State Folded Structure = {folded}\n')
         csv_lines.append(f'2nd State Folded Oligo Energy = {folded_energy_ligoligo}\n')

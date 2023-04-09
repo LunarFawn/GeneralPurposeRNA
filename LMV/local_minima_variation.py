@@ -14,6 +14,7 @@ from matplotlib.ticker import StrMethodFormatter
 import matplotlib
 from typing import List
 from datetime import datetime
+import numpy as np
 
 
 import nupackAPI_Sara2_Ver2 as nupack_api
@@ -204,16 +205,18 @@ def test_LMV():
     plt.title(f'LMV Switch plot for {name}')
     plt.suptitle(info_str, fontsize=14)
     #fig = plt.figure()
-    #ax = fig.add_axes((0, float(span), 0, 50))
+    
     #ax.set_xticks(tick_span)
     plt.gca().xaxis.set_major_formatter(StrMethodFormatter('{x:,.2f}')) # 2 decimal places
     plt.plot(time_span, new_list_string_mfe, 'b^-', label='LMV_U mfe')
     plt.plot(time_span, new_list_string_rel, 'ro-', label='LMV_U rel')
     plt.plot(time_span, new_switch_string, 'kD-', label='LMV_US target')
     plt.plot(time_span, new_switch_string_folded, 'gs-', label='LMV_US folded')
-    y_ticks = [0,5,10,15,20,25,30,35,40,45,50]
+    #y_ticks = [0,5,10,15,20,25,30,35,40,45,50]
+    y_ticks = np.arange(-10,65, step=5)
     plt.xticks(time_span)
     plt.yticks(y_ticks)
+    #plt.yticks()
     plt.grid(True)   
     plt.legend(loc='lower right',fontsize="x-small")
     plt.subplots_adjust(top=.8, bottom=.2, left=.12, right=.95)  
@@ -225,21 +228,22 @@ def test_LMV():
     delat_energy:float = 2
     lower_range_folded_energy: float = folded_energy_ligoligo - (delat_energy/2)
     uper_range_folded_energy: float = folded_energy_ligoligo + (delat_energy/2)
-    plt.axvline(x=folded_energy_ligoligo, color="blue", linestyle="--")
-    plt.axvline(x=lower_range_folded_energy, color="red", linestyle="--")
-    plt.axvline(x=uper_range_folded_energy, color="red", linestyle="--")
-    plt.text(lower_range_folded_energy, .5, '   2nd State', transform=trans, fontsize=7)
-    plt.text(lower_range_folded_energy, .45, ' 2Kcal range', transform=trans, fontsize=7)
-    plt.text(folded_energy_ligoligo, .75, '    2nd State', transform=trans, fontsize=7)
-    plt.text(folded_energy_ligoligo, .7, '  folded Energy', transform=trans, fontsize=7)
+    plt.axvline(x=folded_energy_ligoligo, color="green", linestyle="--")
+    plt.axvline(x=lower_range_folded_energy, color="green", linestyle=":")
+    plt.axvline(x=uper_range_folded_energy, color="green", linestyle=":")
+    plt.text(lower_range_folded_energy, .06, '   2nd State', transform=trans, fontsize=7)
+    plt.text(lower_range_folded_energy, .01, ' 2Kcal range', transform=trans, fontsize=7)
+    plt.text(folded_energy_ligoligo, .06, '    2nd State', transform=trans, fontsize=7)
+    plt.text(folded_energy_ligoligo, .01, '  folded Energy', transform=trans, fontsize=7)
 
     ev_mfe_lower:float = time_span[0]
     ev_mfe_upper:float = mfe_value + delat_energy
     
-    plt.axvline(x=ev_mfe_lower, color="black", linestyle="--")
-    plt.axvline(x=ev_mfe_upper, color="black", linestyle="--")
-    plt.text(ev_mfe_lower, .5, '   1st State', transform=trans, fontsize=7)
-    plt.text(ev_mfe_lower, .45, ' 2Kcal range', transform=trans, fontsize=7)
+    plt.axvline(x=ev_mfe_lower, color="blue", linestyle=":")
+    plt.axvline(x=ev_mfe_upper, color="blue", linestyle=":")
+    plt.text(ev_mfe_lower, .06, '   1st State', transform=trans, fontsize=7)
+    plt.text(ev_mfe_lower, .01, ' 2Kcal range', transform=trans, fontsize=7)
+    #ax.set_ybound(lower=0, upper=70)
     
 
     file_name:str = f'{name}_{designID}'

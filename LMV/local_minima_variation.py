@@ -21,6 +21,27 @@ from nupackAPI_Sara2_Ver2 import Sara2SecondaryStructure, Sara2StructureList, En
 
 debug:bool = True
 
+
+from bisect import bisect_left
+
+def take_closest(myList, myNumber):
+    """
+    Assumes myList is sorted. Returns closest value to myNumber.
+
+    If two numbers are equally close, return the smallest number.
+    """
+    pos = bisect_left(myList, myNumber)
+    if pos == 0:
+        return myList[0]
+    if pos == len(myList):
+        return myList[-1]
+    before = myList[pos - 1]
+    after = myList[pos]
+    if after - myNumber < myNumber - before:
+        return after
+    else:
+        return before
+    
 def test_LMV():
 
     sequence = ''
@@ -31,7 +52,10 @@ def test_LMV():
     name = ''
     designID: int= 0
     labname: str = ''
-    folder_name:str = '/home/ubuntu/rna_analysis/tbox_round1/new'
+    folder_name:str = ''
+    ligand_oligo_energy:float = 0
+    folded_energy_ligoligo: float = 0
+    ligand_oligo_name:str = ''
 
     if debug is True:
         print("using debug")
@@ -43,6 +67,10 @@ def test_LMV():
         name = "09_eli"
         designID = 12345
         labname = "Tbox Round 1"
+        folder_name:str = '/home/ubuntu/rna_analysis/tbox_round1/debug'
+        ligand_oligo_energy:float = 10
+        folded_energy_ligoligo: float = -29
+        ligand_oligo_name:str = ''
     else:
         print("Enter single strand RNA sequence")
         sequence = input()
@@ -52,6 +80,9 @@ def test_LMV():
 
         print("Enter predicted 2nd state folded structure")
         folded = input()
+
+        print("Enter Energy of folded structure with ligand/oligo bound")
+        folded_energy_ligoligo = float(input())
 
         print("Enter Kcal delta span to look at")
         span = input()
@@ -68,6 +99,9 @@ def test_LMV():
         print("Enter Lab Name")
         labname = input()
 
+        
+
+        folder_name:str = '/home/ubuntu/rna_analysis/tbox_round1/poly'
 
 
     
@@ -130,9 +164,13 @@ def test_LMV():
     start_value:float = 2
     #last value of span
     stop_value: float = tick_span[-1]
+    #get polymorphicicyt
     mfe_fold_EV_delta = EV_test.lmsv_delta(start_value, stop_value, ev_result_mfe, switch_result_folded, tick_span)
     delta_message: str = f'Polymorphicity Level (2Kcal delta to end) = {mfe_fold_EV_delta}'
 
+    mfe_ev_oligo:float = take_closest(time_span, folded_energy_ligoligo)
+    mfe_ev_oligo_index: int = time_span.index(mfe_ev_oligo)
+    ev_oligo_folded:float = new_switch_string_folded[mfe_ev_oligo_index]
 
     csv_log_results: List[str]=[]
     csv_log_results.append("Kcal,LMSV_U_mfe,LMSV_U_rel,LMSV_US_target,LMSV_US_folded\n")
@@ -145,7 +183,7 @@ def test_LMV():
         line:str = f'{kcal},{LMSV_U_mfe},{LMSV_U_rel},{LMSV_US_target},{LMSV_US_folded}\n'
         csv_log_results.append(line)
     
-    print(f'Results for name={name}\nsequence={sequence}\mspan={span}\nunits={units}\ntarget={target}\nfolded={folded}\nDesignID={designID}\nLabName={labname}\n')
+    print(f'Results for name={name}\nsequence={sequence}\nspan={span}\nunits={units}\ntarget={target}\nfolded={folded}\nDesignID={designID}\nLabName={labname}\n')
     print("LMV_U mfe")
     print(new_list_string_mfe)
     print()
@@ -162,7 +200,7 @@ def test_LMV():
     #now save teh data
     import time
     timestr = time.strftime("%Y%m%d-%H%M%S")
-
+    fig, ax = plt.subplots()
     plt.title(f'LMV Switch plot for {name}')
     plt.suptitle(info_str, fontsize=14)
     #fig = plt.figure()
@@ -183,6 +221,27 @@ def test_LMV():
     plt.ylabel("Local Minima Structure Variation (LMSV)")
     plt.xlabel("Local Kcal Energy along Ensemble")
     plt.figtext(0.54, 0.01, delta_message, ha="center", fontsize=10, bbox={"facecolor":"orange", "alpha":.5, "pad":2})
+    trans = ax.get_xaxis_transform()
+    delat_energy:float = 2
+    lower_range_folded_energy: float = folded_energy_ligoligo - (delat_energy/2)
+    uper_range_folded_energy: float = folded_energy_ligoligo + (delat_energy/2)
+    plt.axvline(x=folded_energy_ligoligo, color="blue", linestyle="--")
+    plt.axvline(x=lower_range_folded_energy, color="red", linestyle="--")
+    plt.axvline(x=uper_range_folded_energy, color="red", linestyle="--")
+    plt.text(lower_range_folded_energy, .5, '   2nd State', transform=trans, fontsize=7)
+    plt.text(lower_range_folded_energy, .45, ' 2Kcal range', transform=trans, fontsize=7)
+    plt.text(folded_energy_ligoligo, .75, '    2nd State', transform=trans, fontsize=7)
+    plt.text(folded_energy_ligoligo, .7, '  folded Energy', transform=trans, fontsize=7)
+
+    ev_mfe_lower:float = time_span[0]
+    ev_mfe_upper:float = mfe_value + delat_energy
+    
+    plt.axvline(x=ev_mfe_lower, color="black", linestyle="--")
+    plt.axvline(x=ev_mfe_upper, color="black", linestyle="--")
+    plt.text(ev_mfe_lower, .5, '   1st State', transform=trans, fontsize=7)
+    plt.text(ev_mfe_lower, .45, ' 2Kcal range', transform=trans, fontsize=7)
+    
+
     file_name:str = f'{name}_{designID}'
     
     plt.savefig(f'{folder_name}/{file_name}_{timestr}.png')
@@ -196,20 +255,22 @@ def test_LMV():
         csv_lines.append(f'Creation Date={datetime.now()}\n')
         csv_lines.append("---------------------------------------\n")
         csv_lines.append("***DESIGN INFO***\n")
-        csv_lines.append(f'Design Name={name}\n')
-        csv_lines.append(f'DesignID={designID}\n')
-        csv_lines.append(f'Lab Name={labname}\n')
-        csv_lines.append(f'Sequence={sequence}\n')
-        csv_lines.append(f'2nd State Target Structure={target}\n')
-        csv_lines.append(f'2nd State Folded Structure={folded}\n')
-        csv_lines.append(f'Energy Span from MFE={span}\n')
-        csv_lines.append(f'Energy span units={units}\n')
+        csv_lines.append(f'Design Name = {name}\n')
+        csv_lines.append(f'DesignID = {designID}\n')
+        csv_lines.append(f'Lab Name = {labname}\n')
+        csv_lines.append(f'Sequence = {sequence}\n')
+        csv_lines.append(f'2nd State Target Structure = {target}\n')
+        csv_lines.append(f'2nd State Folded Structure = {folded}\n')
+        csv_lines.append(f'2nd State Folded Oligo Energy = {folded_energy_ligoligo}\n')
+        csv_lines.append(f'Energy Span from MFE = {span}\n')
+        csv_lines.append(f'Energy span units = {units}\n')
         csv_lines.append("---------------------------------------\n")
         csv_lines.append("***RAW DATA***\n")
         csv_lines = csv_lines + csv_log_results
         csv_lines.append("---------------------------------------\n")
         csv_lines.append("***METRICS***\n")
-        csv_lines.append(f'Polymorphicity Level (2kcal to end of sample)={mfe_fold_EV_delta}\n')
+        csv_lines.append(f'Polymorphicity Level (2kcal to end of sample) = {mfe_fold_EV_delta}\n')
+        csv_lines.append(f'LMV_US_folded at folded with lignad/oligo energy = {ev_oligo_folded}\n')
         csv_lines.append("---------------------------------------\n")
         csv_lines.append("EOF\n")
         csv_file.writelines(csv_lines)

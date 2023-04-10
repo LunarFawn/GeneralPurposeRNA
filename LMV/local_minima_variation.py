@@ -20,7 +20,7 @@ import numpy as np
 import nupackAPI_Sara2_Ver2 as nupack_api
 from nupackAPI_Sara2_Ver2 import Sara2SecondaryStructure, Sara2StructureList, EnsembleVariation, EVResult
 
-debug:bool = True
+debug:bool = False
 
 
 from bisect import bisect_left
@@ -59,6 +59,7 @@ def test_LMV():
     ligand_oligo_name:str = ''
     eterna_score:float = 0
     fold_change:float = 0
+    number_of_clusters:int = 0
 
     if debug is True:
         print("using debug")
@@ -76,6 +77,7 @@ def test_LMV():
         ligand_oligo_name:str = ''
         eterna_score:float = 100
         fold_change:float = 500
+        number_of_clusters:int = 1000
     else:
         print("Enter single strand RNA sequence")
         sequence = input()
@@ -90,10 +92,13 @@ def test_LMV():
         folded_energy_ligoligo = float(input())
 
         print("Enter Kcal delta span to look at")
-        span = input()
+        
+        span = '7'#input()
+        print(f'span is {span}')
 
         print("Enter kcal unit to plot by")
-        units = input()
+        units = '.5' #input()
+        print(f'units is {units}')
 
         print("Enter design name")
         name = input()
@@ -110,13 +115,16 @@ def test_LMV():
         print("Enter Fold Change")
         fold_change = float(input())
 
+        print("Enter Number of Clusters")
+        number_of_clusters = int(input())
+
         
 
-        folder_name:str = '/home/ubuntu/rna_analysis/tbox_round1/poly'
+        folder_name:str = '/home/ubuntu/rna_analysis/PNAS_FMN/SSNG1'
 
 
     
-    info_str:str = f'Eterna_Score = {eterna_score}, FoldChange = {fold_change}'
+    info_str:str = f'Eterna_Score = {eterna_score}, FoldChange = {fold_change}, Num Clusters = {number_of_clusters}'
 
    
     

@@ -388,6 +388,37 @@ class EnsembleVariation:
             weighted_structure = weighted_structure + most_common_char
         
         return weighted_structure
+    
+    def compair_weighted_structure(self, unbound_mfe_struct:str, bound_mfe_struct:str, weighted_struct:str, nuc_count:int):
+        """
+        Compaire the weighted structure against the folded and not-folded mfe's.
+        If a element is present in the folded mfe then it gets a '-'
+        if element is in unbound only then it gets a '|'.
+        The idea is that if you have a straight line in the list then it is very close to the
+        folded mfe and if it is not straight then it is more like the unbound mfe.
+        """
+        unbound:str = '|'
+        bound:str = '-'
+        dot:str = '.'
+        compared_struct:str = ''            
+
+        for nuc_index in range(nuc_count):
+            weighted_nuc:str = weighted_struct[nuc_index]
+            unbound_nuc:str = unbound_mfe_struct[nuc_index]
+            bound_nuc: str = bound_mfe_struct[nuc_index]
+
+            comp_nuc_symbol:str = dot
+
+            if weighted_nuc == bound_nuc:
+                comp_nuc_symbol = bound
+            elif weighted_nuc != bound_nuc and weighted_nuc == unbound_nuc:
+                comp_nuc_symbol = unbound
+            
+            compared_struct = compared_struct + comp_nuc_symbol
+        
+        return compared_struct
+            
+
 
     def process_ensemble_variation(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float, folded_2nd_state_structure:str='', target_2nd_state_structure:str=''):
         start_time=datetime.now()
@@ -464,7 +495,8 @@ class EnsembleVariation:
            
             try:
                 new_struct = self.make_weighted_struct(group)
-                print (new_struct)
+                comp_struct = self.compair_weighted_structure(span_structures.sara_stuctures[0].structure, folded_2nd_state_structure, new_struct, span_structures.nuc_count)
+                print (comp_struct)
             except:
                 print ("bad list")
              

@@ -63,9 +63,9 @@ def test_LMV():
 
     if debug is True:
         print("using debug")
-        sequence = 'GAAUUCGCAUGAGGAUAUGCUCCCGUUUCGGGAGCAGAAGGCAUGUCAUAAGACAUGAGGAUCACCCAUGUAGUUAAGAUUGAA'
+        sequence = 'GCCAUCGCAUGAGGAUAUGCUCCCGUUUCGGGAGCAGAAGGCAUGUCAUAAGACAUGAGGAUCACCCAUGUAGAUAAGAUGGCA'
         target = '........(((......(((.............))).....)))........................................'
-        folded = '....(.(((((......((((((((...)))))))).....))))).)....(((((.((....))))))).............'
+        folded = '((((((.((((......((((((((...)))))))).....))))..((...(((((.((....)))))))..))..)))))).'
         span = 5
         units = .2
         name = "09_eli"

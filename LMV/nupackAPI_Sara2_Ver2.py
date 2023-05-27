@@ -494,14 +494,25 @@ class EnsembleVariation:
         print("folded")
         print(folded_2nd_state_structure)
         print("weighted structs per group")
+        start_group_mfe:float = mfe_energy + 0.5
+        end_group_mfe:float = mfe_energy + Kcal_unit_increments
         for group in groups_list:
-           
+            comp_struct:str =''
+            result:str = ''
             try:
-                new_struct = self.make_weighted_struct(group)
-                comp_struct = self.compair_weighted_structure(span_structures.sara_stuctures[0].structure, folded_2nd_state_structure, new_struct, span_structures.nuc_count)
-                print (comp_struct)
-            except:
-                print ("bad list")
+                if group.num_structures > 0:
+                    new_struct = self.make_weighted_struct(group)
+                    comp_struct = self.compair_weighted_structure(span_structures.sara_stuctures[0].structure, folded_2nd_state_structure, new_struct, span_structures.nuc_count)                    
+                else:
+                    comp_struct = "no structures in kcal group"
+            except Exception as error:
+                comp_struct = f'bad list Error:{error}'
+            
+            line: str = f'{round(start_group_mfe,4)} to {round(end_group_mfe,4)} kcal:   {comp_struct}'
+            print (line)
+            start_group_mfe = end_group_mfe
+            end_group_mfe = start_group_mfe + Kcal_unit_increments
+            
              
 
 

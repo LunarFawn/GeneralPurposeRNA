@@ -399,6 +399,7 @@ class EnsembleVariation:
         """
         unbound:str = '|'
         bound:str = '-'
+        both:str = '+'
         dot:str = '.'
         compared_struct:str = ''            
 
@@ -409,10 +410,12 @@ class EnsembleVariation:
 
             comp_nuc_symbol:str = dot
 
-            if weighted_nuc == bound_nuc:
+            if weighted_nuc == bound_nuc and weighted_nuc != unbound_nuc:
                 comp_nuc_symbol = bound
             elif weighted_nuc != bound_nuc and weighted_nuc == unbound_nuc:
                 comp_nuc_symbol = unbound
+            elif weighted_nuc == bound_nuc and weighted_nuc == unbound_nuc:
+                comp_nuc_symbol = both
             
             compared_struct = compared_struct + comp_nuc_symbol
         

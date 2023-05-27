@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 import threading
 import time
+import collections
 
 my_model = Model
 
@@ -330,12 +331,17 @@ class EnsembleVariation:
         not_bond_value: int = -1
 
         nuc_poistion_values: List[int] = []
+        nuc_pairs_comp_list: List[List[str]] = []
+
         for nucIndex in range(structure_list.nuc_count):
             nuc_poistion_values[nucIndex] = 0
+            pairs_list: List[str] = []            
+            nuc_pairs_comp_list.append(pairs_list)
 
         for struct in structure_list.sara_stuctures:
             for nucIndex in range(structure_list.nuc_count):
                 nuc_bond_type:str = struct.structure[nucIndex]
+                nuc_pairs_comp_list[nucIndex].append(nuc_bond_type)
                 adder: int = 0
                 if nuc_bond_type == '.':
                     adder = not_bond_value
@@ -343,8 +349,29 @@ class EnsembleVariation:
                     adder = is_bond_value
                 nuc_poistion_values[nucIndex] = nuc_poistion_values[nucIndex] + adder
         
+        #now record if the nuc position has a weghted bond
+        good_nucs_each_pos: List[bool] = []
+
+        for nucIndex in range(structure_list.nuc_count):
+            nuc_value: int = nuc_poistion_values[nucIndex]
+            #worked out this algotithm one night.. idk
+            num_bonds_found = nuc_value / 2 + 1
+            min_good_bonds = (num_bonds_found * 2) - ((nuc_value-num_bonds_found) * (-1))
+            is_weighted_bond=False
+            if num_bonds_found >= min_good_bonds:
+                is_weighted_bond = True
+            good_nucs_each_pos[nucIndex] = is_weighted_bond
+
+        weighted_structure:str = ''
+        for nucIndex in range(structure_list.nuc_count):
+            is_bonded = good_nucs_each_pos[nucIndex]
+            new_counter: collections.Counter = collections.Counter(nuc_pairs_comp_list[nucIndex])
+            most_common_char[str]= '.'
+            if is_bonded is True:
+                most_common_char = new_counter.most_common(1)[0]
+            weighted_structure[nucIndex] = most_common_char
         
-        
+        return weighted_structure
 
     def process_ensemble_variation(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float, folded_2nd_state_structure:str='', target_2nd_state_structure:str=''):
         start_time=datetime.now()

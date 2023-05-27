@@ -14,6 +14,7 @@ from datetime import datetime, timedelta
 import threading
 import time
 import numpy as np
+import collections
 
 my_model = Model
 
@@ -325,6 +326,69 @@ class EnsembleVariation:
         #process ensemble variation
         pass
 
+    def make_weighted_struct(self, structure_list: Sara2StructureList):
+        is_bond_value: int = 2
+        not_bond_value: int = -1
+
+        nuc_poistion_values: List[int] = []
+        nuc_pairs_comp_list: List[List[str]] = []
+        good_nucs_each_pos: List[bool] = []
+
+        struct_count: int = structure_list.num_structures
+
+        for nucIndex in range(structure_list.nuc_count):
+            nuc_poistion_values.append(0)
+            pairs_list: List[str] = []            
+            nuc_pairs_comp_list.append(pairs_list)
+            #good_nucs_each_pos.append(False)
+
+        for struct in structure_list.sara_stuctures:
+            for nucIndex in range(structure_list.nuc_count):
+                nuc_bond_type:str = struct.structure[nucIndex]
+                nuc_pairs_comp_list[nucIndex].append(nuc_bond_type)
+                adder: int = 0
+                if nuc_bond_type == '.':
+                    adder = not_bond_value
+                else:
+                    adder = is_bond_value
+                nuc_poistion_values[nucIndex] = nuc_poistion_values[nucIndex] + adder
+        
+        #now record if the nuc position has a weghted bond
+        for nucIndex in range(structure_list.nuc_count):
+            is_weighted_bond=False
+            if nuc_poistion_values[nucIndex] > struct_count:
+                is_weighted_bond = True
+            good_nucs_each_pos.append(is_weighted_bond)
+
+        """
+        for nucIndex in range(structure_list.nuc_count):
+            nuc_value: float = float(nuc_poistion_values[nucIndex])
+            #worked out this algotithm one night.. idk
+            num_bonds_found:float = nuc_value / 2 + 1
+            min_good_bonds: float = (num_bonds_found * 2) - ((nuc_value-num_bonds_found) * (-1))
+            is_weighted_bond=False
+            if num_bonds_found >= min_good_bonds and num_bonds_found > 0:
+                is_weighted_bond = True
+            good_nucs_each_pos.append(is_weighted_bond)
+        """
+
+        weighted_structure:str = ''
+        for nucIndex in range(structure_list.nuc_count):
+            is_bonded = good_nucs_each_pos[nucIndex]
+            new_counter: collections.Counter = collections.Counter(nuc_pairs_comp_list[nucIndex])
+            most_common_char: str= '.'
+            if is_bonded is True:
+                #most_common_char = '|'
+                new_char:str = new_counter.most_common(2)[0][0]
+                length = len(new_counter.most_common(2))
+                if new_char == '.' and length > 1:
+                    #then get second most common
+                    new_char = new_counter.most_common(2)[1][0]
+                most_common_char = new_char
+            weighted_structure = weighted_structure + most_common_char
+        
+        return weighted_structure
+
     def process_ensemble_variation(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float, folded_2nd_state_structure:str='', target_2nd_state_structure:str=''):
         start_time=datetime.now()
         print(f'Starting test at {start_time}')
@@ -333,7 +397,8 @@ class EnsembleVariation:
         span_structures: Sara2StructureList
         span_structures = self.get_subopt_energy_gap(sequence_string=sequence, energy_delta_from_MFE=kcal_delta_span_from_mfe)       
         mfe_energy:float =  span_structures.mfe_freeEnergy
-
+        
+        
         print(f'Done with subopt gathering. {span_structures.num_structures} structures found\n')
 
         #this is for increments of 1 kcal need to do fraction
@@ -386,6 +451,23 @@ class EnsembleVariation:
 
         for group_index in range(len(groups_list)):
             groups_dict[group_index] = groups_list[group_index]
+        
+        print("whole span")
+        new_struct = self.make_weighted_struct(span_structures)
+        print(new_struct)
+        print("mfe")
+        print(span_structures.sara_stuctures[0].structure)
+        print("folded")
+        print(folded_2nd_state_structure)
+        print("weighted structs per group")
+        for group in groups_list:
+           
+            try:
+                new_struct = self.make_weighted_struct(group)
+                print (new_struct)
+            except:
+                print ("bad list")
+             
 
 
 

@@ -381,7 +381,7 @@ class EnsembleVariation:
         span_structures: Sara2StructureList
         span_structures = self.get_subopt_energy_gap(sequence_string=sequence, energy_delta_from_MFE=kcal_delta_span_from_mfe)       
         mfe_energy:float =  span_structures.mfe_freeEnergy
-
+        new_struct = self.make_weighted_struct(span_structures)
         print(f'Done with subopt gathering. {span_structures.num_structures} structures found\n')
 
         #this is for increments of 1 kcal need to do fraction

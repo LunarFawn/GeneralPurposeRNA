@@ -324,6 +324,28 @@ class EnsembleVariation:
         #process ensemble variation
         pass
 
+        
+    def make_weighted_struct(self, structure_list: Sara2StructureList):
+        is_bond_value: int = 2
+        not_bond_value: int = -1
+
+        nuc_poistion_values: List[int] = []
+        for nucIndex in range(structure_list.nuc_count):
+            nuc_poistion_values[nucIndex] = 0
+
+        for struct in structure_list.sara_stuctures:
+            for nucIndex in range(structure_list.nuc_count):
+                nuc_bond_type:str = struct.structure[nucIndex]
+                adder: int = 0
+                if nuc_bond_type == '.':
+                    adder = not_bond_value
+                else:
+                    adder = is_bond_value
+                nuc_poistion_values[nucIndex] = nuc_poistion_values[nucIndex] + adder
+        
+        
+        
+
     def process_ensemble_variation(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float, folded_2nd_state_structure:str='', target_2nd_state_structure:str=''):
         start_time=datetime.now()
         print(f'Starting test at {start_time}')

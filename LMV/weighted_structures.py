@@ -28,8 +28,9 @@ class WeightedStructures():
     def __init__(self) -> None:
         pass
 
-    def process_ensemble_group(self):
-        
+    def process_ensemble_group(self, structure_list: Sara2StructureList, kcal_start:float, kcal_stop:float, is_folded_mfe:bool):
+        pass
+
 
     def make_weighted_struct(self, structure_list: Sara2StructureList):
         is_bond_value: int = 2

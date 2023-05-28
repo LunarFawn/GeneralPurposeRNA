@@ -209,6 +209,8 @@ class EVResult():
 @dataclass
 class SingleEnsembleGroup():
     group: Sara2StructureList = Sara2StructureList()
+    multi_state_mfe: List[str] = []
+    isbound_multi_state_mfe_kcal: List[bool] = [] 
     has_bound_mfe_kcal: bool = False
     kcal_span: float = 0
     kcal_start: float = 0
@@ -227,6 +229,7 @@ class MultipleEnsembleGroups():
         if self.switched_state_mfe_kcal >= group.kcal_start and self.switched_state_mfe_kcal < group.kcal_end:
             group.has_bound_mfe_kcal = True
         self.groups.append(group)
+    
 
 class LMV_Token():
     def __init__(self, num_groups: int) -> None:

@@ -18,7 +18,14 @@ import collections
 
 import nupackAPI_Sara2_Ver2 as nupack_api
 from nupackAPI_Sara2_Ver2 import Sara2SecondaryStructure, Sara2StructureList, EnsembleVariation, EVResult
+import serena_sara2_api as serena_api
+from serena_sara2_api import SingleEnsembleGroup, MultipleEnsembleGroups
 
+@dataclass
+class WeightedResult():
+    weighted_struct: str = ''
+    comp_struct: str = ''
+    result_line: str = ''
 
 class WeightedStructures():
     """
@@ -28,8 +35,33 @@ class WeightedStructures():
     def __init__(self) -> None:
         pass
 
-    def process_ensemble_group(self, structure_list: Sara2StructureList, kcal_start:float, kcal_stop:float, is_folded_mfe:bool):
-        pass
+    def process_ensemble_group(self, ensemble: SingleEnsembleGroup, kcal_start:float, kcal_stop:float, is_folded_mfe:bool, num_states: int):
+        if num_states != 2:
+            message :str =  "only supports 2 states right now"
+            raise Exception(message)
+
+        #for 2 states do this        
+        group = ensemble.group
+        comp_struct:str =''
+        result_line:str = ''
+        try:
+            if group.num_structures > 0:
+                weighted_struct = self.make_weighted_struct(group)
+                comp_struct = self.compair_weighted_structure(ensemble.multi_state_mfe[0], ensemble.multi_state_mfe[1], 
+                                                                          weighted_struct, ensemble.group.nuc_count)                    
+            else:
+                comp_struct = "no structures in kcal group"
+        except Exception as error:
+            comp_struct = f'bad list Error:{error}'
+        
+        result_line: str = f'{round(kcal_start,2)} to {round(kcal_stop,2)} kcal:   {comp_struct}'
+        
+        weighted_result: WeightedResult = WeightedResult(weighted_struct=weighted_struct, 
+                                                         comp_struct=comp_struct, 
+                                                         result_line=result_line)
+        
+        return weighted_result
+
 
 
     def make_weighted_struct(self, structure_list: Sara2StructureList):

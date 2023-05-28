@@ -242,19 +242,16 @@ class EnsembleVariation():
     def __init__(self) -> None:
         pass
 
-    def get_ensemble_variation(self, ensemble: List[Sara2StructureList], state_source:int = 1):        
+    def get_ensemble_variation(self, ensemble: MultipleEnsembleGroups, state_source:int = 1):        
         #now process all the groups
        
-        source_mfe: SourceMFE = SourceMFE.UNBOUND
+        source_mfe: SourceMFE = SourceMFE.NONE
 
-        
-        
         #should be able to populate before hand and add to the group stuff i am working on
         #seams to push for the need a bit more
-        groups_dict: Dict[int, Sara2StructureList] = {}
-        group_values: List[float] = []
 
         if state_source == 1:    
+            source_mfe = SourceMFE.UNBOUND
             print(f'Begining LMV_U processing at {datetime.now()}')
         elif state_source == 2:
             source_mfe = SourceMFE.BOUND
@@ -269,8 +266,8 @@ class EnsembleVariation():
         group_ev_list: List[EV] = result_thread_LMV.group_results
         group_ev_dict: Dict[int,EV] = result_thread_LMV.group_dict
 
-        result_LMV_U_rel: EVResult = EVResult(groups_list=ensemble, groups_dict=groups_dict, 
-                                              group_values=group_values, group_ev_list=group_ev_list, 
+        result_LMV_U_rel: EVResult = EVResult(groups_list=ensemble.raw_groups, groups_dict=ensemble.groups_dict, 
+                                              group_values=ensemble.group_values, group_ev_list=group_ev_list, 
                                               group_ev_dict=group_ev_dict)
 
     def thread_EV(self, shuttle: LMV_Shuttle):

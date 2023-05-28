@@ -219,17 +219,70 @@ class SingleEnsembleGroup():
 class MultipleEnsembleGroups():
 
     def __init__(self, non_switch_kcal:float, non_switch_struct:str, switched_kcal:float, switched_struct:str) -> None:
-        self.groups: List[SingleEnsembleGroup] = []  
-        self.non_switch_state_mfe_kcal: float = non_switch_kcal
-        self.non_switch_state_structure: str = non_switch_struct
-        self.switched_state_mfe_kcal: float = switched_kcal
-        self.switched_state_structure: str = switched_struct
+        self._groups: List[SingleEnsembleGroup] = []  
+        self._raw_groups: List[Sara2StructureList] = []
+        self._non_switch_state_mfe_kcal: float = non_switch_kcal
+        self._non_switch_state_structure: str = non_switch_struct
+        self._switched_state_mfe_kcal: float = switched_kcal
+        self._switched_state_structure: str = switched_struct
+        self._groups_dict: Dict[int, Sara2StructureList] = {}
+        self._group_values: List[float] = []
     
-    def add_group(self, group:SingleEnsembleGroup):
-        if self.switched_state_mfe_kcal >= group.kcal_start and self.switched_state_mfe_kcal < group.kcal_end:
+    def add_group(self, group:SingleEnsembleGroup, group_index:int, value_of_group:float):
+        if self._switched_state_mfe_kcal >= group.kcal_start and self._switched_state_mfe_kcal < group.kcal_end:
             group.has_bound_mfe_kcal = True
-        self.groups.append(group)
+        self._groups.append(group)
+        self._raw_groups.append(group.group)
+        self._groups_dict[group_index]= group.group
+        self._group_values.append(value_of_group)
     
+    @property
+    def groups(self):
+        return self._groups
+    
+    @groups.setter
+    def groups(self, groupss:List[SingleEnsembleGroup]):
+        self._groups = groupss
+    
+    @property
+    def raw_groups(self):
+        return self._raw_groups
+    
+    @raw_groups.setter
+    def raw_groups(self, groupss:List[Sara2StructureList]):
+        self._raw_groups = groupss
+    
+    @property
+    def non_switch_state_mfe_kcal(self):
+        return self._non_switch_state_mfe_kcal
+    
+    @property
+    def non_switch_state_structure(self):
+        return self._non_switch_state_structure
+    
+    @property
+    def switched_state_mfe_kcal(self):
+        return self._switched_state_mfe_kcal
+    
+    @property
+    def switched_state_structure(self):
+        return self._switched_state_structure
+    
+    @property
+    def groups_dict(self):
+        return self._groups_dict
+    
+    @groups_dict.setter
+    def groups_dict(self, dict: Dict[int, Sara2StructureList]):
+        self._groups_dict = dict
+    
+    @property
+    def group_values(self):
+        return self._group_values
+    
+    @group_values.setter
+    def group_values(self, values :List[float]):
+        self._group_values = values
 
 class LMV_Token():
     def __init__(self, num_groups: int) -> None:

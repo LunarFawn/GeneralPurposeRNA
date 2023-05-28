@@ -29,7 +29,7 @@ class WeightedResult():
 
 class WeightedStructures():
     """
-    Class for strcuts
+    Class for struCts
     """
 
     def __init__(self) -> None:
@@ -50,9 +50,9 @@ class WeightedStructures():
                 comp_struct = self.compair_weighted_structure(ensemble.multi_state_mfe[0], ensemble.multi_state_mfe[1], 
                                                                           weighted_struct, ensemble.group.nuc_count)                    
             else:
-                comp_struct = "no structures in kcal group"
+                comp_struct = "EMPTY GROUP"
         except Exception as error:
-            comp_struct = f'bad list Error:{error}'
+            comp_struct = f'BAD GROUP Error:{error}'
         
         result_line: str = f'{round(kcal_start,2)} to {round(kcal_stop,2)} kcal:   {comp_struct}'
         

@@ -159,4 +159,3 @@ class WeightedStructures():
         
         return compared_struct
     
-    def 

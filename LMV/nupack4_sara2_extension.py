@@ -64,13 +64,13 @@ class NUPACK4Interface():
         my_model = Model(material=param, celsius=temp_C)
         return my_model
 
-    def GetPairProbs2DArray(self,mySequence, material_param:MaterialParameter, temp_C:int):
+    def GetPairProbs2DArray(self, sequence, material_param:MaterialParameter, temp_C:int):
         param: str = self.select_material_parameters(material_param)
         my_model = self.select_model(param, temp_C)
         #convert into form the named touple is expecting
         #pairs = List[List[float]]
         nucpairs = list()
-        pairsMatrix = pairs(strands=mySequence, model=my_model)
+        pairsMatrix = pairs(strands=sequence, model=my_model)
         pairsArray = pairsMatrix.to_array()
         for i in range(len(pairsArray)):
             nucpairs.append(list())
@@ -80,17 +80,17 @@ class NUPACK4Interface():
                 nucpairs[i].append(pairValue) 
         return nucpairs
 
-    def process_ensemble_variation_make_groups(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float, folded_2nd_state_structure:str='', target_2nd_state_structure:str=''):
+    def get_ensemble_groups(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float, folded_2nd_state_structure:str='', folded_2nd_state_kcal:float=0):
         start_time=datetime.now()
-        print(f'Starting test at {start_time}')
-        print("Getting subopt\n")
+        #print(f'Starting test at {start_time}')
+        #print("Getting subopt\n")
         nucs_lists:List[List[str]]
         span_structures: Sara2StructureList
         span_structures = self.get_subopt_energy_gap(sequence_string=sequence, energy_delta_from_MFE=kcal_delta_span_from_mfe)       
         mfe_energy:float =  span_structures.mfe_freeEnergy
         
         
-        print(f'Done with subopt gathering. {span_structures.num_structures} structures found\n')
+        #print(f'Done with subopt gathering. {span_structures.num_structures} structures found\n')
 
         #this is for increments of 1 kcal need to do fraction
         num_groups: int = int(kcal_delta_span_from_mfe / Kcal_unit_increments)
@@ -113,7 +113,7 @@ class NUPACK4Interface():
         #if remainder > 0:
         #    current_energy = current_energy + kcal_delta_span_from_mfe
         #    group_values.append(current_energy)
-        print(f'Processing group values {group_values} to \n')
+        #print(f'Processing group values {group_values} to \n')
         #now initialize the groups_list
         for index in range(len(group_values)-1):
             group: Sara2StructureList = Sara2StructureList()
@@ -139,18 +139,31 @@ class NUPACK4Interface():
                     groups_list[group_index].add_structure(sara_structure)
                     groups_index_used[group_index] = True            
     
-
+        ensemble_groups: MultipleEnsembleGroups = MultipleEnsembleGroups()
         for group_index in range(len(groups_list)):
+            this_group: SingleEnsembleGroup = SingleEnsembleGroup()
+            this_group.group = groups_list[group_index]
+            this_group.append_multi_state_mfe_data(span_structures.mfe_structure, span_structures.mfe_freeEnergy)
+            this_group.append_multi_state_mfe_data(folded_2nd_state_structure, folded_2nd_state_kcal)
+            this_group.kcal_span = Kcal_unit_increments
+            this_group.kcal_start = group_values[group_index] - Kcal_unit_increments
+            this_group.kcal_end = group_values[group_index]
             groups_dict[group_index] = groups_list[group_index]
-
+            ensemble_groups.groups = groups_list
+            ensemble_groups.raw_groups = groups_list
+            ensemble_groups.groups_dict = groups_dict
+            ensemble_groups.group_values = group_values
+            
+        return ensemble_groups
+    
     def get_subopt_energy_gap(self, material_param:MaterialParameter, temp_C:int, sequence_string, energy_delta_from_MFE: int):
         #run through subopt
         param: str = self.select_material_parameters(material_param)
         my_model = self.select_model(param, temp_C)
-        print(f'Starting subopt at {datetime.now()}')
+        #print(f'Starting subopt at {datetime.now()}')
         kcal_group_structures_list: Sara2StructureList = Sara2StructureList()
         ensemble_kcal_group= subopt(strands=sequence_string, model=my_model, energy_gap=energy_delta_from_MFE)
-        print(f'Completed subopt at {datetime.now()}')
+        #print(f'Completed subopt at {datetime.now()}')
         #get all the data out of it
         #list_of_nuc_lists: List[List[str]] = [[]]
         #num_nucs:int = len(sequence_string)

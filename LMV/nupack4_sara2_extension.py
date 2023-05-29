@@ -24,25 +24,49 @@ from nupackAPI_Sara2_Ver2 import Sara2SecondaryStructure, Sara2StructureList, En
 import serena_sara2_api as serena_api
 from serena_sara2_api import SingleEnsembleGroup, MultipleEnsembleGroups
 
-my_model = Model
+class MaterialParameter(Enum):
+    NONE: 0
 
-rna_model='rna95-nupack3'  
+    #"Based on [Mathews99] and [Lu06] with additional parameters [Xia98,Zuker03] including coaxial stacking [Mathews99,Turner10] and dangle stacking [Serra95,Zuker03,Turner10] in 1M Na+."
+    rna06_nupack4: 1
+    #"Based on [Serra95] with additional parameters [Zuker03] including coaxial stacking [Mathews99,Turner10] and dangle stacking [Serra95,Zuker03,Turner10] in 1M Na+."
+    rna95_nupack4: 2    
+    #"Parameters from [Mathews99] with terminal mismatch free energies in exterior loops and multiloops replaced by two dangle stacking free energies. Parameters are provided only for 37 ∘C."
+    rna99_nupack3: 3    
+    #"Same as rna95 except that terminal mismatch free energies in exterior loops and multiloops are replaced by two dangle stacking free energies."
+    rna95_nupack3: 4
+
 
 class NUPACK4Interface():
     """
-    Class for nupack4 interface for sara2 logic intended for serena packag
+    Class for nupack4 interface for sara2 logic intended for serena package
     """
 
     def __init__(self) -> None:
         pass
 
-    def SetModel(self, rna_model, temp_C):
-        my_model = Model(material=rna_model, celsius=int(temp_C))
+    def set_material_parameters(self, parameters:MaterialParameter):
+        param:str = ''
+        
+        match parameters :            
+            case MaterialParameter.rna06_nupack4:
+                param = "rna06"
+            case MaterialParameter.rna95_nupack4:
+                param = "rna95"
+            case MaterialParameter.rna99_nupack3:
+                param = "rna99-nupack3"
+            case MaterialParameter.rna95_nupack3:
+                param = "rna95-nupack3"
+        return param                                                      
+
+    def select_model(self, material_param:MaterialParameter, temp_C:int):
+        param: str = self.set_material_parameters(material_param)
+        my_model = Model(material=param, celsius=temp_C)
         return my_model
 
-
-    def GetPairProbs2DArray(self,mySequence, rna_model, temp_C ):
-        my_model = self.SetModel(rna_model, temp_C)
+    def GetPairProbs2DArray(self,mySequence, material_param:MaterialParameter, temp_C:int):
+        param: str = self.set_material_parameters(material_param)
+        my_model = self.select_model(param, temp_C)
         #convert into form the named touple is expecting
         #pairs = List[List[float]]
         nucpairs = list()
@@ -119,9 +143,10 @@ class NUPACK4Interface():
         for group_index in range(len(groups_list)):
             groups_dict[group_index] = groups_list[group_index]
 
-    def get_subopt_energy_gap(self, sequence_string, energy_delta_from_MFE: int):
-        #run through subopt 
-        my_model = self.SetModel(rna_model, 37)
+    def get_subopt_energy_gap(self, material_param:MaterialParameter, temp_C:int, sequence_string, energy_delta_from_MFE: int):
+        #run through subopt
+        param: str = self.set_material_parameters(material_param)
+        my_model = self.select_model(param, temp_C)
         print(f'Starting subopt at {datetime.now()}')
         kcal_group_structures_list: Sara2StructureList = Sara2StructureList()
         ensemble_kcal_group= subopt(strands=sequence_string, model=my_model, energy_gap=energy_delta_from_MFE)

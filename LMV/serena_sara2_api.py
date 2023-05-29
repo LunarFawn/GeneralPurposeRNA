@@ -269,7 +269,7 @@ class SingleEnsembleGroup():
     def kcal_end(self, kcal:float):
         self._kcal_end = kcal
     
-    def update_kcals(self, start:float, stop:float, span:float)
+    def update_kcals(self, start:float, stop:float, span:float):
         self._kcal_start = start
         self._kcal_end = stop
         self._kcal_span = span

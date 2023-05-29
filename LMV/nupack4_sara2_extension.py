@@ -45,7 +45,7 @@ class NUPACK4Interface():
     def __init__(self) -> None:
         pass
 
-    def set_material_parameters(self, parameters:MaterialParameter):
+    def select_material_parameters(self, parameters:MaterialParameter):
         param:str = ''
         
         match parameters :            
@@ -60,12 +60,12 @@ class NUPACK4Interface():
         return param                                                      
 
     def select_model(self, material_param:MaterialParameter, temp_C:int):
-        param: str = self.set_material_parameters(material_param)
+        param: str = self.select_material_parameters(material_param)
         my_model = Model(material=param, celsius=temp_C)
         return my_model
 
     def GetPairProbs2DArray(self,mySequence, material_param:MaterialParameter, temp_C:int):
-        param: str = self.set_material_parameters(material_param)
+        param: str = self.select_material_parameters(material_param)
         my_model = self.select_model(param, temp_C)
         #convert into form the named touple is expecting
         #pairs = List[List[float]]
@@ -145,7 +145,7 @@ class NUPACK4Interface():
 
     def get_subopt_energy_gap(self, material_param:MaterialParameter, temp_C:int, sequence_string, energy_delta_from_MFE: int):
         #run through subopt
-        param: str = self.set_material_parameters(material_param)
+        param: str = self.select_material_parameters(material_param)
         my_model = self.select_model(param, temp_C)
         print(f'Starting subopt at {datetime.now()}')
         kcal_group_structures_list: Sara2StructureList = Sara2StructureList()

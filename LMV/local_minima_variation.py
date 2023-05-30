@@ -94,7 +94,7 @@ def test_LMV():
 
         print("Enter Kcal delta span to look at")
         
-        span = '5'#input()
+        span = '8'#input()
         print(f'span is {span}')
 
         print("Enter kcal unit to plot by")

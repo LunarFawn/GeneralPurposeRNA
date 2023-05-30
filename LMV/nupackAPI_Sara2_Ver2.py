@@ -556,13 +556,19 @@ class EnsembleVariation:
             
             if last_unbound_ratio >=2 and last_bound_ratio >= 2 and bound_ratio >=2 and is_in_bound_range is True:
                 is_powerful_switch = True
+
+            if (last_unbound_ratio >= 2 and last_bound_ratio >= 2) and unbound_to_total_ratio <=.15 and is_in_bound_range is True:
+                is_powerful_switch = True
+
+            if bound_ratio >=  2 and unbound_to_total_ratio <=.15 and is_in_bound_range is True:
+                is_powerful_switch = True
             
         if is_good_switch is True:
             print("Functional Switch")
             if is_powerful_switch is True:
-                print('Its Powerfull')
+                print('High Fold Change Predicted')
             else:
-                print("its just functional.")
+                print("Low fold change predicted")
         else:
             print("Bad Switch")
 

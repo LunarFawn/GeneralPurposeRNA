@@ -63,17 +63,17 @@ def test_LMV():
 
     if debug is True:
         print("using debug")
-        sequence = 'GCCAUCGCAUGAGGAUAUGCUCCCGUUUCGGGAGCAGAAGGCAUGUCAUAAGACAUGAGGAUCACCCAUGUAGAUAAGAUGGCA'
+        sequence = 'AGAGACCUCACAGGAUAUGCUGGACUUUGUCCAGCAGAAGGGUGAAAACAUGAGGAUCACCCAUGUAUGGUCUCCAAAUUUAAU'
         target = '........(((......(((.............))).....)))........................................'
-        folded = '((((((.((((......((((((((...)))))))).....))))..((...(((((.((....)))))))..))..)))))).'
-        span = 5
-        units = 1
+        folded = '.((((((((((......((((((((...)))))))).....))))..(((((.((....)))))))..))))))..........'
+        span = 8
+        units = .5
         name = "09_eli"
         designID = 12345
         labname = "Tbox Round 1"
         folder_name:str = '/home/ubuntu/rna_analysis/tbox_round1/debug'
         ligand_oligo_energy:float = 10
-        folded_energy_ligoligo: float = -29
+        folded_energy_ligoligo: float = -28.8
         ligand_oligo_name:str = ''
         eterna_score:float = 100
         fold_change:float = 500
@@ -135,7 +135,7 @@ def test_LMV():
     switch_result_target: EVResult
     switch_result_folded: EVResult
 
-    ev_result_mfe, ev_result_rel, switch_result_target, switch_result_folded = EV_test.process_ensemble_variation(sequence, int(span), float(units), folded, target)
+    ev_result_mfe, ev_result_rel, switch_result_target, switch_result_folded = EV_test.process_ensemble_variation(sequence, int(span), float(units), folded, target, folded_energy_ligoligo)
 
     #print(ev_result.group_ev_list)
 

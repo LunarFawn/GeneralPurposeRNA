@@ -398,9 +398,13 @@ class EnsembleVariation:
         folded mfe and if it is not straight then it is more like the unbound mfe.
         """
         unbound:str = '|'
+        num_unbound:int = 0
         bound:str = '-'
+        num_bound:int = 0
         both:str = '+'
+        num_both:int = 0
         dot:str = '.'
+        num_dot:int = 0
         compared_struct:str = ''            
 
         for nuc_index in range(nuc_count):
@@ -408,22 +412,28 @@ class EnsembleVariation:
             unbound_nuc:str = unbound_mfe_struct[nuc_index]
             bound_nuc: str = bound_mfe_struct[nuc_index]
 
-            comp_nuc_symbol:str = dot
+            comp_nuc_symbol:str = ''
 
             if weighted_nuc == bound_nuc and weighted_nuc != unbound_nuc:
                 comp_nuc_symbol = bound
+                num_bound += 1
             elif weighted_nuc != bound_nuc and weighted_nuc == unbound_nuc:
                 comp_nuc_symbol = unbound
+                num_unbound += 1
             elif weighted_nuc == bound_nuc and weighted_nuc == unbound_nuc:
                 comp_nuc_symbol = both
+                num_both += 1
+            else:
+                comp_nuc_symbol = dot
+                num_dot += 1
             
             compared_struct = compared_struct + comp_nuc_symbol
         
-        return compared_struct
+        return compared_struct, num_bound, num_unbound
             
 
 
-    def process_ensemble_variation(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float, folded_2nd_state_structure:str='', target_2nd_state_structure:str=''):
+    def process_ensemble_variation(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float, folded_2nd_state_structure:str='', target_2nd_state_structure:str='', folded_kcal:float=0):
         start_time=datetime.now()
         print(f'Starting test at {start_time}')
         print("Getting subopt\n")
@@ -485,30 +495,53 @@ class EnsembleVariation:
 
         for group_index in range(len(groups_list)):
             groups_dict[group_index] = groups_list[group_index]
-        
+        bound: int = 0
+        unbound: int= 0
         print("whole span")
         new_struct = self.make_weighted_struct(span_structures)
-        print(new_struct)
+        comp_struct, bound, unbound = self.compair_weighted_structure(span_structures.sara_stuctures[0].structure, folded_2nd_state_structure, new_struct, span_structures.nuc_count)
+        print(comp_struct)
         print("mfe")
         print(span_structures.sara_stuctures[0].structure)
         print("folded")
         print(folded_2nd_state_structure)
         print("weighted structs per group")
         start_group_mfe:float = mfe_energy + 0.5
-        end_group_mfe:float = mfe_energy + Kcal_unit_increments
+        end_group_mfe:float = start_group_mfe + Kcal_unit_increments
+        bond_range_start:float = folded_kcal - 2
+        bond_range_end:float = folded_kcal + 2
+        last_unbound:float=0
+        last_bound:float=0
         for group in groups_list:
             comp_struct:str =''
             result:str = ''
+            is_in_bound_range: bool = False
+            modifier:str=''
             try:
                 if group.num_structures > 0:
                     new_struct = self.make_weighted_struct(group)
-                    comp_struct = self.compair_weighted_structure(span_structures.sara_stuctures[0].structure, folded_2nd_state_structure, new_struct, span_structures.nuc_count)                    
+                    comp_struct, bound, unbound = self.compair_weighted_structure(span_structures.sara_stuctures[0].structure, folded_2nd_state_structure, new_struct, span_structures.nuc_count)                    
+                    if start_group_mfe >= bond_range_start and start_group_mfe <= bond_range_end and end_group_mfe >= bond_range_start and end_group_mfe <= bond_range_end:
+                    #if folded_kcal >=start_group_mfe and folded_kcal <= end_group_mfe:
+                        is_in_bound_range == True
+                        modifier = '***'
                 else:
                     comp_struct = "no structures in kcal group"
             except Exception as error:
                 comp_struct = f'bad list Error:{error}'
             
-            line: str = f'{round(start_group_mfe,4)} to {round(end_group_mfe,4)} kcal:   {comp_struct}'
+            bound_ratio:float = bound/unbound
+            last_unbound_ratio = 0
+            last_bound_ratio = 0
+            if unbound != 0:
+                last_unbound_ratio:float = last_unbound/unbound 
+            if bound != 0:
+                last_bound_ratio:float = last_bound/bound 
+            
+            bound_stats: str = f'Ratio:{round(bound_ratio,1)}, BDrop:{round(last_bound_ratio,1)}, UDrop:{round(last_unbound_ratio,1)}, B:{bound},U{unbound}'
+            last_unbound = unbound
+            last_bound = bound
+            line: str = f'{modifier} {round(start_group_mfe,2)} to {round(end_group_mfe,2)} kcal: {bound_stats}  {comp_struct}'
             print (line)
             start_group_mfe = end_group_mfe
             end_group_mfe = start_group_mfe + Kcal_unit_increments

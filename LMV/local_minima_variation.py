@@ -63,17 +63,17 @@ def test_LMV():
 
     if debug is True:
         print("using debug")
-        sequence = 'AGAGACCUCACAGGAUAUGCUGGACUUUGUCCAGCAGAAGGGUGAAAACAUGAGGAUCACCCAUGUAUGGUCUCCAAAUUUAAU'
+        sequence = 'GUCAUCUCAUGAGGAUAUGCUCGGGUUUCCCGAGCAGAAGGCAUGUCAUACAUGAGGAUCACCCAUGUUGACAUUAAGAUUGUA'
         target = '........(((......(((.............))).....)))........................................'
-        folded = '.((((((((((......((((((((...)))))))).....))))..(((((.((....)))))))..))))))..........'
-        span = 8
+        folded = '........(((......((((((((...)))))))).....)))((((.(((((.((....)))))))))))............'
+        span = 5
         units = .5
         name = "09_eli"
         designID = 12345
         labname = "Tbox Round 1"
         folder_name:str = '/home/ubuntu/rna_analysis/tbox_round1/debug'
         ligand_oligo_energy:float = 10
-        folded_energy_ligoligo: float = -28.8
+        folded_energy_ligoligo: float = -23.7
         ligand_oligo_name:str = ''
         eterna_score:float = 100
         fold_change:float = 500

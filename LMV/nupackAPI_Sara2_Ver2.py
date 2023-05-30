@@ -512,6 +512,7 @@ class EnsembleVariation:
         bond_range_end:float = folded_kcal + 2
         last_unbound:float=0
         last_bound:float=0
+        is_good_switch = False
         for group in groups_list:
             comp_struct:str =''
             result:str = ''
@@ -523,7 +524,7 @@ class EnsembleVariation:
                     comp_struct, bound, unbound = self.compair_weighted_structure(span_structures.sara_stuctures[0].structure, folded_2nd_state_structure, new_struct, span_structures.nuc_count)                    
                     if start_group_mfe >= bond_range_start and start_group_mfe <= bond_range_end and end_group_mfe >= bond_range_start and end_group_mfe <= bond_range_end:
                     #if folded_kcal >=start_group_mfe and folded_kcal <= end_group_mfe:
-                        is_in_bound_range == True
+                        is_in_bound_range = True
                         modifier = '***'
                 else:
                     comp_struct = "no structures in kcal group"
@@ -535,8 +536,8 @@ class EnsembleVariation:
             last_bound_ratio = 0
             if unbound != 0:
                 last_unbound_ratio:float = last_unbound/unbound 
-            if bound != 0:
-                last_bound_ratio:float = last_bound/bound 
+            if last_bound != 0:
+                last_bound_ratio:float = bound/last_bound 
             
             bound_stats: str = f'Ratio:{round(bound_ratio,1)}, BDrop:{round(last_bound_ratio,1)}, UDrop:{round(last_unbound_ratio,1)}, B:{bound},U{unbound}'
             last_unbound = unbound
@@ -545,8 +546,15 @@ class EnsembleVariation:
             print (line)
             start_group_mfe = end_group_mfe
             end_group_mfe = start_group_mfe + Kcal_unit_increments
+
+            if (last_unbound_ratio >=2 or last_bound_ratio >= 2) and is_in_bound_range is True:
+                is_good_switch = True
+
             
-             
+        if is_good_switch is True:
+                print("Good Switch")
+        else:
+            print("Bad Switch")
 
 
 

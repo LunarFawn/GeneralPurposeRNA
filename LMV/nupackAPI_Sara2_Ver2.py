@@ -508,10 +508,12 @@ class EnsembleVariation:
         print("weighted structs per group")
         start_group_mfe:float = mfe_energy + 0.5
         end_group_mfe:float = start_group_mfe + Kcal_unit_increments
-        bond_range_start:float = folded_kcal - 2
-        bond_range_end:float = folded_kcal + 2
+        bond_range_start:float = folded_kcal - 3
+        bond_range_end:float = folded_kcal + 3
         last_unbound:float=0
         last_bound:float=0
+        is_functional_switch = False
+        is_powerful_switch = False
         is_good_switch = False
         for group in groups_list:
             comp_struct:str =''
@@ -530,16 +532,18 @@ class EnsembleVariation:
                     comp_struct = "no structures in kcal group"
             except Exception as error:
                 comp_struct = f'bad list Error:{error}'
-            
-            bound_ratio:float = bound/unbound
+            unbound_to_total_ratio:float = 0
+            bound_ratio: float = 0
             last_unbound_ratio = 0
             last_bound_ratio = 0
             if unbound != 0:
-                last_unbound_ratio:float = last_unbound/unbound 
+                last_unbound_ratio = last_unbound/unbound 
+                bound_ratio = bound/unbound
             if last_bound != 0:
-                last_bound_ratio:float = bound/last_bound 
-            
-            bound_stats: str = f'Ratio:{round(bound_ratio,1)}, BDrop:{round(last_bound_ratio,1)}, UDrop:{round(last_unbound_ratio,1)}, B:{bound},U{unbound}'
+                last_bound_ratio = bound/last_bound 
+            unbound_to_total_ratio = unbound/span_structures.nuc_count
+
+            bound_stats: str = f'BURatio:{round(bound_ratio,1)}, BRaise:{round(last_bound_ratio,2)}, UDrop:{round(last_unbound_ratio,2)}, UTotal:{round(unbound_to_total_ratio,2)} B:{bound}, U:{unbound}'
             last_unbound = unbound
             last_bound = bound
             line: str = f'{modifier} {round(start_group_mfe,2)} to {round(end_group_mfe,2)} kcal: {bound_stats}  {comp_struct}'
@@ -547,12 +551,18 @@ class EnsembleVariation:
             start_group_mfe = end_group_mfe
             end_group_mfe = start_group_mfe + Kcal_unit_increments
 
-            if (last_unbound_ratio >=2 or last_bound_ratio >= 2) and is_in_bound_range is True:
+            if (last_unbound_ratio >=2 or last_bound_ratio >= 2) and unbound_to_total_ratio <=.25 and is_in_bound_range is True:
                 is_good_switch = True
-
+            
+            if last_unbound_ratio >=2 and last_bound_ratio >= 2 and bound_ratio >=2 and is_in_bound_range is True:
+                is_powerful_switch = True
             
         if is_good_switch is True:
-                print("Good Switch")
+            print("Functional Switch")
+            if is_powerful_switch is True:
+                print('Its Powerfull')
+            else:
+                print("its just functional.")
         else:
             print("Bad Switch")
 

@@ -20,7 +20,7 @@ import numpy as np
 import nupackAPI_Sara2_Ver2 as nupack_api
 from nupackAPI_Sara2_Ver2 import Sara2SecondaryStructure, Sara2StructureList, EnsembleVariation, EVResult
 
-debug:bool = True
+debug:bool = False
 
 
 from bisect import bisect_left
@@ -63,9 +63,10 @@ def test_LMV():
 
     if debug is True:
         print("using debug")
-        sequence = 'GUCAUCUCAUGAGGAUAUGCUCGGGUUUCCCGAGCAGAAGGCAUGUCAUACAUGAGGAUCACCCAUGUUGACAUUAAGAUUGUA'
-        target = '........(((......(((.............))).....)))........................................'
-        folded = '........(((......((((((((...)))))))).....)))((((.(((((.((....)))))))))))............'
+        sequence = ''
+        target = ''
+        folded = ''
+        folded_energy_ligoligo: float = -29.5
         span = 5
         units = .5
         name = "09_eli"
@@ -73,7 +74,7 @@ def test_LMV():
         labname = "Tbox Round 1"
         folder_name:str = '/home/ubuntu/rna_analysis/tbox_round1/debug'
         ligand_oligo_energy:float = 10
-        folded_energy_ligoligo: float = -23.7
+        
         ligand_oligo_name:str = ''
         eterna_score:float = 100
         fold_change:float = 500
@@ -83,7 +84,7 @@ def test_LMV():
         sequence = input()
 
         print("Enter target structure")
-        target = input()
+        target = '........(((......(((.............))).....)))........................................' #input()
 
         print("Enter predicted 2nd state folded structure")
         folded = input()
@@ -93,21 +94,21 @@ def test_LMV():
 
         print("Enter Kcal delta span to look at")
         
-        span = '7'#input()
+        span = '5'#input()
         print(f'span is {span}')
 
         print("Enter kcal unit to plot by")
-        units = '.5' #input()
+        units = '1' #input()
         print(f'units is {units}')
 
         print("Enter design name")
-        name = input()
+        name = 'test'#input()
 
         print("Enter designID")
-        designID = int(input())
+        designID = '99'#int(input())
 
         print("Enter Lab Name")
-        labname = input()
+        labname = 'test'#input()
 
         print("Enter Eterna Score")
         eterna_score = float(input())
@@ -116,7 +117,7 @@ def test_LMV():
         fold_change = float(input())
 
         print("Enter Number of Clusters")
-        number_of_clusters = int(input())
+        number_of_clusters = -9 #int(input())
 
         
 

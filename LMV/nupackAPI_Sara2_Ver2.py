@@ -517,6 +517,32 @@ class EnsembleVariation:
         is_good_switch = False
         good_groups:List[Sara2StructureList] = []
         group_index: int = 0
+
+        switch_mfe_sub: Sara2SecondaryStructure = Sara2SecondaryStructure()
+        switch_mfe_sub.sequence=span_structures.sara_stuctures[0].sequence
+        switch_mfe_sub.structure=target_2nd_state_structure
+        switch_mfe_sub.freeEnergy=span_structures.sara_stuctures[0].freeEnergy
+        switch_mfe_sub.stackEnergy=span_structures.sara_stuctures[0].stackEnergy
+
+        LMV_US_thread_target: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct=switch_mfe_sub)       
+        result_thread_mfe:LMV_Token = LMV_US_thread_target.run_LMV()
+        
+        switch_mfe_sub_folded: Sara2SecondaryStructure = Sara2SecondaryStructure()
+        switch_mfe_sub_folded.sequence=span_structures.sara_stuctures[0].sequence
+        switch_mfe_sub_folded.structure=folded_2nd_state_structure
+        switch_mfe_sub_folded.freeEnergy=span_structures.sara_stuctures[0].freeEnergy
+        switch_mfe_sub_folded.stackEnergy=span_structures.sara_stuctures[0].stackEnergy
+
+        LMV_US_thread_folded: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct=switch_mfe_sub_folded)
+        result_thread_folded:LMV_Token = LMV_US_thread_folded.run_LMV()
+
+        group_ev_list_mfe: List[EV] = result_thread_mfe.group_results
+        group_ev_dict_mfe: Dict[int,EV] = result_thread_mfe.group_dict
+
+        group_ev_list_rel: List[EV] = result_thread_folded.group_results
+        group_ev_dict_rel: Dict[int,EV] = result_thread_folded.group_dict
+
+
         for group in groups_list:
             comp_struct:str =''
             result:str = ''
@@ -561,37 +587,30 @@ class EnsembleVariation:
             result_thread_LMV_comp:LMV_Token = LMV_comp_thread_folded.run_LMV()
 
             
-            switch_mfe_sub_folded.sequence=span_structures.sara_stuctures[0].sequence
-            switch_mfe_sub_folded.structure=span_structures.sara_stuctures[0].structure
-            switch_mfe_sub_folded.freeEnergy=span_structures.sara_stuctures[0].freeEnergy
-            switch_mfe_sub_folded.stackEnergy=span_structures.sara_stuctures[0].stackEnergy
-            #new_list: List[Sara2StructureList] = [group]
-            LMV_comp_mfe_thread_folded: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=[group],mfe_stuct=switch_mfe_sub_folded)
-            result_thread_LMV_comp_mfe:LMV_Token = LMV_comp_mfe_thread_folded.run_LMV()
-
+       
             comp_ev_list_target: List[EV] = result_thread_LMV_comp.group_results
-            compmfe__ev_list_target: List[EV] = result_thread_LMV_comp_mfe.group_results
+
             #print(comp_ev_list_target)
-            comp_ev_dict_target: Dict[int,EV] = result_thread_LMV_comp.group_dict
+
             ev_comp:float = comp_ev_list_target[0].ev_normalized
-            ev_mfe:float = compmfe__ev_list_target[0].ev_normalized
-            bound_stats =f'EV_C: {round(ev_comp,2)},EV_M: {round(ev_mfe,2)} {bound_stats}'  
+
+            bound_stats =f'EV_C: {round(ev_comp,2)},EV_F: {round(group_ev_list_rel[group_index],2)},EV_M: {round(group_ev_list_mfe[group_index],2)}, {bound_stats}'  
 
             
-            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.3 and ev_comp < ev_mfe and is_in_bound_range is True:
+            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.3 and ev_comp < group_ev_list_mfe[group_index] and is_in_bound_range is True:
                 is_good_switch = True
                 modifier = '@@@'
                 
             
-            if last_unbound_ratio >= limit and last_bound_ratio >= limit and bound_ratio >=2 and ev_comp < ev_mfe and  is_in_bound_range is True:
+            if last_unbound_ratio >= limit and last_bound_ratio >= limit and bound_ratio >=2 and ev_comp < group_ev_list_mfe[group_index] and  is_in_bound_range is True:
                 is_powerful_switch = True
                 modifier = "!!!"
 
-            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.2 and ev_comp < ev_mfe and is_in_bound_range is True:
+            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.2 and ev_comp < group_ev_list_mfe[group_index] and is_in_bound_range is True:
                 is_powerful_switch = True
                 modifier = '!!!'
 
-            if bound_ratio >=  limit and unbound_to_total_ratio <=.15 and ev_comp < ev_mfe and is_in_bound_range is True:
+            if bound_ratio >=  limit and unbound_to_total_ratio <=.15 and ev_comp < group_ev_list_mfe[group_index] and is_in_bound_range is True:
                 is_powerful_switch = True
                 modifier = '!!!'
                                 

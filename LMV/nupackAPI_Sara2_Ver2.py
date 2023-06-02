@@ -508,8 +508,8 @@ class EnsembleVariation:
         print("weighted structs per group")
         start_group_mfe:float = mfe_energy + 0.5
         end_group_mfe:float = start_group_mfe + Kcal_unit_increments
-        bond_range_start:float = folded_kcal - 2
-        bond_range_end:float = folded_kcal + 2
+        bond_range_start:float = folded_kcal - 3
+        bond_range_end:float = folded_kcal + 3
         last_unbound:float=0
         last_bound:float=0
         is_functional_switch = False
@@ -520,7 +520,7 @@ class EnsembleVariation:
 
         switch_mfe_sub: Sara2SecondaryStructure = Sara2SecondaryStructure()
         switch_mfe_sub.sequence=span_structures.sara_stuctures[0].sequence
-        switch_mfe_sub.structure=target_2nd_state_structure
+        switch_mfe_sub.structure=span_structures.sara_stuctures[0].structure
         switch_mfe_sub.freeEnergy=span_structures.sara_stuctures[0].freeEnergy
         switch_mfe_sub.stackEnergy=span_structures.sara_stuctures[0].stackEnergy
 
@@ -593,24 +593,25 @@ class EnsembleVariation:
             #print(comp_ev_list_target)
 
             ev_comp:float = comp_ev_list_target[0].ev_normalized
+            ev_comp_limit: float = 14
 
-            bound_stats =f'EV_C: {round(ev_comp,2)},EV_F: {round(group_ev_list_rel[group_index],2)},EV_M: {round(group_ev_list_mfe[group_index],2)}, {bound_stats}'  
+            bound_stats =f'EV_C: {round(ev_comp,2)}, EV_F: {round(group_ev_list_rel[group_index].ev_normalized,2)}, EV_M: {round(group_ev_list_mfe[group_index].ev_normalized,2)}, {bound_stats}'  
 
             
-            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.3 and ev_comp < group_ev_list_mfe[group_index] and is_in_bound_range is True:
+            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.3 and ev_comp < ev_comp_limit and is_in_bound_range is True:
                 is_good_switch = True
                 modifier = '@@@'
                 
             
-            if last_unbound_ratio >= limit and last_bound_ratio >= limit and bound_ratio >=2 and ev_comp < group_ev_list_mfe[group_index] and  is_in_bound_range is True:
+            if last_unbound_ratio >= limit and last_bound_ratio >= limit and bound_ratio >=2 and ev_comp < ev_comp_limit and  is_in_bound_range is True:
                 is_powerful_switch = True
                 modifier = "!!!"
 
-            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.2 and ev_comp < group_ev_list_mfe[group_index] and is_in_bound_range is True:
+            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.2 and ev_comp < ev_comp_limit and is_in_bound_range is True:
                 is_powerful_switch = True
                 modifier = '!!!'
 
-            if bound_ratio >=  limit and unbound_to_total_ratio <=.15 and ev_comp < group_ev_list_mfe[group_index] and is_in_bound_range is True:
+            if bound_ratio >=  limit and unbound_to_total_ratio <=.15 and ev_comp < ev_comp_limit and is_in_bound_range is True:
                 is_powerful_switch = True
                 modifier = '!!!'
                                 

@@ -20,7 +20,7 @@ import numpy as np
 import nupackAPI_Sara2_Ver2 as nupack_api
 from nupackAPI_Sara2_Ver2 import Sara2SecondaryStructure, Sara2StructureList, EnsembleVariation, EVResult
 
-debug:bool = False
+debug:bool = True
 
 
 from bisect import bisect_left
@@ -63,12 +63,12 @@ def test_LMV():
 
     if debug is True:
         print("using debug")
-        sequence = 'GAGCUGCAGACAGGAUAUGAGACCGCCACGGUCUCAGAAGGGUCAUGUUCUACAUGAGGAUCACCCAUGUCGGACAGCUCGAAG'
+        sequence = 'GCCAUCACAUGAGGAUAUGCUCCCGUUUCGGGAGCAGAAGGCGUGUCAUUAGACAUGAGGAUCACCCAUGUAGUUAAGAUGGCA'
         target = '........(((......(((.............))).....)))........................................'
-        folded = '((((....(((......((((((((...)))))))).....))).(((((.(((((.((....))))))).)))))))))....'
-        folded_energy_ligoligo: float = -29.5
+        folded = '(((((((((((......((((((((...)))))))).....)))))..(((((((((.((....)))))))..)))))))))).'
+        folded_energy_ligoligo: float = -29.2
         span = 6
-        units = 1
+        units = .5
         name = "09_eli"
         designID = 12345
         labname = "Tbox Round 1"

@@ -542,6 +542,8 @@ class EnsembleVariation:
         group_ev_list_rel: List[EV] = result_thread_folded.group_results
         group_ev_dict_rel: Dict[int,EV] = result_thread_folded.group_dict
 
+        mfe_pronounced_first_group:bool = False
+        is_off_on_switch: bool = False
 
         for group in groups_list:
             comp_struct:str =''
@@ -594,26 +596,38 @@ class EnsembleVariation:
 
             ev_comp:float = comp_ev_list_target[0].ev_normalized
             ev_comp_limit: float = 14
+            ev_mfe:float = group_ev_list_mfe[group_index].ev_normalized
+
+            if group_index == 0:
+                if ev_mfe <= ev_comp:
+                    mfe_pronounced_first_group = True
+            
+            if group_index == 1:
+                if ev_comp < ev_mfe and mfe_pronounced_first_group is True and is_in_bound_range is True:
+                    is_off_on_switch = True
+                    modifier = modifier + '+++'
+
 
             bound_stats =f'EV_C: {round(ev_comp,2)}, EV_F: {round(group_ev_list_rel[group_index].ev_normalized,2)}, EV_M: {round(group_ev_list_mfe[group_index].ev_normalized,2)}, {bound_stats}'  
 
             
             if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.3 and ev_comp < ev_comp_limit and is_in_bound_range is True:
                 is_good_switch = True
-                modifier = '@@@'
+                modifier = modifier + '@@@'
                 
             
-            if last_unbound_ratio >= limit and last_bound_ratio >= limit and bound_ratio >=2 and ev_comp < ev_comp_limit and  is_in_bound_range is True:
+            if last_unbound_ratio >= limit and last_bound_ratio >= limit and bound_ratio >=2 and ev_comp < ev_mfe and  is_in_bound_range is True:
                 is_powerful_switch = True
-                modifier = "!!!"
+                modifier = modifier + "!!!"
 
-            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.2 and ev_comp < ev_comp_limit and is_in_bound_range is True:
+            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.2 and ev_comp < ev_mfe and is_in_bound_range is True:
                 is_powerful_switch = True
-                modifier = '!!!'
+                modifier = modifier + '!!!'
 
-            if bound_ratio >=  limit and unbound_to_total_ratio <=.15 and ev_comp < ev_comp_limit and is_in_bound_range is True:
+            if bound_ratio >=  limit and unbound_to_total_ratio <=.15 and ev_comp < ev_mfe and is_in_bound_range is True:
                 is_powerful_switch = True
-                modifier = '!!!'
+                modifier = modifier + '!!!'
+            
                                 
 
             last_unbound = unbound
@@ -625,11 +639,11 @@ class EnsembleVariation:
             group_index = group_index +1
                 
             
-        if is_good_switch is True or is_powerful_switch is True:
+        if is_good_switch is True or is_powerful_switch is True  or is_off_on_switch is True:
             print("Functional Switch")
-            if is_powerful_switch is True:
+            if is_powerful_switch is True or is_off_on_switch is True:
                 print('High Fold Change Predicted')
-            else:
+            else:            
                 print("Low fold change predicted")
 
            

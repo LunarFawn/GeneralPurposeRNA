@@ -508,8 +508,8 @@ class EnsembleVariation:
         print("weighted structs per group")
         start_group_mfe:float = mfe_energy + 0.5
         end_group_mfe:float = start_group_mfe + Kcal_unit_increments
-        bond_range_start:float = folded_kcal - 3
-        bond_range_end:float = folded_kcal + 3
+        bond_range_start:float = folded_kcal - 2
+        bond_range_end:float = folded_kcal + 2
         last_unbound:float=0
         last_bound:float=0
         is_functional_switch = False

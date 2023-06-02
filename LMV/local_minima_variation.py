@@ -63,10 +63,10 @@ def test_LMV():
 
     if debug is True:
         print("using debug")
-        sequence = 'GCCAUCACGUGAGGAUAUGCUCCCGUUUCGGGAGCAGAAGGCAUGUCAUAAGACAUGAGGAUCACCCAUGUAGAUAAGAUGGCA'
+        sequence = 'GCCAUCACAUGAGGAUAUGCUCCCGUUUCGGGAGCAGAAGGCGUGUCAUUAGACAUGAGGAUCACCCAUGUAGUUAAGAUGGCA'
         target = '........(((......(((.............))).....)))........................................'
-        folded = '(((((((((((......((((((((...)))))))).....))))).((...(((((.((....)))))))..))..)))))).'
-        folded_energy_ligoligo: float = -29.9
+        folded = '(((((((((((......((((((((...)))))))).....)))))..(((((((((.((....)))))))..)))))))))).'
+        folded_energy_ligoligo: float = -29.2
         span = 6
         units = .5
         name = "09_eli"

@@ -578,39 +578,43 @@ class EnsembleVariation:
              
             limit: float = 1.5 
 
-            
-            switch_mfe_sub_folded: Sara2SecondaryStructure = Sara2SecondaryStructure()
-            switch_mfe_sub_folded.sequence=span_structures.sara_stuctures[0].sequence
-            switch_mfe_sub_folded.structure=new_struct
-            switch_mfe_sub_folded.freeEnergy=span_structures.sara_stuctures[0].freeEnergy
-            switch_mfe_sub_folded.stackEnergy=span_structures.sara_stuctures[0].stackEnergy
-            #new_list: List[Sara2StructureList] = [group]
-            LMV_comp_thread_folded: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=[group],mfe_stuct=switch_mfe_sub_folded)
-            result_thread_LMV_comp:LMV_Token = LMV_comp_thread_folded.run_LMV()
+            ev_comp:float = 0
+            ev_mfe: float = 0
+            if group.num_structures > 0:
+                
+                switch_mfe_sub_folded: Sara2SecondaryStructure = Sara2SecondaryStructure()
+                switch_mfe_sub_folded.sequence=span_structures.sara_stuctures[0].sequence
+                switch_mfe_sub_folded.structure=new_struct
+                switch_mfe_sub_folded.freeEnergy=span_structures.sara_stuctures[0].freeEnergy
+                switch_mfe_sub_folded.stackEnergy=span_structures.sara_stuctures[0].stackEnergy
+                #new_list: List[Sara2StructureList] = [group]
+                
+                LMV_comp_thread_folded: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=[group],mfe_stuct=switch_mfe_sub_folded)
+                result_thread_LMV_comp:LMV_Token = LMV_comp_thread_folded.run_LMV()
 
-            
-       
-            comp_ev_list_target: List[EV] = result_thread_LMV_comp.group_results
+                
+        
+                comp_ev_list_target: List[EV] = result_thread_LMV_comp.group_results
 
-            #print(comp_ev_list_target)
+                #print(comp_ev_list_target)
 
-            ev_comp:float = comp_ev_list_target[0].ev_normalized
-            ev_comp_limit: float = 14
-            ev_mfe:float = group_ev_list_mfe[group_index].ev_normalized
+                ev_comp = comp_ev_list_target[0].ev_normalized
+                ev_comp_limit: float = 14
+                ev_mfe = group_ev_list_mfe[group_index].ev_normalized
 
-            if group_index == 0:
-                if ev_mfe <= ev_comp:
-                    mfe_pronounced_first_group = True
-            
-            if group_index == 1:
-                if ev_comp < ev_mfe and mfe_pronounced_first_group is True and is_in_bound_range is True:
-                    is_off_on_switch = True
-                    modifier = modifier + '+++'
+                if group_index == 0:
+                    if ev_mfe <= ev_comp:
+                        mfe_pronounced_first_group = True
+                
+                if group_index == 1:
+                    if ev_comp < ev_mfe and mfe_pronounced_first_group is True and is_in_bound_range is True:
+                        is_off_on_switch = True
+                        modifier = modifier + '+++'
 
 
-            bound_stats =f'EV_C: {round(ev_comp,2)}, EV_F: {round(group_ev_list_rel[group_index].ev_normalized,2)}, EV_M: {round(group_ev_list_mfe[group_index].ev_normalized,2)}, {bound_stats}'  
+                bound_stats =f'EV_C: {round(ev_comp,2)}, EV_F: {round(group_ev_list_rel[group_index].ev_normalized,2)}, EV_M: {round(group_ev_list_mfe[group_index].ev_normalized,2)}, {bound_stats}'  
 
-            
+                
             if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.3 and ev_comp < ev_comp_limit and is_in_bound_range is True:
                 is_good_switch = True
                 modifier = modifier + '@@@'

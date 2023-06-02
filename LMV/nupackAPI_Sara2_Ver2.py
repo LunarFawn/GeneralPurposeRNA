@@ -508,13 +508,15 @@ class EnsembleVariation:
         print("weighted structs per group")
         start_group_mfe:float = mfe_energy + 0.5
         end_group_mfe:float = start_group_mfe + Kcal_unit_increments
-        bond_range_start:float = folded_kcal - 3
-        bond_range_end:float = folded_kcal + 3
+        bond_range_start:float = folded_kcal - 2
+        bond_range_end:float = folded_kcal + 2
         last_unbound:float=0
         last_bound:float=0
         is_functional_switch = False
         is_powerful_switch = False
         is_good_switch = False
+        good_groups:List[Sara2StructureList] = []
+        group_index: int = 0
         for group in groups_list:
             comp_struct:str =''
             result:str = ''
@@ -544,33 +546,75 @@ class EnsembleVariation:
             unbound_to_total_ratio = unbound/span_structures.nuc_count
 
             bound_stats: str = f'BURatio:{round(bound_ratio,1)}, BRaise:{round(last_bound_ratio,2)}, UDrop:{round(last_unbound_ratio,2)}, UTotal:{round(unbound_to_total_ratio,2)} B:{bound}, U:{unbound}'
+ 
+             
+            limit: float = 1.5 
+
+            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.3 and is_in_bound_range is True:
+                is_good_switch = True
+                modifier = '@@@'
+                
+            
+            if last_unbound_ratio >= limit and last_bound_ratio >= limit and bound_ratio >=2 and is_in_bound_range is True:
+                is_powerful_switch = True
+                modifier = "!!!"
+
+            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.2 and is_in_bound_range is True:
+                is_powerful_switch = True
+                modifier = '!!!'
+
+            if bound_ratio >=  limit and unbound_to_total_ratio <=.15 and is_in_bound_range is True:
+                is_powerful_switch = True
+                modifier = '!!!'
+                
+            
+            switch_mfe_sub_folded: Sara2SecondaryStructure = Sara2SecondaryStructure()
+            switch_mfe_sub_folded.sequence=span_structures.sara_stuctures[0].sequence
+            switch_mfe_sub_folded.structure=new_struct
+            switch_mfe_sub_folded.freeEnergy=span_structures.sara_stuctures[0].freeEnergy
+            switch_mfe_sub_folded.stackEnergy=span_structures.sara_stuctures[0].stackEnergy
+            #new_list: List[Sara2StructureList] = [group]
+            LMV_comp_thread_folded: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=[group],mfe_stuct=switch_mfe_sub_folded)
+            result_thread_LMV_comp:LMV_Token = LMV_comp_thread_folded.run_LMV()
+
+            
+            switch_mfe_sub_folded.sequence=span_structures.sara_stuctures[0].sequence
+            switch_mfe_sub_folded.structure=span_structures.sara_stuctures[0].structure
+            switch_mfe_sub_folded.freeEnergy=span_structures.sara_stuctures[0].freeEnergy
+            switch_mfe_sub_folded.stackEnergy=span_structures.sara_stuctures[0].stackEnergy
+            #new_list: List[Sara2StructureList] = [group]
+            LMV_comp_mfe_thread_folded: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=[group],mfe_stuct=switch_mfe_sub_folded)
+            result_thread_LMV_comp_mfe:LMV_Token = LMV_comp_mfe_thread_folded.run_LMV()
+
+            comp_ev_list_target: List[EV] = result_thread_LMV_comp.group_results
+            compmfe__ev_list_target: List[EV] = result_thread_LMV_comp_mfe.group_results
+            #print(comp_ev_list_target)
+            comp_ev_dict_target: Dict[int,EV] = result_thread_LMV_comp.group_dict
+            ev:float = comp_ev_list_target[0].ev_normalized
+            ev_mfe:float = compmfe__ev_list_target[0].ev_normalized
+            bound_stats =f'EV_C: {round(ev,2)},EV_M: {round(ev_mfe,2)} {bound_stats}'  
+                
+
             last_unbound = unbound
             last_bound = bound
             line: str = f'{modifier} {round(start_group_mfe,2)} to {round(end_group_mfe,2)} kcal: {bound_stats}  {comp_struct}'
             print (line)
             start_group_mfe = end_group_mfe
             end_group_mfe = start_group_mfe + Kcal_unit_increments
-
-            if (last_unbound_ratio >=2 or last_bound_ratio >= 2) and unbound_to_total_ratio <=.25 and is_in_bound_range is True:
-                is_good_switch = True
+            group_index = group_index +1
+                
             
-            if last_unbound_ratio >=2 and last_bound_ratio >= 2 and bound_ratio >=2 and is_in_bound_range is True:
-                is_powerful_switch = True
-
-            if (last_unbound_ratio >= 2 and last_bound_ratio >= 2) and unbound_to_total_ratio <=.15 and is_in_bound_range is True:
-                is_powerful_switch = True
-
-            if bound_ratio >=  2 and unbound_to_total_ratio <=.15 and is_in_bound_range is True:
-                is_powerful_switch = True
-            
-        if is_good_switch is True:
+        if is_good_switch is True or is_powerful_switch is True:
             print("Functional Switch")
             if is_powerful_switch is True:
                 print('High Fold Change Predicted')
             else:
                 print("Low fold change predicted")
+
+           
         else:
             print("Bad Switch")
+
 
 
 
@@ -948,7 +992,7 @@ class LMV_ThreadProcessor():
                 
         stop:bool = False
         while stop == False:
-            print(f'Checking LMV status at {datetime.now()}')
+            #print(f'Checking LMV status at {datetime.now()}')
             current_status: List[bool] = self.group_token.group_done_status
             is_done:bool = self.group_token.is_done
             
@@ -957,14 +1001,14 @@ class LMV_ThreadProcessor():
                 goup_value:str = self.group_token.group_values[index]
                 done_status: bool = self.group_token.group_done_status[index]
                 message = message + f'Group_{index+1}: kcal_group={goup_value}, status={done_status}\n'
-            print(message)
+            #print(message)
 
             if is_done == True:
                 stop = True
-                print(f'Its done at {datetime.now()}')
+                #print(f'Its done at {datetime.now()}')
             else:
                 dwell_time:int = 5
-                print(f'dwelling for {dwell_time} seconds until next check')
+                #print(f'dwelling for {dwell_time} seconds until next check')
                 time.sleep(dwell_time)
         
 

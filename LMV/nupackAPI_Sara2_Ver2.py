@@ -542,13 +542,18 @@ class EnsembleVariation:
         group_ev_list_rel: List[EV] = result_thread_folded.group_results
         group_ev_dict_rel: Dict[int,EV] = result_thread_folded.group_dict
 
+        bound_range_index_plus_one:List[int]=[]
+        found_bound_index:int = -1
+        found_bound_ratio_index: int = -1
+        found_bound_ratio_high_index: int = -1
+
         mfe_pronounced_first_group:bool = False
         is_off_on_switch: bool = False
         score:float = 0
         for group in groups_list:
             comp_struct:str =''
             result:str = ''
-            is_in_bound_range: bool = True
+            is_in_bound_range: bool = False
             modifier:str=''
             try:
                 if group.num_structures > 0:
@@ -558,6 +563,7 @@ class EnsembleVariation:
                     #if folded_kcal >=start_group_mfe and folded_kcal <= end_group_mfe:
                         is_in_bound_range = True
                         modifier = '***'
+                        bound_range_index_plus_one.append(group_index)
                 else:
                     comp_struct = "no structures in kcal group"
             except Exception as error:
@@ -608,16 +614,21 @@ class EnsembleVariation:
 
                 diff_limit:float = 1
 
-                if group_index == 0:
+
+                #if group_index == 1:
+                if mfe_pronounced_first_group is True:
                     diff:float = ev_mfe - ev_comp
-                    if ev_mfe <= ev_comp and diff >= diff_limit:
-                        mfe_pronounced_first_group = True
-                
-                if group_index == 1:
-                    diff:float = ev_comp - ev_mfe
-                    if ev_comp < ev_mfe and mfe_pronounced_first_group is True and is_in_bound_range is True and diff >= diff_limit:
+                    if ev_comp < ev_mfe and diff >= diff_limit:
                         is_off_on_switch = True
                         modifier = modifier + '+++'
+                        found_bound_index = group_index
+
+                #if group_index == 0:
+                diff:float = ev_comp - ev_mfe
+                if ev_mfe <= ev_comp and diff >= diff_limit:
+                    mfe_pronounced_first_group = True
+                
+                
                      
 
 
@@ -625,22 +636,26 @@ class EnsembleVariation:
 
 
                 
-            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.3 and ev_comp < ev_comp_limit and is_in_bound_range is True:
+            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.3 and ev_comp < ev_comp_limit:
                 is_good_switch = True
                 modifier = modifier + '@@@'
+                found_bound_ratio_index = group_index
                 
             
-            if last_unbound_ratio >= limit and last_bound_ratio >= limit and bound_ratio >=2 and ev_comp < ev_mfe and  is_in_bound_range is True:
+            if last_unbound_ratio >= limit and last_bound_ratio >= limit and bound_ratio >=2 and ev_comp < ev_mfe:
                 is_powerful_switch = True
                 modifier = modifier + "!!!"
+                found_bound_ratio_high_index = group_index
 
-            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.2 and ev_comp < ev_mfe and is_in_bound_range is True:
+            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.2 and ev_comp < ev_mfe:
                 is_powerful_switch = True
                 modifier = modifier + '!!!'
+                found_bound_ratio_high_index = group_index
 
-            if bound_ratio >=  limit and unbound_to_total_ratio <=.15 and ev_comp < ev_mfe and is_in_bound_range is True:
+            if bound_ratio >=  limit and unbound_to_total_ratio <=.15 and ev_comp < ev_mfe:
                 is_powerful_switch = True
                 modifier = modifier + '!!!'
+                found_bound_ratio_high_index = group_index
             
             
 
@@ -652,22 +667,38 @@ class EnsembleVariation:
             start_group_mfe = end_group_mfe
             end_group_mfe = start_group_mfe + Kcal_unit_increments
             group_index = group_index +1
-                
+
+        bound_range_min_minus_1: int = min(bound_range_index_plus_one) -1
+        bound_range_max_plus: int = max(bound_range_index_plus_one) + 1            
    
         if is_powerful_switch is True:
             print('High Fold Change Predicted')  
             score = score + 2
-        elif is_good_switch is True: 
+        
+        if is_good_switch is True: 
             print("Functional Switch")
             score = score + 1
         
         if is_off_on_switch is True:
-            print("off/on leaning design thus half point")
-            score= score + 0.5
+            print("off/on leaning design via LMV")
+            score= score + 1
+        
+        if found_bound_index >= bound_range_min_minus_1 and found_bound_index <= bound_range_max_plus and found_bound_index != -1:
+                print("Add a bonus for on/off via LMV being in range for folding")
+                score= score + 1
+        
+        if found_bound_ratio_index >= bound_range_min_minus_1 and found_bound_ratio_index <= bound_range_max_plus and found_bound_ratio_index != -1:
+                print("Add a bonus for functional being in range for folding")
+                score= score + 1
+
+        if found_bound_ratio_high_index >= bound_range_min_minus_1 and found_bound_ratio_high_index <= bound_range_max_plus and found_bound_ratio_high_index != -1:
+                print("Add a bonus for high performing being in range for folding")
+                score= score + 1
 
         if score == 0:
             print("Bad Switch")
-  
+
+        print(f'Score for group is {score}')
         return score
         #now process all the groups
         print(f'Begining LMV_U processing at {datetime.now()}')

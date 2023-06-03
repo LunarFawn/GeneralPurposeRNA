@@ -18,7 +18,7 @@ import collections
 
 my_model = Model
 
-rna_model='rna95-nupack3'    
+rna_model='rna06'    
 # Define physical model 
 
 class Sara2SecondaryStructure(object):
@@ -433,13 +433,13 @@ class EnsembleVariation:
             
 
 
-    def process_ensemble_variation(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float, folded_2nd_state_structure:str='', target_2nd_state_structure:str='', folded_kcal:float=0):
+    def process_ensemble_variation(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float, folded_2nd_state_structure:str='', target_2nd_state_structure:str='', folded_kcal:float=0, temp:int=37):
         start_time=datetime.now()
         print(f'Starting test at {start_time}')
         print("Getting subopt\n")
         nucs_lists:List[List[str]]
         span_structures: Sara2StructureList
-        span_structures = self.get_subopt_energy_gap(sequence_string=sequence, energy_delta_from_MFE=kcal_delta_span_from_mfe)       
+        span_structures = self.get_subopt_energy_gap(sequence_string=sequence, energy_delta_from_MFE=kcal_delta_span_from_mfe, temp=temp)       
         mfe_energy:float =  span_structures.mfe_freeEnergy
         
         
@@ -544,11 +544,11 @@ class EnsembleVariation:
 
         mfe_pronounced_first_group:bool = False
         is_off_on_switch: bool = False
-
+        score:float = 0
         for group in groups_list:
             comp_struct:str =''
             result:str = ''
-            is_in_bound_range: bool = False
+            is_in_bound_range: bool = True
             modifier:str=''
             try:
                 if group.num_structures > 0:
@@ -574,9 +574,13 @@ class EnsembleVariation:
             unbound_to_total_ratio = unbound/span_structures.nuc_count
 
             bound_stats: str = f'BURatio:{round(bound_ratio,1)}, BRaise:{round(last_bound_ratio,2)}, UDrop:{round(last_unbound_ratio,2)}, UTotal:{round(unbound_to_total_ratio,2)} B:{bound}, U:{unbound}'
- 
+
+            #if bound < 4:
+                #disable ability to pass if bound is less than 4
+                #idea is that you need a quad for a good bond
+            #    is_in_bound_range = False
              
-            limit: float = 1.5 
+            limit: float = 2 
 
             ev_comp:float = 0
             ev_mfe: float = 0
@@ -602,17 +606,23 @@ class EnsembleVariation:
                 ev_comp_limit: float = 14
                 ev_mfe = group_ev_list_mfe[group_index].ev_normalized
 
+                diff_limit:float = 1
+
                 if group_index == 0:
-                    if ev_mfe <= ev_comp:
+                    diff:float = ev_mfe - ev_comp
+                    if ev_mfe <= ev_comp and diff >= diff_limit:
                         mfe_pronounced_first_group = True
                 
                 if group_index == 1:
-                    if ev_comp < ev_mfe and mfe_pronounced_first_group is True and is_in_bound_range is True:
+                    diff:float = ev_comp - ev_mfe
+                    if ev_comp < ev_mfe and mfe_pronounced_first_group is True and is_in_bound_range is True and diff >= diff_limit:
                         is_off_on_switch = True
                         modifier = modifier + '+++'
+                     
 
 
                 bound_stats =f'EV_C: {round(ev_comp,2)}, EV_F: {round(group_ev_list_rel[group_index].ev_normalized,2)}, EV_M: {round(group_ev_list_mfe[group_index].ev_normalized,2)}, {bound_stats}'  
+
 
                 
             if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.3 and ev_comp < ev_comp_limit and is_in_bound_range is True:
@@ -632,7 +642,8 @@ class EnsembleVariation:
                 is_powerful_switch = True
                 modifier = modifier + '!!!'
             
-                                
+            
+
 
             last_unbound = unbound
             last_bound = bound
@@ -642,21 +653,22 @@ class EnsembleVariation:
             end_group_mfe = start_group_mfe + Kcal_unit_increments
             group_index = group_index +1
                 
-            
-        if is_good_switch is True or is_powerful_switch is True  or is_off_on_switch is True:
+   
+        if is_powerful_switch is True:
+            print('High Fold Change Predicted')  
+            score = score + 2
+        elif is_good_switch is True: 
             print("Functional Switch")
-            if is_powerful_switch is True or is_off_on_switch is True:
-                print('High Fold Change Predicted')
-            else:            
-                print("Low fold change predicted")
+            score = score + 1
+        
+        if is_off_on_switch is True:
+            print("off/on leaning design thus half point")
+            score= score + 0.5
 
-           
-        else:
+        if score == 0:
             print("Bad Switch")
-
-
-
-
+  
+        return score
         #now process all the groups
         print(f'Begining LMV_U processing at {datetime.now()}')
         LMV_U_thread_mfe: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct="mfe")
@@ -737,9 +749,9 @@ class EnsembleVariation:
         return result_LMV_U_mfe, result_LMV_U_rel, result_LMV_US_target, result_LMV_US_folded
 
 
-    def get_subopt_energy_gap(self, sequence_string, energy_delta_from_MFE: int):
+    def get_subopt_energy_gap(self, sequence_string, energy_delta_from_MFE: int, temp:int):
         #run through subopt 
-        my_model = SetModel(rna_model, 37)
+        my_model = SetModel(rna_model, temp)
         print(f'Starting subopt at {datetime.now()}')
         kcal_group_structures_list: Sara2StructureList = Sara2StructureList()
         ensemble_kcal_group= subopt(strands=sequence_string, model=my_model, energy_gap=energy_delta_from_MFE)

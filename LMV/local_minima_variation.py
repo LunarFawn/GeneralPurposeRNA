@@ -63,12 +63,12 @@ def test_LMV():
 
     if debug is True:
         print("using debug")
-        sequence = 'GCCAUCACAUGAGGAUAUGCUCCCGUUUCGGGAGCAGAAGGCGUGUCAUUAGACAUGAGGAUCACCCAUGUAGUUAAGAUGGCA'
+        sequence = 'GCCAUCACGUGAGGAUAUGCUCCCGUUUCGGGAGCAGAAGGCAUGUCAUAAGACAUGAGGAUCACCCAUGUAGAUAAGAUGGCA'
         target = '........(((......(((.............))).....)))........................................'
-        folded = '(((((((((((......((((((((...)))))))).....)))))..(((((((((.((....)))))))..)))))))))).'
-        folded_energy_ligoligo: float = -29.2
+        folded = '(((((((((((......((((((((...)))))))).....))))).((...(((((.((....)))))))..))..)))))).'
+        folded_energy_ligoligo: float = -29.9
         span = 6
-        units = .5
+        units = 1
         name = "09_eli"
         designID = 12345
         labname = "Tbox Round 1"
@@ -136,7 +136,24 @@ def test_LMV():
     switch_result_target: EVResult
     switch_result_folded: EVResult
 
-    ev_result_mfe, ev_result_rel, switch_result_target, switch_result_folded = EV_test.process_ensemble_variation(sequence, int(span), float(units), folded, target, folded_energy_ligoligo)
+    temp_1:int = 35
+    temp_2:int = 36
+    temp_3:int = 37
+    temp_4:int = 38
+    temp_5:int = 39
+
+    temp_list: List[int] = [32,33,34,35,36, 37, 38,39,40,41,42]
+    score_list:List[float] = []
+
+    score: float = 0
+    for temp in temp_list: 
+        print(f'Temp = {temp}')
+        value = EV_test.process_ensemble_variation(sequence, int(span), float(units), folded, target, folded_energy_ligoligo, temp)
+        score = score + value
+        score_list.append(value)
+   
+    print(f'Score is {score} of {len(temp_list)}')
+    print(score_list)
 
     #print(ev_result.group_ev_list)
 

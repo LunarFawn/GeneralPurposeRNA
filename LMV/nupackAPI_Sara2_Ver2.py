@@ -675,27 +675,27 @@ class EnsembleVariation:
             bound_range_max_plus: int = max(bound_range_index_plus_one) + 1            
    
         if is_powerful_switch is True:
-            print('High Fold Change Predicted')  
-            score = score + 2
+            print('Potential High Fold Change')  
+            #score = score + 1
         
         if is_good_switch is True: 
-            print("Functional Switch")
-            score = score + 1
+            print("Potential  Functional Switch")
+            #score = score + 1
         
         if is_off_on_switch is True:
-            print("off/on leaning design via LMV")
-            score= score + 1
+            print("Potential  off/on leaning design via LMV")
+            #score= score + 1
         
         if found_bound_index >= bound_range_min_minus_1 and found_bound_index <= bound_range_max_plus and found_bound_index != -1:
-                print("Add a bonus for on/off via LMV being in range for folding")
+                print("Confirmned good. Add point for on/off via LMV being in range for folding")
                 score= score + 1
         
         if found_bound_ratio_index >= bound_range_min_minus_1 and found_bound_ratio_index <= bound_range_max_plus and found_bound_ratio_index != -1:
-                print("Add a bonus for functional being in range for folding")
+                print("Confirmned good. Add point for functional being in range for folding")
                 score= score + 1
 
         if found_bound_ratio_high_index >= bound_range_min_minus_1 and found_bound_ratio_high_index <= bound_range_max_plus and found_bound_ratio_high_index != -1:
-                print("Add a bonus for high performing being in range for folding")
+                print("Confirmned good. Add point for high performing being in range for folding")
                 score= score + 1
 
         if score == 0:

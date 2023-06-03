@@ -667,9 +667,12 @@ class EnsembleVariation:
             start_group_mfe = end_group_mfe
             end_group_mfe = start_group_mfe + Kcal_unit_increments
             group_index = group_index +1
-
-        bound_range_min_minus_1: int = min(bound_range_index_plus_one) -1
-        bound_range_max_plus: int = max(bound_range_index_plus_one) + 1            
+        bound_range_min_minus_1: int = 0
+        bound_range_max_plus: int = 0
+        if len(bound_range_index_plus_one) > 0: 
+            bound_range_min_minus_1: int = min(bound_range_index_plus_one) -1
+        if len(bound_range_index_plus_one) > 0: 
+            bound_range_max_plus: int = max(bound_range_index_plus_one) + 1            
    
         if is_powerful_switch is True:
             print('High Fold Change Predicted')  

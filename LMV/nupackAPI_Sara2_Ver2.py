@@ -588,7 +588,7 @@ class EnsembleVariation:
                 #idea is that you need a quad for a good bond
             #    is_in_bound_range = False
              
-            limit: float = 1.75 
+            limit: float = 1.5 
 
             ev_comp:float = 0
             ev_mfe: float = 0

@@ -63,10 +63,10 @@ def test_LMV():
 
     if debug is True:
         print("using debug")
-        sequence = 'AUGGAUAUCACAGGAUAUGCUAAGGAUACCUUAGCAGAAGGGUGAUCCAUCCUAUGGCUGUACAUGAGGAUCACCCAUGUGUCA'
+        sequence = 'GCAAUAGCAUGAGGAUAUGCUGGAGUUUAGACAGCAGAAGGCAUGUCAUAAGACAUGAGGAUCACCCAUGUAGUUACAAUGGCA'
         target = '........(((......(((.............))).....)))........................................'
-        folded = '....(((((....)))))(((((((...)))))))....(((((((((....((((......)))).)))))))))........'
-        folded_energy_ligoligo: float = -30.0
+        folded = '...((.(((((......(((((.........))))).....))))).))...(((((.((....))))))).(((.....))).'
+        folded_energy_ligoligo: float = -18.7
         span = 6
         units = 1
         name = "09_eli"
@@ -152,14 +152,16 @@ def test_LMV():
         value = EV_test.process_ensemble_variation(sequence, int(span), float(units), folded, target, folded_energy_ligoligo, temp)
         score = score + value
         score_list.append(value)
-   
-    print(f'Score is {score} of {len(temp_list)}')
-    num_values: int = temp_list.count(0)
-    for index in range(num_values):
-        temp_list.remove(0)
-    print(f'Count of list is {len(temp_list)}')
-    print(score_list)
-
+    
+    num_scores: int = len(temp_list)
+    print(f'Raw score is {score} of {len(temp_list)}')
+    
+    num_zero_values: int = temp_list.count(0)
+    modified_score: float = (score - (num_zero_values * 2)) / num_scores
+    print(f'modified_score is {modified_score}')
+    
+    
+    
     #print(ev_result.group_ev_list)
 
     time_span: List[float] = []

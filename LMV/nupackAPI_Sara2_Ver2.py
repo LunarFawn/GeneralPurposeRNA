@@ -544,12 +544,14 @@ class EnsembleVariation:
 
         bound_range_index_plus_one:List[int]=[]
         found_bound_index:int = -1
+        found_bound_list:List[int] = []
         found_bound_ratio_index: int = -1
         found_bound_ratio_high_index: int = -1
 
         mfe_pronounced_first_group:bool = False
         is_off_on_switch: bool = False
         score:float = 0
+        stop_diff:bool =False
         for group in groups_list:
             comp_struct:str =''
             result:str = ''
@@ -579,7 +581,7 @@ class EnsembleVariation:
                 last_bound_ratio = bound/last_bound 
             unbound_to_total_ratio = unbound/span_structures.nuc_count
 
-            bound_stats: str = f'BURatio:{round(bound_ratio,1)}, BRaise:{round(last_bound_ratio,2)}, UDrop:{round(last_unbound_ratio,2)}, UTotal:{round(unbound_to_total_ratio,2)} B:{bound}, U:{unbound}'
+            bound_stats: str = f'BURatio:{round(bound_ratio,2)}, BRaise:{round(last_bound_ratio,2)}, UDrop:{round(last_unbound_ratio,2)}, UTotal:{round(unbound_to_total_ratio,2)} B:{bound}, U:{unbound}'
 
             #if bound < 4:
                 #disable ability to pass if bound is less than 4
@@ -612,20 +614,23 @@ class EnsembleVariation:
                 ev_comp_limit: float = 14
                 ev_mfe = group_ev_list_mfe[group_index].ev_normalized
 
-                diff_limit:float = 1
+                diff_limit:float = .5
 
-
+                
                 #if group_index == 1:
                 if mfe_pronounced_first_group is True:
-                    diff:float = ev_mfe - ev_comp
-                    if ev_comp < ev_mfe and diff >= diff_limit:
+                    diff:float = round(ev_mfe,2) - round(ev_comp,2)
+                    if round(ev_comp,2) < round(ev_mfe,2) and diff >= diff_limit:
                         is_off_on_switch = True
                         modifier = modifier + '+++'
-                        found_bound_index = group_index
+                        found_bound_list.append(group_index)
+                        if stop_diff is False:
+                            found_bound_index = group_index
+                        stop_diff = True
 
                 #if group_index == 0:
-                diff:float = ev_comp - ev_mfe
-                if ev_mfe <= ev_comp and diff >= diff_limit:
+                diff = round(ev_comp,2) - round(ev_mfe,2)
+                if round(ev_mfe,2) <= round(ev_comp,2) and diff >= diff_limit:
                     mfe_pronounced_first_group = True
                 
                 
@@ -634,7 +639,12 @@ class EnsembleVariation:
 
                 bound_stats =f'EV_C: {round(ev_comp,2)}, EV_F: {round(group_ev_list_rel[group_index].ev_normalized,2)}, EV_M: {round(group_ev_list_mfe[group_index].ev_normalized,2)}, {bound_stats}'  
 
-
+            last_unbound_ratio = round(last_bound_ratio,2)
+            last_bound_ratio = round(last_bound_ratio,2)
+            unbound_to_total_ratio = round(unbound_to_total_ratio,2)
+            bound_ratio = round(bound_ratio,2)
+            ev_comp = round(ev_comp,2)
+            ev_mfe = round(ev_mfe,2)
                 
             if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.3 and ev_comp < ev_comp_limit:
                 is_good_switch = True
@@ -676,27 +686,44 @@ class EnsembleVariation:
    
         if is_powerful_switch is True:
             print('Potential High Fold Change')  
-            #score = score + 1
+            score = score + 1
         
         if is_good_switch is True: 
             print("Potential  Functional Switch")
-            #score = score + 1
+            score = score + 1
         
         if is_off_on_switch is True:
             print("Potential  off/on leaning design via LMV")
-            #score= score + 1
+            score= score + 1
         
         if found_bound_index >= bound_range_min_minus_1 and found_bound_index <= bound_range_max_plus and found_bound_index != -1:
-                print("Confirmned good. Add point for on/off via LMV being in range for folding")
-                score= score + 1
+            print("Confirmned good. Add bonus point for on/off via LMV being in range for folding")
+            score= score + 1
+        elif found_bound_index <= 2 and found_bound_index != -1:
+            print("Confirmned good. Add bonus point for on/off via LMV being in first three groups")
+            score= score + .5
         
         if found_bound_ratio_index >= bound_range_min_minus_1 and found_bound_ratio_index <= bound_range_max_plus and found_bound_ratio_index != -1:
-                print("Confirmned good. Add point for functional being in range for folding")
-                score= score + 1
+            print("Confirmned good. Add bonus point for functional being in range for folding")
+            score= score + 1
+        elif found_bound_ratio_index >= 0 and found_bound_ratio_index <= 3 and found_bound_ratio_index != -1:
+            print("Confirmned good. Add bonus point for point for functional being in first two groups")
+            score= score + .5
 
         if found_bound_ratio_high_index >= bound_range_min_minus_1 and found_bound_ratio_high_index <= bound_range_max_plus and found_bound_ratio_high_index != -1:
-                print("Confirmned good. Add point for high performing being in range for folding")
-                score= score + 1
+            print("Confirmned good. Add bonus point for high performing being in range for folding")
+            score= score + 1
+        elif found_bound_ratio_high_index >= 0 and found_bound_ratio_high_index <= 3 and found_bound_ratio_high_index != -1:
+            print("Confirmned good. Add bonus point for high performing being in first two groups")
+            score= score + .5
+
+        if found_bound_ratio_high_index in found_bound_list:
+            print("Add bonus for high performing being in range of on/off prediction")
+            score= score + 1
+        
+        if found_bound_ratio_index in found_bound_list:
+            print("Add bonus for functional being in range of on/off prediction")
+            score= score + 1
 
         if score == 0:
             print("Bad Switch")

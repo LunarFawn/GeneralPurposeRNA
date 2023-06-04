@@ -154,6 +154,10 @@ def test_LMV():
         score_list.append(value)
    
     print(f'Score is {score} of {len(temp_list)}')
+    num_values: int = temp_list.count(0)
+    for index in range(num_values):
+        temp_list.remove(0)
+    print(f'Count of list is {len(temp_list)}')
     print(score_list)
 
     #print(ev_result.group_ev_list)

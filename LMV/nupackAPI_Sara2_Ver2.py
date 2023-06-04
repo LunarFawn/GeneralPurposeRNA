@@ -588,7 +588,7 @@ class EnsembleVariation:
                 #idea is that you need a quad for a good bond
             #    is_in_bound_range = False
              
-            limit: float = 2 
+            limit: float = 1.75 
 
             ev_comp:float = 0
             ev_mfe: float = 0
@@ -611,10 +611,10 @@ class EnsembleVariation:
                 #print(comp_ev_list_target)
 
                 ev_comp = comp_ev_list_target[0].ev_normalized
-                ev_comp_limit: float = 14
+                ev_comp_limit: float = 25
                 ev_mfe = group_ev_list_mfe[group_index].ev_normalized
 
-                diff_limit:float = .5
+                diff_limit:float = 1
 
                 
                 #if group_index == 1:
@@ -630,7 +630,7 @@ class EnsembleVariation:
 
                 #if group_index == 0:
                 diff = round(ev_comp,2) - round(ev_mfe,2)
-                if round(ev_mfe,2) <= round(ev_comp,2) and diff >= diff_limit:
+                if round(ev_mfe,2) <= round(ev_comp,2):# and (diff >= diff_limit or diff == 0):
                     mfe_pronounced_first_group = True
                 
                 
@@ -639,7 +639,7 @@ class EnsembleVariation:
 
                 bound_stats =f'EV_C: {round(ev_comp,2)}, EV_F: {round(group_ev_list_rel[group_index].ev_normalized,2)}, EV_M: {round(group_ev_list_mfe[group_index].ev_normalized,2)}, {bound_stats}'  
 
-            last_unbound_ratio = round(last_bound_ratio,2)
+            last_unbound_ratio = round(last_unbound_ratio,2)
             last_bound_ratio = round(last_bound_ratio,2)
             unbound_to_total_ratio = round(unbound_to_total_ratio,2)
             bound_ratio = round(bound_ratio,2)

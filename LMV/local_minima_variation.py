@@ -148,7 +148,7 @@ def test_LMV():
 
     score: float = 0
     for temp in temp_list: 
-        print(f'Temp = {temp}')
+        
         value = EV_test.process_ensemble_variation(sequence, int(span), float(units), folded, target, folded_energy_ligoligo, temp)
         score = score + value
         score_list.append(value)

@@ -552,6 +552,7 @@ class EnsembleVariation:
         found_bound_index:int = -1
         found_bound_list:List[int] = []
         found_bound_ratio_index: int = -1
+        found_bound_ratio_list: List[int] = []
         found_bound_ratio_high_index: int = -1
 
         mfe_pronounced_first_group:bool = False
@@ -564,6 +565,8 @@ class EnsembleVariation:
         analysis_list: List[str] = []
         struct_list:List[str] = []
  
+        is_good_count:int=0
+        is_excelent_copunt:int =0
         for group in groups_list:
             comp_struct:str =''
             result:str = ''
@@ -693,12 +696,15 @@ class EnsembleVariation:
                 is_good_switch = True
                 modifier = modifier + '@@@'
                 found_bound_ratio_index = group_index
+                found_bound_ratio_list.append(group_index)
+                is_good_count = is_good_count+1
                 
             
             if last_unbound_ratio >= limit and last_bound_ratio >= limit and bound_ratio >=2 and ev_comp < ev_mfe:
                 is_powerful_switch = True
                 modifier = modifier + "!!!"
                 found_bound_ratio_high_index = group_index
+                is_excelent_copunt = is_excelent_copunt +1
 
             if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.2 and ev_comp < ev_mfe:
                 is_powerful_switch = True
@@ -716,7 +722,9 @@ class EnsembleVariation:
                 found_bound_ratio_high_index = group_index
                 is_good_switch = True
                 modifier = modifier + '@@@'
+                is_good_count = is_good_count+1
                 found_bound_ratio_index = group_index
+                found_bound_ratio_list.append(group_index)
             
             
 
@@ -752,7 +760,7 @@ class EnsembleVariation:
         
         if is_good_switch is True: 
             print("Potential  Functional Switch")
-            score = score + .5
+            score = score + (len(found_bound_ratio_list)*.5)
         
         if is_off_on_switch is True:
             print("Potential  off/on leaning design via LMV")
@@ -764,13 +772,13 @@ class EnsembleVariation:
         elif found_bound_index <= 2 and found_bound_index != -1 and is_in_bound_range is True:
             print("Confirmned good. Add bonus point for on/off via LMV being in first three groups")
             score= score + .5
-        
-        if found_bound_ratio_index >= bound_range_min_minus_1 and found_bound_ratio_index <= bound_range_max_plus and found_bound_ratio_index != -1:
-            print("Confirmned good. Add bonus point for functional being in range for folding")
-            score= score + 1
-        elif found_bound_ratio_index >= 0 and found_bound_ratio_index <= 1 and found_bound_ratio_index != -1:
-            print("Confirmned good. Add bonus point for point for functional being in first two groups")
-            score= score + .5
+        for value in found_bound_ratio_list:
+            if value >= bound_range_min_minus_1 and value <= bound_range_max_plus and found_bound_ratio_index != -1:
+                print("Confirmned good. Add bonus point for functional being in range for folding")
+                score= score + 1
+            elif value >= 0 and value <= 1 and value != -1:
+                print("Confirmned good. Add bonus point for point for functional being in first two groups")
+                score= score + .5
 
         if found_bound_ratio_high_index >= bound_range_min_minus_1 and found_bound_ratio_high_index <= bound_range_max_plus and found_bound_ratio_high_index != -1 :
             print("Confirmned good. Add bonus point for high performing being in range for folding")

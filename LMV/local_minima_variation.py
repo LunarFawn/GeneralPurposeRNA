@@ -63,10 +63,10 @@ def test_LMV():
 
     if debug is True:
         print("using debug")
-        sequence = 'GCCAUCGCAUGAGGAUAUGCUCCCGUUUCGGGAGCAGAAGGCAUGUCACAAGACAUGAGGAUCACCCAUGUAGAUAAGAUGGCA'
+        sequence = 'GGUACUAUCACAGGAUAUGCUUUCCUUUGGGAAGCAGAAGGGUGUAACAUGAGGAUCACCCAUGUGGUGCCAGGGCGUGGGCCC'
         target = '........(((......(((.............))).....)))........................................'
-        folded = '((((((.((((......((((((((...)))))))).....))))((.....(((((.((....))))))).))...)))))).'
-        folded_energy_ligoligo: float = -27.4
+        folded = '(((((((.(((......((((((((...)))))))).....)))...((((.((....))))))))))))).((((....))))'
+        folded_energy_ligoligo: float = -27.2
         span = 6
         units = 1
         name = "09_eli"
@@ -160,9 +160,17 @@ def test_LMV():
     modified_score: float = (score - (num_zero_values)) / num_scores
     print(f'modified_score is {modified_score}')
     
+    max_fold_score:float = 3    
+    if modified_score > (max_fold_score+1):
+        #its probbaly only going to be in 2nd state state so give penatly
+        offset = modified_score - max_fold_score
+        modified_score = max_fold_score - offset
+
+
     why_not:float = (27/3)*modified_score
-    predicted_foldchange:str = f'Fold Change Predicted to be {why_not} if greater than 9. If less then expect negative numbers'
     
+    predicted_foldchange:str = f'Fold Change Predicted to be {why_not} if greater than 9. If less then expect negative numbers'
+    print(predicted_foldchange)
     #print(ev_result.group_ev_list)
 
     time_span: List[float] = []

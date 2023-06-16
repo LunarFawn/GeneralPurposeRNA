@@ -63,10 +63,10 @@ def test_LMV():
 
     if debug is True:
         print("using debug")
-        sequence = 'GCCAUCGCAUGAGGAUAUGCUCCCGUUUCGGGAGCAGAAGGCAUGUCAUAAGACAUGAGGAUCACCCAUGUAGAUAAGAUGGCA'
+        sequence = 'GCCAUCACAUGAGGAUAUGCUCCCGUUUCGGGAGCAGAAGGCGUGUCAUUAGACAUGAGGAUCACCCAUGUAGUUAAGAUGGCA'
         target = '........(((......(((.............))).....)))........................................'
-        folded = '((((((.((((......((((((((...)))))))).....))))..((...(((((.((....)))))))..))..)))))).'
-        folded_energy_ligoligo: float = -29.8
+        folded = '(((((((((((......((((((((...)))))))).....)))))..(((((((((.((....)))))))..)))))))))).'
+        folded_energy_ligoligo: float = -29.2
         span = 6
         units = 1
         name = "09_eli"
@@ -160,11 +160,13 @@ def test_LMV():
     modified_score: float = (score - (num_zero_values)) / num_scores
     print(f'modified_score is {modified_score}')
     
-    max_fold_score:float = 3    
-    if modified_score > (max_fold_score):
-        #its probbaly only going to be in 2nd state state so give penatly
-        offset = (modified_score - max_fold_score)
-        modified_score = max_fold_score - offset
+    do_offset: bool = False
+    if do_offset == True:
+        max_fold_score:float = 3    
+        if modified_score > (max_fold_score):
+            #its probbaly only going to be in 2nd state state so give penatly
+            offset = (modified_score - max_fold_score)
+            modified_score = max_fold_score - offset
 
 
     why_not:float = (27/2)*modified_score
@@ -176,7 +178,7 @@ def test_LMV():
     elif why_not < 1:
         predicted_foldchange:str = f'Bad Switch Predicted. Fold change predicterd to be {abs(2*modified_score)}..'
     else:
-        predicted_foldchange:str = f'Bad Switch Predicted. Fold Change Predicted to be between {why_not} and {why_not2}'
+        predicted_foldchange:str = f'Good and Bad Switch SchrodenState Predicted. Fold performance Predicted to be so high (29+), that it might be too high. \r My only form in 2nd state with 0 basescore and thus have bad fold change in wetlab. Probn KDON of ~150 and KDOFF off ~2ish'
     print(predicted_foldchange)
     #print(ev_result.group_ev_list)
 

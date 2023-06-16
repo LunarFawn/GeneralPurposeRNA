@@ -63,10 +63,10 @@ def test_LMV():
 
     if debug is True:
         print("using debug")
-        sequence = 'GCCAUCGCAUGAGGAUAUAAUCGGGUUUCCCGUUUAGAAGGCAUGUCAUAAGACAUGAGGAUCACCCAUGUAGUUAAGAUGGCA'
+        sequence = 'UGAGCGACCACAGGAUAUACUUGAGAAGACCGAGUAGAAGGGUGGAAGAGCGUGCAGUGACAUGAGGAUCACCCAUGUGGUUGU'
         target = '........(((......(((.............))).....)))........................................'
-        folded = '((((((.((((......(((.((((...)))).))).....))))...(((.(((((.((....)))))))..))).)))))).'
-        folded_energy_ligoligo: float = -21.8
+        folded = '....((((((((...(.((((((.......)))))).).((((((.....((((......))))....)))))).)))))))).'
+        folded_energy_ligoligo: float = -22.7
         span = 6
         units = 1
         name = "09_eli"
@@ -170,9 +170,11 @@ def test_LMV():
     why_not:float = (27/2)*modified_score
     why_not2:float = (27/3)*modified_score
     if why_not > 10:
-        predicted_foldchange:str = f'Good Switch Predicted. Fold change predicterd to be between {why_not} to {why_not2}.'
+        predicted_foldchange:str = f'Good Switch Predicted. Fold change predicterd to be between {why_not} and {why_not2}.'
+    elif why_not < 1:
+        predicted_foldchange:str = f'Good Switch Predicted. Fold change predicterd to be between {abs(2*why_not)} and {abs(2*why_not2)}.'
     else:
-        predicted_foldchange:str = f'Bad Switch Predicted. Fold Change Predicted to be between {9*why_not} to {9*why_not2}'
+        predicted_foldchange:str = f'Bad Switch Predicted. Fold Change Predicted to be between {9*why_not} and {9*why_not2}'
     print(predicted_foldchange)
     #print(ev_result.group_ev_list)
 

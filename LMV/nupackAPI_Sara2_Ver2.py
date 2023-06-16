@@ -429,7 +429,7 @@ class EnsembleVariation:
             
             compared_struct = compared_struct + comp_nuc_symbol
         
-        return compared_struct, num_bound, num_unbound
+        return compared_struct, num_bound, num_unbound, num_both, num_dot
             
 
 
@@ -497,9 +497,11 @@ class EnsembleVariation:
             groups_dict[group_index] = groups_list[group_index]
         bound: int = 0
         unbound: int= 0
+        both_nuc:int = 0
+        dot_nuc:int = 0 
         print("whole span")
         new_struct = self.make_weighted_struct(span_structures)
-        comp_struct, bound, unbound = self.compair_weighted_structure(span_structures.sara_stuctures[0].structure, folded_2nd_state_structure, new_struct, span_structures.nuc_count)
+        comp_struct, bound, unbound, both_nuc, dot_nuc = self.compair_weighted_structure(span_structures.sara_stuctures[0].structure, folded_2nd_state_structure, new_struct, span_structures.nuc_count)
         print(comp_struct)
         print("mfe")
         print(span_structures.sara_stuctures[0].structure)
@@ -508,10 +510,11 @@ class EnsembleVariation:
         print("weighted structs per group")
         start_group_mfe:float = mfe_energy + 0.5
         end_group_mfe:float = start_group_mfe + Kcal_unit_increments
-        bond_range_start:float = folded_kcal - 2
-        bond_range_end:float = folded_kcal + 2
+        bond_range_start:float = folded_kcal - 3
+        bond_range_end:float = folded_kcal + 3
         last_unbound:float=0
         last_bound:float=0
+        last_both: float = 0
         is_functional_switch = False
         is_powerful_switch = False
         is_good_switch = False
@@ -533,7 +536,7 @@ class EnsembleVariation:
         switch_mfe_sub_folded.freeEnergy=span_structures.sara_stuctures[0].freeEnergy
         switch_mfe_sub_folded.stackEnergy=span_structures.sara_stuctures[0].stackEnergy
 
-        LMV_US_thread_folded: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct=switch_mfe_sub_folded)
+        LMV_US_thread_folded: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct="rel")
         result_thread_folded:LMV_Token = LMV_US_thread_folded.run_LMV()
 
         group_ev_list_mfe: List[EV] = result_thread_mfe.group_results
@@ -552,6 +555,12 @@ class EnsembleVariation:
         is_off_on_switch: bool = False
         score:float = 0
         stop_diff:bool =False
+
+        bound_hold:int = -1
+
+        analysis_list: List[str] = []
+        struct_list:List[str] = []
+ 
         for group in groups_list:
             comp_struct:str =''
             result:str = ''
@@ -560,7 +569,7 @@ class EnsembleVariation:
             try:
                 if group.num_structures > 0:
                     new_struct = self.make_weighted_struct(group)
-                    comp_struct, bound, unbound = self.compair_weighted_structure(span_structures.sara_stuctures[0].structure, folded_2nd_state_structure, new_struct, span_structures.nuc_count)                    
+                    comp_struct, bound, unbound, both_nuc, dot_nuc = self.compair_weighted_structure(span_structures.sara_stuctures[0].structure, folded_2nd_state_structure, new_struct, span_structures.nuc_count)                    
                     if start_group_mfe >= bond_range_start and start_group_mfe <= bond_range_end and end_group_mfe >= bond_range_start and end_group_mfe <= bond_range_end:
                     #if folded_kcal >=start_group_mfe and folded_kcal <= end_group_mfe:
                         is_in_bound_range = True
@@ -574,14 +583,46 @@ class EnsembleVariation:
             bound_ratio: float = 0
             last_unbound_ratio = 0
             last_bound_ratio = 0
-            if unbound != 0:
+            last_both_ratio = 0
+            
+            try:
                 last_unbound_ratio = last_unbound/unbound 
+            except:
+                pass
+            try:
                 bound_ratio = bound/unbound
-            if last_bound != 0:
-                last_bound_ratio = bound/last_bound 
-            unbound_to_total_ratio = unbound/span_structures.nuc_count
+            except:
+                pass
+            try:
 
-            bound_stats: str = f'BURatio:{round(bound_ratio,2)}, BRaise:{round(last_bound_ratio,2)}, UDrop:{round(last_unbound_ratio,2)}, UTotal:{round(unbound_to_total_ratio,2)} B:{bound}, U:{unbound}'
+                if bound_hold != -1:
+                    #do normal                    
+                    if bound_hold < last_bound: 
+                        if bound_hold == 0:
+                            bound_hold = 1                   
+                        last_bound_ratio = bound/bound_hold 
+                    else:
+                        last_bound_ratio = bound/last_bound 
+                else:
+                    last_bound_ratio = bound/last_bound
+
+                if bound > last_bound:
+                    #its getting bigger so record that
+                    bound_hold = last_bound   
+                else:
+                    bound_hold = -1    
+            except:
+                pass
+            try:
+                last_both_ratio = both_nuc/last_both 
+            except:
+                pass
+            unbound_to_total_ratio = unbound/span_structures.nuc_count
+            bound_to_total_ratio = bound/span_structures.nuc_count
+            both_nuc_total= both_nuc/span_structures.nuc_count
+            dot_nuc_total= dot_nuc/span_structures.nuc_count
+
+            bound_stats: str = f'BURatio:{round(bound_ratio,2)},both_Raise:{round(last_both_ratio,2)} BRaise:{round(last_bound_ratio,2)}, UDrop:{round(last_unbound_ratio,2)},BothTotal:{round(both_nuc_total,2)}, BoundTotal:{round(bound_to_total_ratio,2)}, UTotal:{round(unbound_to_total_ratio,2)} B:{bound}, U:{unbound}. both:{both_nuc}'
 
             #if bound < 4:
                 #disable ability to pass if bound is less than 4
@@ -603,7 +644,6 @@ class EnsembleVariation:
                 
                 LMV_comp_thread_folded: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=[group],mfe_stuct=switch_mfe_sub_folded)
                 result_thread_LMV_comp:LMV_Token = LMV_comp_thread_folded.run_LMV()
-
                 
         
                 comp_ev_list_target: List[EV] = result_thread_LMV_comp.group_results
@@ -637,7 +677,7 @@ class EnsembleVariation:
                      
 
 
-                bound_stats =f'EV_C: {round(ev_comp,2)}, EV_F: {round(group_ev_list_rel[group_index].ev_normalized,2)}, EV_M: {round(group_ev_list_mfe[group_index].ev_normalized,2)}, {bound_stats}'  
+                bound_stats =f'EV_C: {round(ev_comp,2)}, EV_R: {round(group_ev_list_rel[group_index].ev_normalized,2)}, EV_M: {round(group_ev_list_mfe[group_index].ev_normalized,2)}, {bound_stats}'  
 
             last_unbound_ratio = round(last_unbound_ratio,2)
             last_bound_ratio = round(last_bound_ratio,2)
@@ -646,7 +686,7 @@ class EnsembleVariation:
             ev_comp = round(ev_comp,2)
             ev_mfe = round(ev_mfe,2)
                 
-            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.3 and ev_comp < ev_comp_limit:
+            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.3 and ev_comp < ev_comp_limit and bound > 2:
                 is_good_switch = True
                 modifier = modifier + '@@@'
                 found_bound_ratio_index = group_index
@@ -667,53 +707,72 @@ class EnsembleVariation:
                 modifier = modifier + '!!!'
                 found_bound_ratio_high_index = group_index
             
+            if last_bound_ratio > 3 and ev_comp < ev_mfe:
+                is_powerful_switch = True
+                modifier = modifier + '!!!'
+                found_bound_ratio_high_index = group_index
+                is_good_switch = True
+                modifier = modifier + '@@@'
+                found_bound_ratio_index = group_index
+            
             
 
 
             last_unbound = unbound
             last_bound = bound
-            line: str = f'{modifier} {round(start_group_mfe,2)} to {round(end_group_mfe,2)} kcal: {bound_stats}  {comp_struct}'
-            print (line)
+            last_both = both_nuc
+            analysis_list.append(bound_stats)
+            line: str = f'{round(start_group_mfe,2)} to {round(end_group_mfe,2)} kcal: {comp_struct} :: {modifier} '
+            struct_list.append(line)
+            #print (line)
             start_group_mfe = end_group_mfe
             end_group_mfe = start_group_mfe + Kcal_unit_increments
             group_index = group_index +1
+        
+        for thing in analysis_list:
+            print(thing)
+        
+        for thing in struct_list:
+            print(thing)
+
         bound_range_min_minus_1: int = 0
         bound_range_max_plus: int = 0
+        bound_good_range_modifier:int = 0 
         if len(bound_range_index_plus_one) > 0: 
-            bound_range_min_minus_1: int = min(bound_range_index_plus_one) -1
+            bound_range_min_minus_1: int = min(bound_range_index_plus_one) - bound_good_range_modifier
         if len(bound_range_index_plus_one) > 0: 
-            bound_range_max_plus: int = max(bound_range_index_plus_one) + 1            
+            bound_range_max_plus: int = max(bound_range_index_plus_one) + bound_good_range_modifier            
    
         if is_powerful_switch is True:
             print('Potential High Fold Change')  
-            score = score + 1
+            score = score + .5
         
         if is_good_switch is True: 
             print("Potential  Functional Switch")
-            score = score + 1
+            score = score + .5
         
         if is_off_on_switch is True:
             print("Potential  off/on leaning design via LMV")
-            score= score + 1
+            score= score + .5
         
-        if found_bound_index >= bound_range_min_minus_1 and found_bound_index <= bound_range_max_plus and found_bound_index != -1:
+        if found_bound_index >= bound_range_min_minus_1 and found_bound_index <= bound_range_max_plus and found_bound_index != -1 and is_off_on_switch is True:
             print("Confirmned good. Add bonus point for on/off via LMV being in range for folding")
             score= score + 1
-        elif found_bound_index <= 2 and found_bound_index != -1:
+        elif found_bound_index <= 2 and found_bound_index != -1 and is_in_bound_range is True:
             print("Confirmned good. Add bonus point for on/off via LMV being in first three groups")
             score= score + .5
         
         if found_bound_ratio_index >= bound_range_min_minus_1 and found_bound_ratio_index <= bound_range_max_plus and found_bound_ratio_index != -1:
             print("Confirmned good. Add bonus point for functional being in range for folding")
             score= score + 1
-        elif found_bound_ratio_index >= 0 and found_bound_ratio_index <= 3 and found_bound_ratio_index != -1:
+        elif found_bound_ratio_index >= 0 and found_bound_ratio_index <= 1 and found_bound_ratio_index != -1:
             print("Confirmned good. Add bonus point for point for functional being in first two groups")
             score= score + .5
 
-        if found_bound_ratio_high_index >= bound_range_min_minus_1 and found_bound_ratio_high_index <= bound_range_max_plus and found_bound_ratio_high_index != -1:
+        if found_bound_ratio_high_index >= bound_range_min_minus_1 and found_bound_ratio_high_index <= bound_range_max_plus and found_bound_ratio_high_index != -1 :
             print("Confirmned good. Add bonus point for high performing being in range for folding")
             score= score + 1
-        elif found_bound_ratio_high_index >= 0 and found_bound_ratio_high_index <= 3 and found_bound_ratio_high_index != -1:
+        elif found_bound_ratio_high_index >= 0 and found_bound_ratio_high_index <= 1 and found_bound_ratio_high_index != -1:
             print("Confirmned good. Add bonus point for high performing being in first two groups")
             score= score + .5
 

@@ -63,11 +63,11 @@ def test_LMV():
 
     if debug is True:
         print("using debug")
-        sequence = 'GCCAUCACAUGAGGAUAUGCUCCCGUUUCGGGAGCAGAAGGCGUGUCAUUAGACAUGAGGAUCACCCAUGUAGUUAAGAUGGCA'
+        sequence = 'GCCAUCGCAUGAGGAUAUGCUCCCGUUUCGGGAGCAGAAGGCAUGUCACAAGACAUGAGGAUCACCCAUGUAGAUAAGAUGGCA'
         target = '........(((......(((.............))).....)))........................................'
-        folded = '(((((((((((......((((((((...)))))))).....)))))..(((((((((.((....)))))))..)))))))))).'
-        folded_energy_ligoligo: float = -29.2
-        span = 6
+        folded = '((((((.((((......((((((((...)))))))).....))))((.....(((((.((....))))))).))...)))))).'
+        folded_energy_ligoligo: float = -27.4
+        span = 7
         units = 1
         name = "09_eli"
         designID = 12345
@@ -160,7 +160,7 @@ def test_LMV():
     modified_score: float = (score - (num_zero_values)) / num_scores
     print(f'modified_score is {modified_score}')
     
-    do_offset: bool = True
+    do_offset: bool = False
     if do_offset == True:
         max_fold_score:float = 3    
         if modified_score > (max_fold_score):
@@ -171,14 +171,15 @@ def test_LMV():
 
     why_not:float = (27/2)*modified_score
     why_not2:float = (27/3)*modified_score
-    if why_not > 10:
-        predicted_foldchange:str = f'Good Switch Predicted. Fold change predicterd to be between {why_not} and {why_not2}.'
-    elif why_not == -1:
-        predicted_foldchange:str = f'Bad Switch Predicted. Fold Change Predicted to be between {2} and {9}'
-    elif why_not < 1:
-        predicted_foldchange:str = f'Bad Switch Predicted. Fold change predicterd to be {abs(2*modified_score)}..'
+    if modified_score > 5:
+        predicted_foldchange:str = f'Good and Bad Switch SchrodenState Predicted. Fold performance Predicted to be so high (20s) that it might be too high. \nMight only form in 2nd state with low basescore and thus have bad fold change in wetlab. Probn KDON of ~150 and KDOFF off ~2ish'
     else:
-        predicted_foldchange:str = f'Good and Bad Switch SchrodenState Predicted. Fold performance Predicted to be so high (29+) \n that it might be too high. Might only form in 2nd state with 0 basescore and thus have bad fold change in wetlab. Probn KDON of ~150 and KDOFF off ~2ish'
+        if why_not > 10:
+            predicted_foldchange:str = f'Good Switch Predicted. Fold change predicterd to be between {why_not} and {why_not2}.'
+        elif why_not == -1:
+            predicted_foldchange:str = f'Unkown Switch Predicted. score of 0 for all temperatures so could be unkown fold to energy model or a really bad design'
+        elif why_not < 1:
+            predicted_foldchange:str = f'Bad Switch Predicted. Fold change predicterd to be {abs(2*modified_score)}..'
     print(predicted_foldchange)
     #print(ev_result.group_ev_list)
 

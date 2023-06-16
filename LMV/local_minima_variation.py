@@ -63,10 +63,10 @@ def test_LMV():
 
     if debug is True:
         print("using debug")
-        sequence = 'GGUACUAUCACAGGAUAUGCUUUCCUUUGGGAAGCAGAAGGGUGUAACAUGAGGAUCACCCAUGUGGUGCCAGGGCGUGGGCCC'
+        sequence = 'GCCAUCGCAUGAGGAUAUAAUCGGGUUUCCCGUUUAGAAGGCAUGUCAUAAGACAUGAGGAUCACCCAUGUAGUUAAGAUGGCA'
         target = '........(((......(((.............))).....)))........................................'
-        folded = '(((((((.(((......((((((((...)))))))).....)))...((((.((....))))))))))))).((((....))))'
-        folded_energy_ligoligo: float = -27.2
+        folded = '((((((.((((......(((.((((...)))).))).....))))...(((.(((((.((....)))))))..))).)))))).'
+        folded_energy_ligoligo: float = -21.8
         span = 6
         units = 1
         name = "09_eli"
@@ -161,15 +161,17 @@ def test_LMV():
     print(f'modified_score is {modified_score}')
     
     max_fold_score:float = 3    
-    if modified_score > (max_fold_score+1):
+    if modified_score > (max_fold_score):
         #its probbaly only going to be in 2nd state state so give penatly
-        offset = modified_score - max_fold_score
+        offset = (modified_score - max_fold_score)
         modified_score = max_fold_score - offset
 
 
     why_not:float = (27/3)*modified_score
-    
-    predicted_foldchange:str = f'Fold Change Predicted to be {why_not} if greater than 9. If less then expect negative numbers'
+    if why_not > 10:
+        predicted_foldchange:str = f'Good Switch Predicted. Fold change predicterd to be {why_not} if greater than 10. If less then expect closer to 1'
+    else:
+        predicted_foldchange:str = f'Bad Switch Predicted. Fold Change Predicted to be {9*why_not}'
     print(predicted_foldchange)
     #print(ev_result.group_ev_list)
 

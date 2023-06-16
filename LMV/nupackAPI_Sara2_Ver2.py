@@ -434,6 +434,8 @@ class EnsembleVariation:
 
 
     def process_ensemble_variation(self, sequence:str, kcal_delta_span_from_mfe:int, Kcal_unit_increments: float, folded_2nd_state_structure:str='', target_2nd_state_structure:str='', folded_kcal:float=0, temp:int=37):
+        print(f'Start of Temperature')
+        print(f'*******************')
         start_time=datetime.now()
         print(f'Starting test at {start_time}')
         print("Getting subopt\n")
@@ -788,6 +790,8 @@ class EnsembleVariation:
             print("Bad Switch")
 
         print(f'Score for group is {score}')
+        print(f'End of temperature')
+        print(f'*******************')
         return score
         #now process all the groups
         print(f'Begining LMV_U processing at {datetime.now()}')

@@ -63,10 +63,10 @@ def test_LMV():
 
     if debug is True:
         print("using debug")
-        sequence = 'GCCAUCGCAUGAGGAUAUGCUCCCGUUUCGGGAGCAGAAGGCAUGUCACAAGACAUGAGGAUCACCCAUGUAGAUAAGAUGGCA'
+        sequence = 'GCCAUCACGUGAGGAUAUGCUCCCGUUUCGGGAGCAGAAGGCAUGUCAUAAGACAUGAGGAUCACCCAUGUAGAUAAGAUGGCA'
         target = '........(((......(((.............))).....)))........................................'
-        folded = '((((((.((((......((((((((...)))))))).....))))((.....(((((.((....))))))).))...)))))).'
-        folded_energy_ligoligo: float = -27.4
+        folded = '(((((((((((......((((((((...)))))))).....))))).((...(((((.((....)))))))..))..)))))).'
+        folded_energy_ligoligo: float = -29.9
         span = 7
         units = 1
         name = "09_eli"
@@ -170,7 +170,7 @@ def test_LMV():
 
 
     why_not:float = (27/2)*modified_score
-    why_not2:float = (27/3)*modified_score
+    why_not2:float = (27/4.5)*modified_score
     if modified_score > 5:
         predicted_foldchange:str = f'Good and Bad Switch SchrodenState Predicted. Fold performance Predicted to be so high (20s) that it might be too high. \nMight only form in 2nd state with low basescore and thus have bad fold change in wetlab. Probn KDON of ~150 and KDOFF off ~2ish'
     else:

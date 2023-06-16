@@ -160,7 +160,8 @@ def test_LMV():
     modified_score: float = (score - (num_zero_values)) / num_scores
     print(f'modified_score is {modified_score}')
     
-    
+    why_not:float = (27/3)*modified_score
+    predicted_foldchange:str = f'Fold Change Predicted to be {why_not} if greater than 9. If less then expect negative numbers'
     
     #print(ev_result.group_ev_list)
 

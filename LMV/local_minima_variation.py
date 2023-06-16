@@ -167,11 +167,12 @@ def test_LMV():
         modified_score = max_fold_score - offset
 
 
-    why_not:float = (27/3)*modified_score
+    why_not:float = (27/2)*modified_score
+    why_not2:float = (27/3)*modified_score
     if why_not > 10:
-        predicted_foldchange:str = f'Good Switch Predicted. Fold change predicterd to be {why_not}.'
+        predicted_foldchange:str = f'Good Switch Predicted. Fold change predicterd to be between {why_not} to {why_not2}.'
     else:
-        predicted_foldchange:str = f'Bad Switch Predicted. Fold Change Predicted to be {9*why_not}'
+        predicted_foldchange:str = f'Bad Switch Predicted. Fold Change Predicted to be between {9*why_not} to {9*why_not2}'
     print(predicted_foldchange)
     #print(ev_result.group_ev_list)
 

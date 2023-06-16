@@ -160,7 +160,7 @@ def test_LMV():
     modified_score: float = (score - (num_zero_values)) / num_scores
     print(f'modified_score is {modified_score}')
     
-    do_offset: bool = False
+    do_offset: bool = True
     if do_offset == True:
         max_fold_score:float = 3    
         if modified_score > (max_fold_score):
@@ -178,7 +178,7 @@ def test_LMV():
     elif why_not < 1:
         predicted_foldchange:str = f'Bad Switch Predicted. Fold change predicterd to be {abs(2*modified_score)}..'
     else:
-        predicted_foldchange:str = f'Good and Bad Switch SchrodenState Predicted. Fold performance Predicted to be so high (29+), that it might be too high. \r My only form in 2nd state with 0 basescore and thus have bad fold change in wetlab. Probn KDON of ~150 and KDOFF off ~2ish'
+        predicted_foldchange:str = f'Good and Bad Switch SchrodenState Predicted. Fold performance Predicted to be so high (29+) \n that it might be too high. Might only form in 2nd state with 0 basescore and thus have bad fold change in wetlab. Probn KDON of ~150 and KDOFF off ~2ish'
     print(predicted_foldchange)
     #print(ev_result.group_ev_list)
 

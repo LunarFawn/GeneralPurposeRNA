@@ -169,7 +169,7 @@ def test_LMV():
 
     why_not:float = (27/3)*modified_score
     if why_not > 10:
-        predicted_foldchange:str = f'Good Switch Predicted. Fold change predicterd to be {why_not} if greater than 10. If less then expect closer to 1'
+        predicted_foldchange:str = f'Good Switch Predicted. Fold change predicterd to be {why_not}.'
     else:
         predicted_foldchange:str = f'Bad Switch Predicted. Fold Change Predicted to be {9*why_not}'
     print(predicted_foldchange)

@@ -756,7 +756,7 @@ class EnsembleVariation:
    
         if is_powerful_switch is True:
             print('Potential High Fold Change')  
-            score = score + .5
+            score = score + 1
         
         if is_good_switch is True: 
             print("Potential  Functional Switch")

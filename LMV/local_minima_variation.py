@@ -20,7 +20,7 @@ import numpy as np
 import nupackAPI_Sara2_Ver2 as nupack_api
 from nupackAPI_Sara2_Ver2 import Sara2SecondaryStructure, Sara2StructureList, EnsembleVariation, EVResult
 
-debug:bool = True
+debug:bool = False
 
 
 from bisect import bisect_left
@@ -63,10 +63,10 @@ def test_LMV():
 
     if debug is True:
         print("using debug")
-        sequence = 'GCAAUAGCAUGAGGAUAUGCUGGAGUUUAGACAGUAGAAGGCAUGUCAUAAGACAUGAGGAUCACCCAUGUAAUUACAAUAGCA'
+        sequence = 'AUGGAUAUCACAGGAUAUGCUAUGGAUACCAUAGCAGAAGGGUGAUCCAUCCUAUGUAAAUACAUGAGGAUCACCCAUGUGUCC'
         target = '........(((......(((.............))).....)))........................................'
-        folded = '...((.(((((......(((((.........))))).....))))).))...(((((.((....))))))).............'
-        folded_energy_ligoligo: float = -15.2
+        folded = '....(((((....)))))(((((((...)))))))....(((((((((....(((((....))))).)))))))))........'
+        folded_energy_ligoligo: float =  -30.6
         span = 7
         units = 1
         name = "09_eli"
@@ -94,7 +94,7 @@ def test_LMV():
 
         print("Enter Kcal delta span to look at")
         
-        span = '6'#input()
+        span = '7'#input()
         print(f'span is {span}')
 
         print("Enter kcal unit to plot by")
@@ -168,18 +168,21 @@ def test_LMV():
             offset = (modified_score - max_fold_score)
             modified_score = max_fold_score - offset
 
-
-    why_not:float = (27/2)*modified_score
+    predicted_foldchange:str = ''
+    why_not:float = (27/2.5)*modified_score
     why_not2:float = (27/4.5)*modified_score
-    if modified_score > 5:
-        predicted_foldchange:str = f'Good and Bad Switch SchrodenState Predicted. Fold performance Predicted to be so high (20s) that it might be too high. \nMight only form in 2nd state with low basescore and thus have bad fold change in wetlab. Probn KDON of ~150 and KDOFF off ~2ish'
+    print(f'Predicted fold change is ~{why_not2}')
+    if modified_score > 3.5:
+        predicted_foldchange = f'Good and Bad Switch SchrodenState Predicted. Fold performance Predicted to be so high (20s) that it might be too high. \nMight only form in 2nd state with low basescore and thus have bad fold change in wetlab. Probn KDOFF of ~150 and KDON off ~2ish or KDOFF of ~500 and KDON of ~25'
     else:
         if why_not > 10:
-            predicted_foldchange:str = f'Good Switch Predicted. Fold change predicterd to be between {why_not} and {why_not2}.'
+            predicted_foldchange = f'Good Switch Predicted. Fold change predicterd to be between {why_not2} and {why_not}'
         elif why_not == -1:
-            predicted_foldchange:str = f'Unkown Switch Predicted. score of 0 for all temperatures so could be unkown fold to energy model or a really bad design'
+            predicted_foldchange = f'Unkown Switch Predicted. score of 0 for all temperatures so could be unkown fold to energy model or a really bad design'
         elif why_not < 1:
-            predicted_foldchange:str = f'Bad Switch Predicted. Fold change predicterd to be {abs(2*modified_score)}..'
+            predicted_foldchange = f'Bad Switch Predicted. Fold change predicterd to be {abs(2*modified_score)}..'
+        else:
+             predicted_foldchange = f'Bad Switch Predicted. Fold change predicterd to be between {why_not2} and {why_not}'
     print(predicted_foldchange)
     #print(ev_result.group_ev_list)
 

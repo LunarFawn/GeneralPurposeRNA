@@ -18,7 +18,8 @@ import collections
 
 my_model = Model
 
-rna_model='rna06'    
+rna_model='rna06'
+#rna_model='rna95'    
 # Define physical model 
 
 class Sara2SecondaryStructure(object):
@@ -399,9 +400,9 @@ class EnsembleVariation:
         """
         unbound:str = '|'
         num_unbound:int = 0
-        bound:str = '-'
+        bound:str = 'x'
         num_bound:int = 0
-        both:str = '+'
+        both:str = '_'
         num_both:int = 0
         dot:str = '.'
         num_dot:int = 0
@@ -567,6 +568,9 @@ class EnsembleVariation:
  
         is_good_count:int=0
         is_excelent_copunt:int =0
+
+        ev_comp_to_mfe:List[str] = []
+
         for group in groups_list:
             comp_struct:str =''
             result:str = ''
@@ -590,15 +594,17 @@ class EnsembleVariation:
             last_unbound_ratio = 0
             last_bound_ratio = 0
             last_both_ratio = 0
-            
+            bound_to_both_ratio = 0
             try:
                 last_unbound_ratio = last_unbound/unbound 
             except:
                 pass
+            
             try:
                 bound_ratio = bound/unbound
             except:
                 pass
+
             try:
 
                 if bound_hold != -1:
@@ -619,16 +625,24 @@ class EnsembleVariation:
                     bound_hold = -1    
             except:
                 pass
+            
             try:
                 last_both_ratio = both_nuc/last_both 
             except:
                 pass
+            
+            try:
+                bound_to_both_ratio = bound/(both_nuc - unbound)
+            except:
+                pass
+
+
             unbound_to_total_ratio = unbound/span_structures.nuc_count
             bound_to_total_ratio = bound/span_structures.nuc_count
             both_nuc_total= both_nuc/span_structures.nuc_count
             dot_nuc_total= dot_nuc/span_structures.nuc_count
 
-            bound_stats: str = f'BURatio:{round(bound_ratio,2)},both_Raise:{round(last_both_ratio,2)} BRaise:{round(last_bound_ratio,2)}, UDrop:{round(last_unbound_ratio,2)},BothTotal:{round(both_nuc_total,2)}, BoundTotal:{round(bound_to_total_ratio,2)}, UTotal:{round(unbound_to_total_ratio,2)} B:{bound}, U:{unbound}. both:{both_nuc}'
+            bound_stats: str = f'BURatio:{round(bound_ratio,2)},both_Raise:{round(last_both_ratio,2)} BRaise:{round(last_bound_ratio,2)}, UDrop:{round(last_unbound_ratio,2)},BothTotal:{round(both_nuc_total,2)}, BoundTotal:{round(bound_to_total_ratio,2)}, UTotal:{round(unbound_to_total_ratio,2)}, bound_both:{round(bound_to_both_ratio,2)} B:{bound}, U:{unbound}. both:{both_nuc}'
 
             #if bound < 4:
                 #disable ability to pass if bound is less than 4
@@ -679,11 +693,16 @@ class EnsembleVariation:
                 if round(ev_mfe,2) <= round(ev_comp,2):# and (diff >= diff_limit or diff == 0):
                     mfe_pronounced_first_group = True
                 
-                
+                if ev_comp < ev_mfe:
+                    ev_comp_to_mfe.append('<')
+                elif ev_comp == ev_mfe:
+                    ev_comp_to_mfe.append('=')
+                elif ev_comp > ev_mfe:
+                    ev_comp_to_mfe.append('>')
                      
 
 
-                bound_stats =f'EV_C: {round(ev_comp,2)}, EV_R: {round(group_ev_list_rel[group_index].ev_normalized,2)}, EV_M: {round(group_ev_list_mfe[group_index].ev_normalized,2)}, {bound_stats}'  
+                bound_stats =f'EV_C: {round(ev_comp,1)}, EV_R: {round(group_ev_list_rel[group_index].ev_normalized,1)}, EV_M: {round(group_ev_list_mfe[group_index].ev_normalized,1)}, {bound_stats}'  
 
             last_unbound_ratio = round(last_unbound_ratio,2)
             last_bound_ratio = round(last_bound_ratio,2)
@@ -794,6 +813,40 @@ class EnsembleVariation:
         if found_bound_ratio_index in found_bound_list:
             print("Add bonus for functional being in range of on/off prediction")
             score= score + 1
+
+        if span_structures.num_structures > 15000:
+            factor:float = ((float(span_structures.num_structures) - 15000) / 5000 ) * .5
+            print(f'Exsessive structs. Found:{span_structures.num_structures} penalizing {factor} points ')
+            #penalize for too many structs
+            score = score - factor
+        
+        if is_good_switch is True and bound_to_both_ratio >= 0.08:
+            print("Low number of both and mfe nucs in relation to bound. Add bonus point")
+            score= score + 1
+
+        comp_less_ratio: float = ev_comp_to_mfe.count('<') / num_groups
+        com_great_ratio: float = ev_comp_to_mfe.count('>')  / num_groups
+        print(f'ev comp great:{com_great_ratio}, ev comp less:{comp_less_ratio}')
+        if com_great_ratio < comp_less_ratio and comp_less_ratio >= .7:
+            print("EV for compy is greater MOORE often then mfe so add bonus point")
+            score= score + .5
+        elif com_great_ratio > comp_less_ratio and com_great_ratio >= .5:
+            print("EV for comp is greater LESS often then mfe so minus penalty point")
+            score= score - .5
+        
+
+
+        """
+        if both_nuc_total < .7 and unbound_to_total_ratio > .2:
+            print(f'Too few both nucs ratio. Found:{both_nuc_total} need min 0.75 so penalizing 1 point ')
+            #penalize as it has too few boths
+            score = score - 1
+        elif both_nuc_total > .85 and unbound_to_total_ratio < .05:
+            print(f'Design is mostly same nucs. Found: both:{both_nuc_total} unbound:{unbound_to_total_ratio}, so penalizing 1 point ')
+            #penalize as it has too few boths
+            score = score - 1
+        """
+
 
         if score == 0:
             print("Bad Switch")

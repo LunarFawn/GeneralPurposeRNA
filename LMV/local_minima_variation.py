@@ -172,17 +172,17 @@ def test_LMV():
     why_not:float = (27/2.5)*modified_score
     why_not2:float = (27/4.5)*modified_score
     print(f'Predicted fold change is ~{why_not2}')
-    if modified_score > 3.5:
-        predicted_foldchange = f'Good and Bad Switch SchrodenState Predicted. Fold performance Predicted to be so high (20s) that it might be too high. \nMight only form in 2nd state with low basescore and thus have bad fold change in wetlab. Probn KDOFF of ~150 and KDON off ~2ish or KDOFF of ~500 and KDON of ~25'
+    if modified_score > 4.5:
+        predicted_foldchange = f'Good and Bad Switch SchrodenState Predicted. Fold performance Predicted to be so high (20s) that it might be too high. \nMight only form in 2nd state with low basescore and thus have bad fold change in wetlab. Probn KDOFF of ~150 and KDON off ~20ish or KDOFF of ~500 and KDON of ~25'
     else:
         if why_not > 10:
-            predicted_foldchange = f'Good Switch Predicted. Fold change predicterd to be between {why_not2} and {why_not}'
+            predicted_foldchange = f'Good Switch Predicted. Fold change predicterd to be {why_not2} +/-5'
         elif why_not == -1:
             predicted_foldchange = f'Unkown Switch Predicted. score of 0 for all temperatures so could be unkown fold to energy model or a really bad design'
         elif why_not < 1:
             predicted_foldchange = f'Bad Switch Predicted. Fold change predicterd to be {abs(2*modified_score)}..'
         else:
-             predicted_foldchange = f'Bad Switch Predicted. Fold change predicterd to be between {why_not2} and {why_not}'
+             predicted_foldchange = f'Underperforming Switch Predicted. Fold change predicterd to be between {why_not2} and {why_not}'
     print(predicted_foldchange)
     #print(ev_result.group_ev_list)
 

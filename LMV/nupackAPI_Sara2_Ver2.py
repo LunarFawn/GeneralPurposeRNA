@@ -18,8 +18,8 @@ import collections
 
 my_model = Model
 
-rna_model='rna06'
-#rna_model='rna95'    
+#rna_model='rna06'
+rna_model='rna95'    
 # Define physical model 
 
 class Sara2SecondaryStructure(object):
@@ -500,6 +500,8 @@ class EnsembleVariation:
         for group_index in range(len(groups_list)):
             groups_dict[group_index] = groups_list[group_index]
         bound: int = 0
+        bound_total_list: List[int] = []
+        unbound_total_list: List[int] = []
         unbound: int= 0
         both_nuc:int = 0
         dot_nuc:int = 0 
@@ -579,7 +581,8 @@ class EnsembleVariation:
             try:
                 if group.num_structures > 0:
                     new_struct = self.make_weighted_struct(group)
-                    comp_struct, bound, unbound, both_nuc, dot_nuc = self.compair_weighted_structure(span_structures.sara_stuctures[0].structure, folded_2nd_state_structure, new_struct, span_structures.nuc_count)                    
+                    comp_struct, bound, unbound, both_nuc, dot_nuc = self.compair_weighted_structure(span_structures.sara_stuctures[0].structure, folded_2nd_state_structure, new_struct, span_structures.nuc_count)    
+                                  
                     if start_group_mfe >= bond_range_start and start_group_mfe <= bond_range_end and end_group_mfe >= bond_range_start and end_group_mfe <= bond_range_end:
                     #if folded_kcal >=start_group_mfe and folded_kcal <= end_group_mfe:
                         is_in_bound_range = True
@@ -636,11 +639,15 @@ class EnsembleVariation:
             except:
                 pass
 
+  
 
             unbound_to_total_ratio = unbound/span_structures.nuc_count
             bound_to_total_ratio = bound/span_structures.nuc_count
             both_nuc_total= both_nuc/span_structures.nuc_count
             dot_nuc_total= dot_nuc/span_structures.nuc_count
+
+            bound_total_list.append(bound_to_total_ratio)
+            unbound_total_list.append(unbound_to_total_ratio)  
 
             bound_stats: str = f'BURatio:{round(bound_ratio,2)},both_Raise:{round(last_both_ratio,2)} BRaise:{round(last_bound_ratio,2)}, UDrop:{round(last_unbound_ratio,2)},BothTotal:{round(both_nuc_total,2)}, BoundTotal:{round(bound_to_total_ratio,2)}, UTotal:{round(unbound_to_total_ratio,2)}, bound_both:{round(bound_to_both_ratio,2)} B:{bound}, U:{unbound}. both:{both_nuc}'
 
@@ -734,6 +741,11 @@ class EnsembleVariation:
                 is_powerful_switch = True
                 modifier = modifier + '!!!'
                 found_bound_ratio_high_index = group_index
+
+            if last_bound_ratio >=  2 and unbound_to_total_ratio <=.2:
+                is_powerful_switch = True
+                modifier = modifier + '!!!'
+                found_bound_ratio_high_index = group_index
             
             if last_bound_ratio > 3 and ev_comp < ev_mfe:
                 is_powerful_switch = True
@@ -787,32 +799,32 @@ class EnsembleVariation:
         
         if found_bound_index >= bound_range_min_minus_1 and found_bound_index <= bound_range_max_plus and found_bound_index != -1 and is_off_on_switch is True:
             print("Confirmned good. Add bonus point for on/off via LMV being in range for folding")
-            score= score + 1
+            score= score + .5
         elif found_bound_index <= 2 and found_bound_index != -1 and is_in_bound_range is True:
             print("Confirmned good. Add bonus point for on/off via LMV being in first three groups")
             score= score + .5
         for value in found_bound_ratio_list:
             if value >= bound_range_min_minus_1 and value <= bound_range_max_plus and found_bound_ratio_index != -1:
                 print("Confirmned good. Add bonus point for functional being in range for folding")
-                score= score + 1
+                score= score + .5
             elif value >= 0 and value <= 1 and value != -1:
                 print("Confirmned good. Add bonus point for point for functional being in first two groups")
                 score= score + .5
 
         if found_bound_ratio_high_index >= bound_range_min_minus_1 and found_bound_ratio_high_index <= bound_range_max_plus and found_bound_ratio_high_index != -1 :
             print("Confirmned good. Add bonus point for high performing being in range for folding")
-            score= score + 1
+            score= score + .5
         elif found_bound_ratio_high_index >= 0 and found_bound_ratio_high_index <= 1 and found_bound_ratio_high_index != -1:
             print("Confirmned good. Add bonus point for high performing being in first two groups")
             score= score + .5
 
         if found_bound_ratio_high_index in found_bound_list:
             print("Add bonus for high performing being in range of on/off prediction")
-            score= score + 1
+            score= score + .5
         
         if found_bound_ratio_index in found_bound_list:
             print("Add bonus for functional being in range of on/off prediction")
-            score= score + 1
+            score= score + .5
 
         if span_structures.num_structures > 15000:
             factor:float = ((float(span_structures.num_structures) - 15000) / 5000 ) * .5
@@ -822,17 +834,28 @@ class EnsembleVariation:
         
         if is_good_switch is True and bound_to_both_ratio >= 0.08:
             print("Low number of both and mfe nucs in relation to bound. Add bonus point")
-            score= score + 1
+            score= score + .5
 
         comp_less_ratio: float = ev_comp_to_mfe.count('<') / num_groups
         com_great_ratio: float = ev_comp_to_mfe.count('>')  / num_groups
         print(f'ev comp great:{com_great_ratio}, ev comp less:{comp_less_ratio}')
         if com_great_ratio < comp_less_ratio and comp_less_ratio >= .7:
-            print("EV for compy is greater MOORE often then mfe so add bonus point")
+            print("EV for comparison struct is LESS MORE OFTEN than unbound mfe so add bonus")
             score= score + .5
         elif com_great_ratio > comp_less_ratio and com_great_ratio >= .5:
-            print("EV for comp is greater LESS often then mfe so minus penalty point")
+            print("EV for comparison struct is GREATER MORE OFTEN than unbound mfe so penatly")
             score= score - .5
+            if com_great_ratio >= .8:
+                print("EV for comp is GREATER EXTRA MORE OFTEN then mfe so minus penalty point")
+                score= score - .5
+        
+        if bound_total_list[0] > unbound_total_list[0]:
+            penatly: float = 1
+            print(f'Bound in mfe goup more pronounced than mfe. May not fold unbound state properly as too much 2nd state found in 1st kcal goup ensemble. Penalatly points={penatly}')
+            score = score - penatly
+            if bound_total_list[0] > .20:
+                print(f'Bound in mfe goup makes up over 20% of design. Penalatly points=2')
+                score = score - 2
         
 
 

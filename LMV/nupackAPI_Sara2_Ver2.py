@@ -445,430 +445,444 @@ class EnsembleVariation:
         span_structures: Sara2StructureList
         span_structures = self.get_subopt_energy_gap(sequence_string=sequence, energy_delta_from_MFE=kcal_delta_span_from_mfe, temp=temp)       
         mfe_energy:float =  span_structures.mfe_freeEnergy
-        
+        score:float = 0
         
         print(f'Done with subopt gathering. {span_structures.num_structures} structures found\n')
 
-        #this is for increments of 1 kcal need to do fraction
-        num_groups: int = int(kcal_delta_span_from_mfe / Kcal_unit_increments)
-        remainder: int = kcal_delta_span_from_mfe % Kcal_unit_increments
+        bail_num_structures: int = 100000
+        if span_structures.num_structures > bail_num_structures:
+            print(f'Found wayayayay to many structures. Bailing and calling it a 60. Assigning score of 0')
+        else:
 
-        groups_list : List[Sara2StructureList] = []
-        groups_index_used: List[bool] = []
-        groups_dict: Dict[int, Sara2StructureList] = {}
-        group_values: List[float] = []
+            #this is for increments of 1 kcal need to do fraction
+            num_groups: int = int(kcal_delta_span_from_mfe / Kcal_unit_increments)
+            remainder: int = kcal_delta_span_from_mfe % Kcal_unit_increments
+
+            groups_list : List[Sara2StructureList] = []
+            groups_index_used: List[bool] = []
+            groups_dict: Dict[int, Sara2StructureList] = {}
+            group_values: List[float] = []
 
 
 
-        #this fills up the list of energy deltas to publich EV's for
-        current_energy: float = mfe_energy
-        group_values.append(current_energy)
-        for index in range(num_groups):
-            current_energy = current_energy + Kcal_unit_increments
+            #this fills up the list of energy deltas to publich EV's for
+            current_energy: float = mfe_energy
             group_values.append(current_energy)
+            for index in range(num_groups):
+                current_energy = current_energy + Kcal_unit_increments
+                group_values.append(current_energy)
+            
+            #if remainder > 0:
+            #    current_energy = current_energy + kcal_delta_span_from_mfe
+            #    group_values.append(current_energy)
+            print(f'Processing group values {group_values} to \n')
+            #now initialize the groups_list
+            for index in range(len(group_values)-1):
+                group: Sara2StructureList = Sara2StructureList()
+                groups_list.append(group)
+                groups_index_used.append(False)
+                groups_dict[index+1] = group
+
+            num_sara_struct: int = span_structures.num_structures
+            for sara_index in range(0,num_sara_struct):
+                #for sara_structure in span_structures.sara_stuctures:
+
+                #this skips teh mfe from calulations
+                sara_structure: Sara2SecondaryStructure = span_structures.sara_stuctures[sara_index]
+                current_energy = sara_structure.freeEnergy
+
+                #need to do this because there are two indexes need to look at each 
+                #loop and want to avoid triggering a list index overrun
+                for group_index in range(len(group_values)-1):
+                    #remember we are dealing with neg kcal so its you want to 
+                    min_energy: float = group_values[group_index]
+                    max_energy: float = group_values[group_index+1]
+                    if current_energy >= min_energy and current_energy < max_energy:
+                        groups_list[group_index].add_structure(sara_structure)
+                        groups_index_used[group_index] = True            
         
-        #if remainder > 0:
-        #    current_energy = current_energy + kcal_delta_span_from_mfe
-        #    group_values.append(current_energy)
-        print(f'Processing group values {group_values} to \n')
-        #now initialize the groups_list
-        for index in range(len(group_values)-1):
-            group: Sara2StructureList = Sara2StructureList()
-            groups_list.append(group)
-            groups_index_used.append(False)
-            groups_dict[index+1] = group
 
-        num_sara_struct: int = span_structures.num_structures
-        for sara_index in range(0,num_sara_struct):
-            #for sara_structure in span_structures.sara_stuctures:
+            for group_index in range(len(groups_list)):
+                groups_dict[group_index] = groups_list[group_index]
+            bound: int = 0
+            bound_total_list: List[int] = []
+            unbound_total_list: List[int] = []
+            unbound: int= 0
+            both_nuc:int = 0
+            dot_nuc:int = 0 
+            print("whole span")
+            new_struct = self.make_weighted_struct(span_structures)
+            comp_struct, bound, unbound, both_nuc, dot_nuc = self.compair_weighted_structure(span_structures.sara_stuctures[0].structure, folded_2nd_state_structure, new_struct, span_structures.nuc_count)
+            print(comp_struct)
+            print("mfe")
+            print(span_structures.sara_stuctures[0].structure)
+            print("folded")
+            print(folded_2nd_state_structure)
+            print("weighted structs per group")
+            start_group_mfe:float = mfe_energy + 0.5
+            end_group_mfe:float = start_group_mfe + Kcal_unit_increments
+            bond_range_start:float = folded_kcal - 3
+            bond_range_end:float = folded_kcal + 3
+            last_unbound:float=0
+            last_bound:float=0
+            last_both: float = 0
+            is_functional_switch = False
+            is_powerful_switch = False
+            is_good_switch = False
+            good_groups:List[Sara2StructureList] = []
+            group_index: int = 0
 
-            #this skips teh mfe from calulations
-            sara_structure: Sara2SecondaryStructure = span_structures.sara_stuctures[sara_index]
-            current_energy = sara_structure.freeEnergy
+            switch_mfe_sub: Sara2SecondaryStructure = Sara2SecondaryStructure()
+            switch_mfe_sub.sequence=span_structures.sara_stuctures[0].sequence
+            switch_mfe_sub.structure=span_structures.sara_stuctures[0].structure
+            switch_mfe_sub.freeEnergy=span_structures.sara_stuctures[0].freeEnergy
+            switch_mfe_sub.stackEnergy=span_structures.sara_stuctures[0].stackEnergy
 
-            #need to do this because there are two indexes need to look at each 
-            #loop and want to avoid triggering a list index overrun
-            for group_index in range(len(group_values)-1):
-                #remember we are dealing with neg kcal so its you want to 
-                min_energy: float = group_values[group_index]
-                max_energy: float = group_values[group_index+1]
-                if current_energy >= min_energy and current_energy < max_energy:
-                    groups_list[group_index].add_structure(sara_structure)
-                    groups_index_used[group_index] = True            
+            LMV_US_thread_target: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct=switch_mfe_sub)       
+            result_thread_mfe:LMV_Token = LMV_US_thread_target.run_LMV()
+            
+            switch_mfe_sub_folded: Sara2SecondaryStructure = Sara2SecondaryStructure()
+            switch_mfe_sub_folded.sequence=span_structures.sara_stuctures[0].sequence
+            switch_mfe_sub_folded.structure=folded_2nd_state_structure
+            switch_mfe_sub_folded.freeEnergy=span_structures.sara_stuctures[0].freeEnergy
+            switch_mfe_sub_folded.stackEnergy=span_structures.sara_stuctures[0].stackEnergy
+
+            LMV_US_thread_folded: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct="rel")
+            result_thread_folded:LMV_Token = LMV_US_thread_folded.run_LMV()
+
+            group_ev_list_mfe: List[EV] = result_thread_mfe.group_results
+            group_ev_dict_mfe: Dict[int,EV] = result_thread_mfe.group_dict
+
+            group_ev_list_rel: List[EV] = result_thread_folded.group_results
+            group_ev_dict_rel: Dict[int,EV] = result_thread_folded.group_dict
+
+            bound_range_index_plus_one:List[int]=[]
+            found_bound_index:int = -1
+            found_bound_list:List[int] = []
+            found_bound_ratio_index: int = -1
+            found_bound_ratio_list: List[int] = []
+            found_bound_ratio_high_index: int = -1
+
+            mfe_pronounced_first_group:bool = False
+            is_off_on_switch: bool = False
+            
+            stop_diff:bool =False
+
+            bound_hold:int = -1
+
+            analysis_list: List[str] = []
+            struct_list:List[str] = []
+    
+            is_good_count:int=0
+            is_excelent_copunt:int =0
+
+            ev_comp_to_mfe:List[str] = []
+
+            for group in groups_list:
+                comp_struct:str =''
+                result:str = ''
+                is_in_bound_range: bool = False
+                modifier:str=''
+                try:
+                    if group.num_structures > 0:
+                        new_struct = self.make_weighted_struct(group)
+                        comp_struct, bound, unbound, both_nuc, dot_nuc = self.compair_weighted_structure(span_structures.sara_stuctures[0].structure, folded_2nd_state_structure, new_struct, span_structures.nuc_count)    
+                                    
+                        if start_group_mfe >= bond_range_start and start_group_mfe <= bond_range_end and end_group_mfe >= bond_range_start and end_group_mfe <= bond_range_end:
+                        #if folded_kcal >=start_group_mfe and folded_kcal <= end_group_mfe:
+                            is_in_bound_range = True
+                            modifier = '***'
+                            bound_range_index_plus_one.append(group_index)
+                    else:
+                        comp_struct = "no structures in kcal group"
+                except Exception as error:
+                    comp_struct = f'bad list Error:{error}'
+                unbound_to_total_ratio:float = 0
+                bound_ratio: float = 0
+                last_unbound_ratio = 0
+                last_bound_ratio = 0
+                last_both_ratio = 0
+                bound_to_both_ratio = 0
+                try:
+                    last_unbound_ratio = last_unbound/unbound 
+                except:
+                    pass
+                
+                try:
+                    bound_ratio = bound/unbound
+                except:
+                    pass
+
+                try:
+
+                    if bound_hold != -1:
+                        #do normal                    
+                        if bound_hold < last_bound: 
+                            if bound_hold == 0:
+                                bound_hold = 1                   
+                            last_bound_ratio = bound/bound_hold 
+                        else:
+                            last_bound_ratio = bound/last_bound 
+                    else:
+                        last_bound_ratio = bound/last_bound
+
+                    if bound > last_bound:
+                        #its getting bigger so record that
+                        bound_hold = last_bound   
+                    else:
+                        bound_hold = -1    
+                except:
+                    pass
+                
+                try:
+                    last_both_ratio = both_nuc/last_both 
+                except:
+                    pass
+                
+                try:
+                    bound_to_both_ratio = bound/(both_nuc - unbound)
+                except:
+                    pass
+
     
 
-        for group_index in range(len(groups_list)):
-            groups_dict[group_index] = groups_list[group_index]
-        bound: int = 0
-        bound_total_list: List[int] = []
-        unbound_total_list: List[int] = []
-        unbound: int= 0
-        both_nuc:int = 0
-        dot_nuc:int = 0 
-        print("whole span")
-        new_struct = self.make_weighted_struct(span_structures)
-        comp_struct, bound, unbound, both_nuc, dot_nuc = self.compair_weighted_structure(span_structures.sara_stuctures[0].structure, folded_2nd_state_structure, new_struct, span_structures.nuc_count)
-        print(comp_struct)
-        print("mfe")
-        print(span_structures.sara_stuctures[0].structure)
-        print("folded")
-        print(folded_2nd_state_structure)
-        print("weighted structs per group")
-        start_group_mfe:float = mfe_energy + 0.5
-        end_group_mfe:float = start_group_mfe + Kcal_unit_increments
-        bond_range_start:float = folded_kcal - 3
-        bond_range_end:float = folded_kcal + 3
-        last_unbound:float=0
-        last_bound:float=0
-        last_both: float = 0
-        is_functional_switch = False
-        is_powerful_switch = False
-        is_good_switch = False
-        good_groups:List[Sara2StructureList] = []
-        group_index: int = 0
+                unbound_to_total_ratio = unbound/span_structures.nuc_count
+                bound_to_total_ratio = bound/span_structures.nuc_count
+                both_nuc_total= both_nuc/span_structures.nuc_count
+                dot_nuc_total= dot_nuc/span_structures.nuc_count
 
-        switch_mfe_sub: Sara2SecondaryStructure = Sara2SecondaryStructure()
-        switch_mfe_sub.sequence=span_structures.sara_stuctures[0].sequence
-        switch_mfe_sub.structure=span_structures.sara_stuctures[0].structure
-        switch_mfe_sub.freeEnergy=span_structures.sara_stuctures[0].freeEnergy
-        switch_mfe_sub.stackEnergy=span_structures.sara_stuctures[0].stackEnergy
+                bound_total_list.append(bound_to_total_ratio)
+                unbound_total_list.append(unbound_to_total_ratio)  
 
-        LMV_US_thread_target: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct=switch_mfe_sub)       
-        result_thread_mfe:LMV_Token = LMV_US_thread_target.run_LMV()
-        
-        switch_mfe_sub_folded: Sara2SecondaryStructure = Sara2SecondaryStructure()
-        switch_mfe_sub_folded.sequence=span_structures.sara_stuctures[0].sequence
-        switch_mfe_sub_folded.structure=folded_2nd_state_structure
-        switch_mfe_sub_folded.freeEnergy=span_structures.sara_stuctures[0].freeEnergy
-        switch_mfe_sub_folded.stackEnergy=span_structures.sara_stuctures[0].stackEnergy
+                bound_stats: str = f'BURatio:{round(bound_ratio,2)},both_Raise:{round(last_both_ratio,2)} BRaise:{round(last_bound_ratio,2)}, UDrop:{round(last_unbound_ratio,2)},BothTotal:{round(both_nuc_total,2)}, BoundTotal:{round(bound_to_total_ratio,2)}, UTotal:{round(unbound_to_total_ratio,2)}, bound_both:{round(bound_to_both_ratio,2)} B:{bound}, U:{unbound}. both:{both_nuc}'
 
-        LMV_US_thread_folded: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=groups_list,mfe_stuct="rel")
-        result_thread_folded:LMV_Token = LMV_US_thread_folded.run_LMV()
+                #if bound < 4:
+                    #disable ability to pass if bound is less than 4
+                    #idea is that you need a quad for a good bond
+                #    is_in_bound_range = False
+                
+                limit: float = 1.5 
 
-        group_ev_list_mfe: List[EV] = result_thread_mfe.group_results
-        group_ev_dict_mfe: Dict[int,EV] = result_thread_mfe.group_dict
-
-        group_ev_list_rel: List[EV] = result_thread_folded.group_results
-        group_ev_dict_rel: Dict[int,EV] = result_thread_folded.group_dict
-
-        bound_range_index_plus_one:List[int]=[]
-        found_bound_index:int = -1
-        found_bound_list:List[int] = []
-        found_bound_ratio_index: int = -1
-        found_bound_ratio_list: List[int] = []
-        found_bound_ratio_high_index: int = -1
-
-        mfe_pronounced_first_group:bool = False
-        is_off_on_switch: bool = False
-        score:float = 0
-        stop_diff:bool =False
-
-        bound_hold:int = -1
-
-        analysis_list: List[str] = []
-        struct_list:List[str] = []
- 
-        is_good_count:int=0
-        is_excelent_copunt:int =0
-
-        ev_comp_to_mfe:List[str] = []
-
-        for group in groups_list:
-            comp_struct:str =''
-            result:str = ''
-            is_in_bound_range: bool = False
-            modifier:str=''
-            try:
+                ev_comp:float = 0
+                ev_mfe: float = 0
                 if group.num_structures > 0:
-                    new_struct = self.make_weighted_struct(group)
-                    comp_struct, bound, unbound, both_nuc, dot_nuc = self.compair_weighted_structure(span_structures.sara_stuctures[0].structure, folded_2nd_state_structure, new_struct, span_structures.nuc_count)    
-                                  
-                    if start_group_mfe >= bond_range_start and start_group_mfe <= bond_range_end and end_group_mfe >= bond_range_start and end_group_mfe <= bond_range_end:
-                    #if folded_kcal >=start_group_mfe and folded_kcal <= end_group_mfe:
-                        is_in_bound_range = True
-                        modifier = '***'
-                        bound_range_index_plus_one.append(group_index)
-                else:
-                    comp_struct = "no structures in kcal group"
-            except Exception as error:
-                comp_struct = f'bad list Error:{error}'
-            unbound_to_total_ratio:float = 0
-            bound_ratio: float = 0
-            last_unbound_ratio = 0
-            last_bound_ratio = 0
-            last_both_ratio = 0
-            bound_to_both_ratio = 0
-            try:
-                last_unbound_ratio = last_unbound/unbound 
-            except:
-                pass
+                    
+                    switch_mfe_sub_folded: Sara2SecondaryStructure = Sara2SecondaryStructure()
+                    switch_mfe_sub_folded.sequence=span_structures.sara_stuctures[0].sequence
+                    switch_mfe_sub_folded.structure=new_struct
+                    switch_mfe_sub_folded.freeEnergy=span_structures.sara_stuctures[0].freeEnergy
+                    switch_mfe_sub_folded.stackEnergy=span_structures.sara_stuctures[0].stackEnergy
+                    #new_list: List[Sara2StructureList] = [group]
+                    
+                    LMV_comp_thread_folded: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=[group],mfe_stuct=switch_mfe_sub_folded)
+                    result_thread_LMV_comp:LMV_Token = LMV_comp_thread_folded.run_LMV()
+                    
             
-            try:
-                bound_ratio = bound/unbound
-            except:
-                pass
+                    comp_ev_list_target: List[EV] = result_thread_LMV_comp.group_results
 
-            try:
+                    #print(comp_ev_list_target)
 
-                if bound_hold != -1:
-                    #do normal                    
-                    if bound_hold < last_bound: 
-                        if bound_hold == 0:
-                            bound_hold = 1                   
-                        last_bound_ratio = bound/bound_hold 
-                    else:
-                        last_bound_ratio = bound/last_bound 
-                else:
-                    last_bound_ratio = bound/last_bound
+                    ev_comp = comp_ev_list_target[0].ev_normalized
+                    ev_comp_limit: float = 25
+                    ev_mfe = group_ev_list_mfe[group_index].ev_normalized
 
-                if bound > last_bound:
-                    #its getting bigger so record that
-                    bound_hold = last_bound   
-                else:
-                    bound_hold = -1    
-            except:
-                pass
+                    diff_limit:float = 1
+
+                    
+                    #if group_index == 1:
+                    if mfe_pronounced_first_group is True:
+                        diff:float = round(ev_mfe,2) - round(ev_comp,2)
+                        if round(ev_comp,2) < round(ev_mfe,2) and diff >= diff_limit:
+                            is_off_on_switch = True
+                            modifier = modifier + '+++'
+                            found_bound_list.append(group_index)
+                            if stop_diff is False:
+                                found_bound_index = group_index
+                            stop_diff = True
+
+                    #if group_index == 0:
+                    diff = round(ev_comp,2) - round(ev_mfe,2)
+                    if round(ev_mfe,2) <= round(ev_comp,2):# and (diff >= diff_limit or diff == 0):
+                        mfe_pronounced_first_group = True
+                    
+                    if ev_comp < ev_mfe:
+                        ev_comp_to_mfe.append('<')
+                    elif ev_comp == ev_mfe:
+                        ev_comp_to_mfe.append('=')
+                    elif ev_comp > ev_mfe:
+                        ev_comp_to_mfe.append('>')
+                        
+
+
+                    bound_stats =f'EV_C: {round(ev_comp,1)}, EV_R: {round(group_ev_list_rel[group_index].ev_normalized,1)}, EV_M: {round(group_ev_list_mfe[group_index].ev_normalized,1)}, {bound_stats}'  
+
+                last_unbound_ratio = round(last_unbound_ratio,2)
+                last_bound_ratio = round(last_bound_ratio,2)
+                unbound_to_total_ratio = round(unbound_to_total_ratio,2)
+                bound_ratio = round(bound_ratio,2)
+                ev_comp = round(ev_comp,2)
+                ev_mfe = round(ev_mfe,2)
+                    
+                if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.3 and ev_comp < ev_comp_limit and bound > 2:
+                    is_good_switch = True
+                    modifier = modifier + '@@@'
+                    found_bound_ratio_index = group_index
+                    found_bound_ratio_list.append(group_index)
+                    is_good_count = is_good_count+1
+                    
+                
+                if last_unbound_ratio >= limit and last_bound_ratio >= limit and bound_ratio >=2 and ev_comp < ev_mfe:
+                    is_powerful_switch = True
+                    modifier = modifier + "!!!"
+                    found_bound_ratio_high_index = group_index
+                    is_excelent_copunt = is_excelent_copunt +1
+
+                if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.2 and ev_comp < ev_mfe:
+                    is_powerful_switch = True
+                    modifier = modifier + '!!!'
+                    found_bound_ratio_high_index = group_index
+
+                if bound_ratio >=  limit and unbound_to_total_ratio <=.15 and ev_comp < ev_mfe:
+                    is_powerful_switch = True
+                    modifier = modifier + '!!!'
+                    found_bound_ratio_high_index = group_index
+
+                if last_bound_ratio >=  2 and unbound_to_total_ratio <=.2:
+                    is_powerful_switch = True
+                    modifier = modifier + '!!!'
+                    found_bound_ratio_high_index = group_index
+                
+                if last_bound_ratio > 3 and ev_comp < ev_mfe:
+                    is_powerful_switch = True
+                    modifier = modifier + '!!!'
+                    found_bound_ratio_high_index = group_index
+                    is_good_switch = True
+                    modifier = modifier + '@@@'
+                    is_good_count = is_good_count+1
+                    found_bound_ratio_index = group_index
+                    found_bound_ratio_list.append(group_index)
+                
+                
+
+
+                last_unbound = unbound
+                last_bound = bound
+                last_both = both_nuc
+                analysis_list.append(bound_stats)
+                line: str = f'{round(start_group_mfe,2)} to {round(end_group_mfe,2)} kcal: {comp_struct} :: {modifier} '
+                struct_list.append(line)
+                #print (line)
+                start_group_mfe = end_group_mfe
+                end_group_mfe = start_group_mfe + Kcal_unit_increments
+                group_index = group_index +1
             
-            try:
-                last_both_ratio = both_nuc/last_both 
-            except:
-                pass
+            for thing in analysis_list:
+                print(thing)
             
-            try:
-                bound_to_both_ratio = bound/(both_nuc - unbound)
-            except:
-                pass
+            for thing in struct_list:
+                print(thing)
 
-  
-
-            unbound_to_total_ratio = unbound/span_structures.nuc_count
-            bound_to_total_ratio = bound/span_structures.nuc_count
-            both_nuc_total= both_nuc/span_structures.nuc_count
-            dot_nuc_total= dot_nuc/span_structures.nuc_count
-
-            bound_total_list.append(bound_to_total_ratio)
-            unbound_total_list.append(unbound_to_total_ratio)  
-
-            bound_stats: str = f'BURatio:{round(bound_ratio,2)},both_Raise:{round(last_both_ratio,2)} BRaise:{round(last_bound_ratio,2)}, UDrop:{round(last_unbound_ratio,2)},BothTotal:{round(both_nuc_total,2)}, BoundTotal:{round(bound_to_total_ratio,2)}, UTotal:{round(unbound_to_total_ratio,2)}, bound_both:{round(bound_to_both_ratio,2)} B:{bound}, U:{unbound}. both:{both_nuc}'
-
-            #if bound < 4:
-                #disable ability to pass if bound is less than 4
-                #idea is that you need a quad for a good bond
-            #    is_in_bound_range = False
-             
-            limit: float = 1.5 
-
-            ev_comp:float = 0
-            ev_mfe: float = 0
-            if group.num_structures > 0:
-                
-                switch_mfe_sub_folded: Sara2SecondaryStructure = Sara2SecondaryStructure()
-                switch_mfe_sub_folded.sequence=span_structures.sara_stuctures[0].sequence
-                switch_mfe_sub_folded.structure=new_struct
-                switch_mfe_sub_folded.freeEnergy=span_structures.sara_stuctures[0].freeEnergy
-                switch_mfe_sub_folded.stackEnergy=span_structures.sara_stuctures[0].stackEnergy
-                #new_list: List[Sara2StructureList] = [group]
-                
-                LMV_comp_thread_folded: LMV_ThreadProcessor = LMV_ThreadProcessor(stuctures=[group],mfe_stuct=switch_mfe_sub_folded)
-                result_thread_LMV_comp:LMV_Token = LMV_comp_thread_folded.run_LMV()
-                
-        
-                comp_ev_list_target: List[EV] = result_thread_LMV_comp.group_results
-
-                #print(comp_ev_list_target)
-
-                ev_comp = comp_ev_list_target[0].ev_normalized
-                ev_comp_limit: float = 25
-                ev_mfe = group_ev_list_mfe[group_index].ev_normalized
-
-                diff_limit:float = 1
-
-                
-                #if group_index == 1:
-                if mfe_pronounced_first_group is True:
-                    diff:float = round(ev_mfe,2) - round(ev_comp,2)
-                    if round(ev_comp,2) < round(ev_mfe,2) and diff >= diff_limit:
-                        is_off_on_switch = True
-                        modifier = modifier + '+++'
-                        found_bound_list.append(group_index)
-                        if stop_diff is False:
-                            found_bound_index = group_index
-                        stop_diff = True
-
-                #if group_index == 0:
-                diff = round(ev_comp,2) - round(ev_mfe,2)
-                if round(ev_mfe,2) <= round(ev_comp,2):# and (diff >= diff_limit or diff == 0):
-                    mfe_pronounced_first_group = True
-                
-                if ev_comp < ev_mfe:
-                    ev_comp_to_mfe.append('<')
-                elif ev_comp == ev_mfe:
-                    ev_comp_to_mfe.append('=')
-                elif ev_comp > ev_mfe:
-                    ev_comp_to_mfe.append('>')
-                     
-
-
-                bound_stats =f'EV_C: {round(ev_comp,1)}, EV_R: {round(group_ev_list_rel[group_index].ev_normalized,1)}, EV_M: {round(group_ev_list_mfe[group_index].ev_normalized,1)}, {bound_stats}'  
-
-            last_unbound_ratio = round(last_unbound_ratio,2)
-            last_bound_ratio = round(last_bound_ratio,2)
-            unbound_to_total_ratio = round(unbound_to_total_ratio,2)
-            bound_ratio = round(bound_ratio,2)
-            ev_comp = round(ev_comp,2)
-            ev_mfe = round(ev_mfe,2)
-                
-            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.3 and ev_comp < ev_comp_limit and bound > 2:
-                is_good_switch = True
-                modifier = modifier + '@@@'
-                found_bound_ratio_index = group_index
-                found_bound_ratio_list.append(group_index)
-                is_good_count = is_good_count+1
-                
+            bound_range_min_minus_1: int = 0
+            bound_range_max_plus: int = 0
+            bound_good_range_modifier:int = 0 
+            if len(bound_range_index_plus_one) > 0: 
+                bound_range_min_minus_1: int = min(bound_range_index_plus_one) - bound_good_range_modifier
+            if len(bound_range_index_plus_one) > 0: 
+                bound_range_max_plus: int = max(bound_range_index_plus_one) + bound_good_range_modifier            
+    
+            if is_powerful_switch is True:
+                print('Potential High Fold Change')  
+                score = score + .5
             
-            if last_unbound_ratio >= limit and last_bound_ratio >= limit and bound_ratio >=2 and ev_comp < ev_mfe:
-                is_powerful_switch = True
-                modifier = modifier + "!!!"
-                found_bound_ratio_high_index = group_index
-                is_excelent_copunt = is_excelent_copunt +1
-
-            if (last_unbound_ratio >= limit or last_bound_ratio >= limit) and unbound_to_total_ratio <=.2 and ev_comp < ev_mfe:
-                is_powerful_switch = True
-                modifier = modifier + '!!!'
-                found_bound_ratio_high_index = group_index
-
-            if bound_ratio >=  limit and unbound_to_total_ratio <=.15 and ev_comp < ev_mfe:
-                is_powerful_switch = True
-                modifier = modifier + '!!!'
-                found_bound_ratio_high_index = group_index
-
-            if last_bound_ratio >=  2 and unbound_to_total_ratio <=.2:
-                is_powerful_switch = True
-                modifier = modifier + '!!!'
-                found_bound_ratio_high_index = group_index
+            if is_good_switch is True: 
+                print("Potential  Functional Switch")
+                score = score + (len(found_bound_ratio_list)*.5)
             
-            if last_bound_ratio > 3 and ev_comp < ev_mfe:
-                is_powerful_switch = True
-                modifier = modifier + '!!!'
-                found_bound_ratio_high_index = group_index
-                is_good_switch = True
-                modifier = modifier + '@@@'
-                is_good_count = is_good_count+1
-                found_bound_ratio_index = group_index
-                found_bound_ratio_list.append(group_index)
-            
-            
-
-
-            last_unbound = unbound
-            last_bound = bound
-            last_both = both_nuc
-            analysis_list.append(bound_stats)
-            line: str = f'{round(start_group_mfe,2)} to {round(end_group_mfe,2)} kcal: {comp_struct} :: {modifier} '
-            struct_list.append(line)
-            #print (line)
-            start_group_mfe = end_group_mfe
-            end_group_mfe = start_group_mfe + Kcal_unit_increments
-            group_index = group_index +1
-        
-        for thing in analysis_list:
-            print(thing)
-        
-        for thing in struct_list:
-            print(thing)
-
-        bound_range_min_minus_1: int = 0
-        bound_range_max_plus: int = 0
-        bound_good_range_modifier:int = 0 
-        if len(bound_range_index_plus_one) > 0: 
-            bound_range_min_minus_1: int = min(bound_range_index_plus_one) - bound_good_range_modifier
-        if len(bound_range_index_plus_one) > 0: 
-            bound_range_max_plus: int = max(bound_range_index_plus_one) + bound_good_range_modifier            
-   
-        if is_powerful_switch is True:
-            print('Potential High Fold Change')  
-            score = score + .5
-        
-        if is_good_switch is True: 
-            print("Potential  Functional Switch")
-            score = score + (len(found_bound_ratio_list)*.5)
-        
-        if is_off_on_switch is True:
-            print("Potential  off/on leaning design via LMV")
-            score= score + .5
-        
-        if found_bound_index >= bound_range_min_minus_1 and found_bound_index <= bound_range_max_plus and found_bound_index != -1 and is_off_on_switch is True:
-            print("Confirmned good. Add bonus point for on/off via LMV being in range for folding")
-            score= score + .5
-        elif found_bound_index <= 2 and found_bound_index != -1 and is_in_bound_range is True:
-            print("Confirmned good. Add bonus point for on/off via LMV being in first three groups")
-            score= score + .5
-        for value in found_bound_ratio_list:
-            if value >= bound_range_min_minus_1 and value <= bound_range_max_plus and found_bound_ratio_index != -1:
-                print("Confirmned good. Add bonus point for functional being in range for folding")
+            if is_off_on_switch is True:
+                print("Potential  off/on leaning design via LMV")
                 score= score + .5
-            elif value >= 0 and value <= 1 and value != -1:
-                print("Confirmned good. Add bonus point for point for functional being in first two groups")
+            
+            if found_bound_index >= bound_range_min_minus_1 and found_bound_index <= bound_range_max_plus and found_bound_index != -1 and is_off_on_switch is True:
+                print("Confirmned good. Add bonus point for on/off via LMV being in range for folding")
+                score= score + .5
+            elif found_bound_index <= 2 and found_bound_index != -1 and is_in_bound_range is True:
+                print("Confirmned good. Add bonus point for on/off via LMV being in first three groups")
+                score= score + .5
+            for value in found_bound_ratio_list:
+                if value >= bound_range_min_minus_1 and value <= bound_range_max_plus and found_bound_ratio_index != -1:
+                    print("Confirmned good. Add bonus point for functional being in range for folding")
+                    score= score + .5
+                elif value >= 0 and value <= 1 and value != -1:
+                    print("Confirmned good. Add bonus point for point for functional being in first two groups")
+                    score= score + .5
+
+            if found_bound_ratio_high_index >= bound_range_min_minus_1 and found_bound_ratio_high_index <= bound_range_max_plus and found_bound_ratio_high_index != -1 :
+                print("Confirmned good. Add bonus point for high performing being in range for folding")
+                score= score + .5
+            elif found_bound_ratio_high_index >= 0 and found_bound_ratio_high_index <= 1 and found_bound_ratio_high_index != -1:
+                print("Confirmned good. Add bonus point for high performing being in first two groups")
                 score= score + .5
 
-        if found_bound_ratio_high_index >= bound_range_min_minus_1 and found_bound_ratio_high_index <= bound_range_max_plus and found_bound_ratio_high_index != -1 :
-            print("Confirmned good. Add bonus point for high performing being in range for folding")
-            score= score + .5
-        elif found_bound_ratio_high_index >= 0 and found_bound_ratio_high_index <= 1 and found_bound_ratio_high_index != -1:
-            print("Confirmned good. Add bonus point for high performing being in first two groups")
-            score= score + .5
+            if found_bound_ratio_high_index in found_bound_list:
+                print("Add bonus for high performing being in range of on/off prediction")
+                score= score + .5
+            
+            if found_bound_ratio_index in found_bound_list:
+                print("Add bonus for functional being in range of on/off prediction")
+                score= score + .5
 
-        if found_bound_ratio_high_index in found_bound_list:
-            print("Add bonus for high performing being in range of on/off prediction")
-            score= score + .5
-        
-        if found_bound_ratio_index in found_bound_list:
-            print("Add bonus for functional being in range of on/off prediction")
-            score= score + .5
+            excess_limit:float = 7500
+            if span_structures.num_structures > excess_limit:#15000:
+                excess_divisor:float = 2500
+                factor:float = ((float(span_structures.num_structures) - excess_limit) / excess_divisor ) * .5
+                print(f'Exsessive structs. Found:{span_structures.num_structures} penalizing {factor} points ')
+                sixty_range_num:float = 15000
+                #penalize for too many structs
+                score = score - factor
+                if span_structures.num_structures > sixty_range_num:
+                    print(f'Significant excess structures found: found {span_structures.num_structures - sixty_range_num} structures over limit of {sixty_range_num}')
+                    print(f'Eterna_score should be ~60 for temp group and could be good design currently has high penalty for excess structures and now yet one more penalty')
+                    score = score - .5
 
-        if span_structures.num_structures > 15000:
-            factor:float = ((float(span_structures.num_structures) - 15000) / 5000 ) * .5
-            print(f'Exsessive structs. Found:{span_structures.num_structures} penalizing {factor} points ')
-            #penalize for too many structs
-            score = score - factor
-        
-        if is_good_switch is True and bound_to_both_ratio >= 0.08:
-            print("Low number of both and mfe nucs in relation to bound. Add bonus point")
-            score= score + .5
+            
+            
+            if is_good_switch is True and bound_to_both_ratio >= 0.08:
+                print("Low number of both and mfe nucs in relation to bound. Add bonus point")
+                score= score + .5
 
-        comp_less_ratio: float = ev_comp_to_mfe.count('<') / num_groups
-        com_great_ratio: float = ev_comp_to_mfe.count('>')  / num_groups
-        print(f'ev comp great:{com_great_ratio}, ev comp less:{comp_less_ratio}')
-        if com_great_ratio < comp_less_ratio and comp_less_ratio >= .7:
-            print("EV for comparison struct is LESS MORE OFTEN than unbound mfe so add bonus")
-            score= score + .5
-        elif com_great_ratio > comp_less_ratio and com_great_ratio >= .5:
-            print("EV for comparison struct is GREATER MORE OFTEN than unbound mfe so penatly")
-            score= score - .5
-            if com_great_ratio >= .8:
-                print("EV for comp is GREATER EXTRA MORE OFTEN then mfe so minus penalty point")
+            comp_less_ratio: float = ev_comp_to_mfe.count('<') / num_groups
+            com_great_ratio: float = ev_comp_to_mfe.count('>')  / num_groups
+            print(f'ev comp great:{com_great_ratio}, ev comp less:{comp_less_ratio}')
+            if com_great_ratio < comp_less_ratio and comp_less_ratio >= .7:
+                print("EV for comparison struct is LESS MORE OFTEN than unbound mfe so add bonus")
+                score= score + .5
+            elif com_great_ratio > comp_less_ratio and com_great_ratio >= .5:
+                print("EV for comparison struct is GREATER MORE OFTEN than unbound mfe so penatly")
                 score= score - .5
-        
-        if bound_total_list[0] > unbound_total_list[0]:
-            penatly: float = 1
-            print(f'Bound in mfe goup more pronounced than mfe. May not fold unbound state properly as too much 2nd state found in 1st kcal goup ensemble. Penalatly points={penatly}')
-            score = score - penatly
-            if bound_total_list[0] > .20:
-                print(f'Bound in mfe goup makes up over 20% of design. Penalatly points=2')
-                score = score - 2
-        
+                if com_great_ratio >= .8:
+                    print("EV for comp is GREATER EXTRA MORE OFTEN then mfe so minus penalty point")
+                    score= score - .5
+            
+            if bound_total_list[0] > unbound_total_list[0]:
+                penatly: float = .5
+                print(f'Bound in mfe goup more pronounced than mfe. May not fold unbound state properly as too much 2nd state found in 1st kcal goup ensemble. Penalatly points={penatly}')
+                score = score - penatly
+                if bound_total_list[0] > .20:
+                    print(f'Bound in mfe goup makes up over 20% of design. Penalatly points=2')
+                    score = score - .5
+            
 
 
-        """
-        if both_nuc_total < .7 and unbound_to_total_ratio > .2:
-            print(f'Too few both nucs ratio. Found:{both_nuc_total} need min 0.75 so penalizing 1 point ')
-            #penalize as it has too few boths
-            score = score - 1
-        elif both_nuc_total > .85 and unbound_to_total_ratio < .05:
-            print(f'Design is mostly same nucs. Found: both:{both_nuc_total} unbound:{unbound_to_total_ratio}, so penalizing 1 point ')
-            #penalize as it has too few boths
-            score = score - 1
-        """
+            """
+            if both_nuc_total < .7 and unbound_to_total_ratio > .2:
+                print(f'Too few both nucs ratio. Found:{both_nuc_total} need min 0.75 so penalizing 1 point ')
+                #penalize as it has too few boths
+                score = score - 1
+            elif both_nuc_total > .85 and unbound_to_total_ratio < .05:
+                print(f'Design is mostly same nucs. Found: both:{both_nuc_total} unbound:{unbound_to_total_ratio}, so penalizing 1 point ')
+                #penalize as it has too few boths
+                score = score - 1
+            """
 
 
         if score == 0:

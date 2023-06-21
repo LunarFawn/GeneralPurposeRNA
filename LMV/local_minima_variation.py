@@ -94,7 +94,7 @@ def test_LMV():
 
         print("Enter Kcal delta span to look at")
         
-        span = '7'#input()
+        span = input()
         print(f'span is {span}')
 
         print("Enter kcal unit to plot by")
@@ -111,10 +111,10 @@ def test_LMV():
         labname = 'test'#input()
 
         print("Enter Eterna Score")
-        eterna_score = float(input())
+        eterna_score = -9#float(input())
 
         print("Enter Fold Change")
-        fold_change = float(input())
+        fold_change = -9#float(input())
 
         print("Enter Number of Clusters")
         number_of_clusters = -9 #int(input())
@@ -142,8 +142,8 @@ def test_LMV():
     temp_4:int = 38
     temp_5:int = 39
 
-    #temp_list: List[int] = [32,33,34, 35,36, 37, 38,39,40,41,42]
-    temp_list: List[int] = [36, 37, 38]
+    temp_list: List[int] = [32,33,34, 35,36, 37, 38,39,40,41,42]
+    #temp_list: List[int] = [36, 37, 38]
     score_list:List[float] = []
 
     score: float = 0

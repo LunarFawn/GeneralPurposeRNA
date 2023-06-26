@@ -361,18 +361,6 @@ class EnsembleVariation:
                 is_weighted_bond = True
             good_nucs_each_pos.append(is_weighted_bond)
 
-        """
-        for nucIndex in range(structure_list.nuc_count):
-            nuc_value: float = float(nuc_poistion_values[nucIndex])
-            #worked out this algotithm one night.. idk
-            num_bonds_found:float = nuc_value / 2 + 1
-            min_good_bonds: float = (num_bonds_found * 2) - ((nuc_value-num_bonds_found) * (-1))
-            is_weighted_bond=False
-            if num_bonds_found >= min_good_bonds and num_bonds_found > 0:
-                is_weighted_bond = True
-            good_nucs_each_pos.append(is_weighted_bond)
-        """
-
         weighted_structure:str = ''
         for nucIndex in range(structure_list.nuc_count):
             is_bonded = good_nucs_each_pos[nucIndex]

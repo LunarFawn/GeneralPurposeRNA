@@ -142,8 +142,9 @@ def test_LMV():
     temp_4:int = 38
     temp_5:int = 39
 
-    temp_list: List[int] = [32,33,34, 35,36, 37, 38,39,40,41,42]
+    #temp_list: List[int] = [32,33,34, 35,36, 37, 38,39,40,41,42]
     #temp_list: List[int] = [36, 37, 38]
+    temp_list: List[int] = [38, 39, 40]
     score_list:List[float] = []
 
     score: float = 0

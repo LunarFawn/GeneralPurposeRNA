@@ -271,7 +271,7 @@ class EnsembleVariation():
                                               group_ev_dict=group_ev_dict)
 
     def thread_EV(self, shuttle: LMV_Shuttle):
-        total_EV_subscore1:int = 0
+        ensemble_variation:int = 0
         structure_element_count = shuttle.kcal_group_structures_list.num_structures
         token:LMV_Token = shuttle.token 
         group_num:int = shuttle.group_index
@@ -322,11 +322,11 @@ class EnsembleVariation():
                 list_of_nuc_scores_base[nucIndex] = num_diff
                 list_of_nuc_scores_subscores[nucIndex] = list_of_nuc_scores_base[nucIndex] / structure_element_count 
             
-            total_EV_subscore1 = sum(list_of_nuc_scores_subscores)
+            ensemble_variation = sum(list_of_nuc_scores_subscores)
         else:
-            total_EV_subscore1 = -1
+            ensemble_variation = -1
 
-        result: EV =  EV(ev_normalized=total_EV_subscore1, ev_ThresholdNorm=0, ev_structure=0)  
+        result: EV =  EV(ev_normalized=ensemble_variation, ev_ThresholdNorm=0, ev_structure=0)  
         token.group_results[group_num]= result
         token.group_dict[group_num] = result
         token.group_done_status[group_num] = True

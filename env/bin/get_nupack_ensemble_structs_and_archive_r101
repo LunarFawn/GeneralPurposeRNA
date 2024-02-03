@@ -1,0 +1,8 @@
+#!/home/rnauser/repo/GeneralPurposeRNA/env/bin/python
+# -*- coding: utf-8 -*-
+import re
+import sys
+from serena.scripts.analyze_pnas_2112979119_sd01 import get_nupack_ensemble_structs_and_archive_r101
+if __name__ == '__main__':
+    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
+    sys.exit(get_nupack_ensemble_structs_and_archive_r101())

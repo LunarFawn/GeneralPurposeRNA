@@ -1,0 +1,3 @@
+[console_scripts]
+get_nupack_ensemble_structs_and_archive_r101 = serena.scripts.analyze_pnas_2112979119_sd01:get_nupack_ensemble_structs_and_archive_r101
+perform_serena_ensemble_computations = serena.scripts.analyze_pnas_2112979119_sd01:perform_serena_ensemble_computations
